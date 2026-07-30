@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " - " : "")WishBound</title>
+
+    @* Fonte (elemento multimédia opcional do enunciado) - Google Fonts *@
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    @* ESTILOS GLOBAIS: aplicam-se a todas as páginas do site *@
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+
+    <link rel="icon" type="image/svg+xml" href="~/img/logo-icon.svg" />
+
+    @* Secção para estilos LOCAIS definidos por cada página *@
+    @await RenderSectionAsync("Estilos", required: false)
+</head>
+<body>
+    @* ===== LAYOUT 1: cabeçalho no topo + conteúdo + rodapé ===== *@
+    <header class="cabecalho">
+        <a class="cabecalho-logo" asp-controller="Home" asp-action="Index">
+            @* Elemento multimédia: logotipo *@
+            <img src="~/img/logo.svg" alt="Logotipo WishBound" class="logo-img" />
+        </a>
+
+        @* Sistema de navegação entre as páginas *@
+        <nav class="navegacao">
+            <a asp-controller="Home" asp-action="Index">Início</a>
+            <a asp-controller="Personagens" asp-action="Index">Personagens</a>
+            <a asp-controller="Invocacao" asp-action="Index">Invocação</a>
+            <a asp-controller="Invocacao" asp-action="Historico">Histórico</a>
+            <a asp-controller="Gestao" asp-action="Index">Gestão</a>
+            <a asp-controller="Home" asp-action="Sobre">Sobre</a>
+        </nav>
+    </header>
+
+    <main class="conteudo">
+        @* Mensagens de sucesso/erro vindas dos controllers (TempData) *@
+        @if (TempData["Sucesso"] != null)
+        {
+            <div class="alerta alerta-sucesso">@TempData["Sucesso"]</div>
+        }
+        @if (TempData["Erro"] != null)
+        {
+            <div class="alerta alerta-erro">@TempData["Erro"]</div>
+        }
+
+        @RenderBody()
+    </main>
+
+    <footer class="rodape">
+        <img src="~/img/logo-icon.svg" alt="Ícone WishBound" class="rodape-icone" />
+        <p>WishBound &copy; 2026 &middot; Projeto Final UFCD 11027 &middot; Plataforma de Coleção Digital de Personagens</p>
+    </footer>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

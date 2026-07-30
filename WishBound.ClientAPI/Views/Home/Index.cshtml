@@ -1,0 +1,76 @@
+@model List<Personagem>
+@{
+    ViewData["Title"] = "Início";
+}
+
+@* ESTILO LOCAL: aplica-se apenas à página inicial *@
+@section Estilos {
+    <style>
+        /* Estilo local da página inicial (hero) */
+        .hero {
+            text-align: center;
+            padding: 70px 20px 50px;
+        }
+
+        .hero-logo {
+            width: 340px;
+            max-width: 90%;
+        }
+
+        .hero-frase {
+            font-size: 1.15rem;
+            color: #c9c4e4;
+            max-width: 560px;
+            margin: 18px auto 30px;
+        }
+
+        .hero-botoes {
+            display: flex;
+            gap: 14px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    </style>
+}
+
+<section class="hero">
+    @* Elemento multimédia: logotipo em destaque *@
+    <img class="hero-logo" src="~/img/logo.svg" alt="WishBound - Plataforma de Coleção Digital de Personagens" />
+
+    <p class="hero-frase">
+        Pede um desejo, invoca personagens e constrói a tua coleção.
+        Quanto mais rara a personagem, mais especial o laço que vos une.
+    </p>
+
+    <div class="hero-botoes">
+        <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Invocar agora</a>
+        <a class="botao" asp-controller="Personagens" asp-action="Index">Ver personagens</a>
+    </div>
+</section>
+
+@if (ViewBag.Erro != null)
+{
+    <div class="alerta alerta-erro">@ViewBag.Erro</div>
+}
+
+@if (Model.Count > 0)
+{
+    <section class="seccao">
+        <h2 class="titulo-seccao">Personagens em destaque</h2>
+
+        <div class="grelha-cartoes">
+            @foreach (var personagem in Model)
+            {
+                <a class="cartao" asp-controller="Personagens" asp-action="Details" asp-route-id="@personagem.Id">
+                    <div class="cartao-imagem" style="--cor-raridade:@(personagem.Raridade?.Cor ?? "#9aa5b1")">
+                        <img src="@(string.IsNullOrEmpty(personagem.ImagemUrl) ? "/img/personagens/desconhecido.svg" : personagem.ImagemUrl)" alt="Imagem da personagem @personagem.Nome" />
+                    </div>
+                    <div class="cartao-corpo">
+                        <h3>@personagem.Nome</h3>
+                        <span class="etiqueta-raridade" style="background:@(personagem.Raridade?.Cor ?? "#9aa5b1")">@(personagem.Raridade?.Nome ?? "Desconhecida")</span>
+                    </div>
+                </a>
+            }
+        </div>
+    </section>
+}

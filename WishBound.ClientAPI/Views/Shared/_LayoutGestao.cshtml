@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@(ViewData["Title"] != null ? ViewData["Title"] + " - " : "")Gestão - WishBound</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+
+    @* ESTILOS GLOBAIS (herdados por todas as páginas) + estilos específicos da área de gestão *@
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/gestao.css" asp-append-version="true" />
+
+    <link rel="icon" type="image/svg+xml" href="~/img/logo-icon.svg" />
+
+    @await RenderSectionAsync("Estilos", required: false)
+</head>
+<body class="corpo-gestao">
+    @* ===== LAYOUT 2: barra lateral fixa + área de conteúdo ===== *@
+    <div class="gestao-grelha">
+        <aside class="gestao-lateral">
+            <a class="gestao-logo" asp-controller="Home" asp-action="Index">
+                <img src="~/img/logo-icon.svg" alt="Ícone WishBound" />
+                <span>WishBound</span>
+            </a>
+            <p class="gestao-titulo-menu">Administração</p>
+            <nav class="gestao-menu">
+                <a asp-controller="Gestao" asp-action="Index">&#9783; Painel de personagens</a>
+                <a asp-controller="Gestao" asp-action="Criar">&#43; Nova personagem</a>
+            </nav>
+            <p class="gestao-titulo-menu">Site público</p>
+            <nav class="gestao-menu">
+                <a asp-controller="Home" asp-action="Index">&#8592; Voltar ao site</a>
+                <a asp-controller="Personagens" asp-action="Index">Ver coleção</a>
+            </nav>
+        </aside>
+
+        <main class="gestao-conteudo">
+            @if (TempData["Sucesso"] != null)
+            {
+                <div class="alerta alerta-sucesso">@TempData["Sucesso"]</div>
+            }
+            @if (TempData["Erro"] != null)
+            {
+                <div class="alerta alerta-erro">@TempData["Erro"]</div>
+            }
+
+            @RenderBody()
+        </main>
+    </div>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

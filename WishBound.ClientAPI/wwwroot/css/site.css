@@ -1,0 +1,491 @@
+/* ============================================================
+   WishBound - ESTILOS GLOBAIS (site.css)
+   Aplicados a todas as páginas do site.
+
+   Nota sobre os 3 tipos de estilos pedidos no enunciado:
+   - GLOBAIS: definidos neste ficheiro (aplicam-se a todo o site);
+   - LOCAIS: definidos na secção "Estilos" de cada página
+     (ex.: Views/Home/Index.cshtml e Views/Invocacao/Index.cshtml);
+   - HERDADOS: propriedades como font-family e color definidas
+     no <body> são herdadas por todos os elementos descendentes
+     (ver comentário "HERANÇA" abaixo).
+   ============================================================ */
+
+:root {
+    --fundo: #14101f;
+    --fundo-suave: #1e1830;
+    --fundo-cartao: #251d3a;
+    --borda: #3a2f57;
+    --texto: #efecfa;
+    --texto-suave: #a79fc4;
+    --dourado: #f3c04f;
+    --roxo: #8b5cf6;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+/* HERANÇA: a fonte e a cor do texto são definidas aqui uma única vez
+   e HERDADAS por títulos, parágrafos, tabelas, botões, etc. */
+body {
+    font-family: 'Inter', 'Segoe UI', sans-serif;
+    color: var(--texto);
+    background: linear-gradient(180deg, #14101f 0%, #1a1230 60%, #14101f 100%);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+h1, h2, h3 {
+    font-family: 'Cinzel', 'Georgia', serif;
+    letter-spacing: 0.5px;
+}
+
+a {
+    color: inherit; /* herda a cor do elemento pai */
+    text-decoration: none;
+}
+
+img {
+    max-width: 100%;
+}
+
+/* ---------- Cabeçalho e navegação (Layout 1) ---------- */
+
+.cabecalho {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+    padding: 14px 32px;
+    background: rgba(20, 14, 36, 0.9);
+    border-bottom: 1px solid var(--borda);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(6px);
+}
+
+.logo-img {
+    height: 44px;
+    display: block;
+}
+
+.navegacao {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+}
+
+.navegacao a {
+    padding: 8px 14px;
+    border-radius: 8px;
+    color: var(--texto-suave);
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+
+.navegacao a:hover {
+    background: var(--fundo-cartao);
+    color: var(--texto);
+}
+
+/* ---------- Estrutura geral ---------- */
+
+.conteudo {
+    flex: 1;
+    width: 100%;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 20px 24px 60px;
+}
+
+.seccao {
+    padding-top: 30px;
+}
+
+.titulo-seccao {
+    font-size: 1.7rem;
+    margin-bottom: 8px;
+    color: var(--dourado);
+}
+
+.pagina-simples {
+    max-width: 760px;
+    margin: 0 auto;
+    padding-top: 36px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.pagina-simples h1 {
+    color: var(--dourado);
+}
+
+.pagina-simples h2 {
+    margin-top: 10px;
+    font-size: 1.2rem;
+}
+
+.texto-suave {
+    color: var(--texto-suave);
+}
+
+.ligacao {
+    color: var(--roxo);
+    font-weight: 600;
+}
+
+.destaque-caixa {
+    background: var(--fundo-cartao);
+    border: 1px solid var(--borda);
+    border-radius: 14px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* ---------- Botões ---------- */
+
+.botao {
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-cartao);
+    color: var(--texto);
+    font-weight: 600;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: transform 0.15s, filter 0.15s;
+}
+
+.botao:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.15);
+}
+
+.botao-destaque {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+    border-color: #8b5cf6;
+}
+
+.botao-suave {
+    background: transparent;
+}
+
+.botao-perigo {
+    background: #7f1d1d;
+    border-color: #b91c1c;
+}
+
+.botao-grande {
+    font-size: 1.15rem;
+    padding: 16px 34px;
+}
+
+.botao-pequeno {
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+/* ---------- Cartões de personagens ---------- */
+
+.grelha-cartoes {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 20px;
+    margin-top: 24px;
+}
+
+.cartao {
+    background: var(--fundo-cartao);
+    border: 1px solid var(--borda);
+    border-radius: 16px;
+    overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.2s;
+    display: block;
+}
+
+.cartao:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+}
+
+.cartao-imagem {
+    /* A cor da raridade chega por variável CSS definida inline na view */
+    background: radial-gradient(circle at 50% 30%, var(--cor-raridade, #9aa5b1) 0%, var(--fundo-suave) 75%);
+    padding: 18px;
+    display: flex;
+    justify-content: center;
+}
+
+.cartao-imagem img {
+    width: 140px;
+    height: 140px;
+    filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.5));
+}
+
+.cartao-corpo {
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: flex-start;
+}
+
+.cartao-corpo h3 {
+    font-size: 1.1rem;
+}
+
+.etiqueta-raridade {
+    display: inline-block;
+    padding: 3px 12px;
+    border-radius: 999px;
+    color: #14101f;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+}
+
+/* ---------- Página de detalhes ---------- */
+
+.detalhe-grelha {
+    display: grid;
+    grid-template-columns: minmax(240px, 340px) 1fr;
+    gap: 34px;
+    align-items: start;
+    margin-top: 20px;
+}
+
+.detalhe-imagem {
+    background: radial-gradient(circle at 50% 30%, var(--cor-raridade, #9aa5b1) 0%, var(--fundo-suave) 75%);
+    border: 1px solid var(--borda);
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    justify-content: center;
+}
+
+.detalhe-imagem img {
+    width: 220px;
+    height: 220px;
+    filter: drop-shadow(0 8px 16px rgba(0, 0, 0, 0.55));
+}
+
+.detalhe-info {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    align-items: flex-start;
+}
+
+.detalhe-info h1 {
+    color: var(--dourado);
+}
+
+.detalhe-descricao {
+    font-size: 1.05rem;
+    line-height: 1.6;
+}
+
+@media (max-width: 720px) {
+    .detalhe-grelha {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ---------- Pesquisa, tabelas, formulários ---------- */
+
+.barra-pesquisa {
+    display: flex;
+    gap: 10px;
+    margin-top: 18px;
+    flex-wrap: wrap;
+}
+
+.barra-pesquisa input {
+    flex: 1;
+    min-width: 220px;
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    color: var(--texto);
+    font-family: inherit; /* herda a fonte definida no body */
+}
+
+.tabela {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 22px;
+    background: var(--fundo-cartao);
+    border-radius: 14px;
+    overflow: hidden;
+}
+
+.tabela caption {
+    caption-side: top;
+    text-align: left;
+    padding: 10px 4px;
+    color: var(--texto-suave);
+    font-weight: 600;
+}
+
+.tabela th,
+.tabela td {
+    padding: 12px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--borda);
+}
+
+.tabela th {
+    background: var(--fundo-suave);
+    color: var(--dourado);
+    font-family: 'Cinzel', serif;
+    font-size: 0.9rem;
+}
+
+.tabela tr:last-child td {
+    border-bottom: none;
+}
+
+.tabela-miniatura {
+    width: 42px;
+    height: 42px;
+}
+
+.tabela-acoes {
+    white-space: nowrap;
+}
+
+.tabela-acoes .botao + .botao {
+    margin-left: 8px;
+}
+
+.caixa-vazia {
+    margin-top: 26px;
+    padding: 40px;
+    text-align: center;
+    background: var(--fundo-cartao);
+    border: 1px dashed var(--borda);
+    border-radius: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    align-items: center;
+    color: var(--texto-suave);
+}
+
+/* ---------- Alertas ---------- */
+
+.alerta {
+    padding: 12px 18px;
+    border-radius: 10px;
+    margin: 16px 0;
+    font-weight: 500;
+}
+
+.alerta-sucesso {
+    background: #113a2b;
+    border: 1px solid #16a34a;
+    color: #bbf7d0;
+}
+
+.alerta-erro {
+    background: #3f1420;
+    border: 1px solid #dc2626;
+    color: #fecaca;
+}
+
+.alerta-validacao:empty {
+    display: none;
+}
+
+.alerta-validacao ul {
+    margin-left: 18px;
+}
+
+/* ---------- Formulários (usados na área de gestão) ---------- */
+
+.formulario {
+    max-width: 560px;
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.campo {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.campo label {
+    font-weight: 600;
+    color: var(--texto-suave);
+}
+
+.campo input,
+.campo textarea,
+.campo select {
+    padding: 10px 14px;
+    border-radius: 10px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    color: var(--texto);
+    font-family: inherit; /* herda a fonte do body */
+    font-size: 0.95rem;
+}
+
+.campo input:focus,
+.campo textarea:focus,
+.campo select:focus {
+    outline: 2px solid var(--roxo);
+}
+
+.campo select option {
+    background: var(--fundo-suave);
+}
+
+.erro-campo {
+    color: #fca5a5;
+    font-size: 0.85rem;
+    min-height: 1em;
+}
+
+.input-validation-error {
+    border-color: #dc2626 !important;
+}
+
+.formulario-acoes {
+    display: flex;
+    gap: 12px;
+    margin-top: 6px;
+}
+
+/* ---------- Rodapé ---------- */
+
+.rodape {
+    border-top: 1px solid var(--borda);
+    padding: 22px 30px;
+    text-align: center;
+    color: var(--texto-suave);
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    align-items: center;
+}
+
+.rodape-icone {
+    height: 28px;
+    opacity: 0.8;
+}

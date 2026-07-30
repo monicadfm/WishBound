@@ -1,0 +1,86 @@
+@model InvocacaoViewModel
+@{
+    ViewData["Title"] = "Invocação";
+}
+
+@* ESTILO LOCAL: animação usada apenas nesta página *@
+@section Estilos {
+    <style>
+        /* Estilo local da página de invocação */
+        .invocacao-zona {
+            text-align: center;
+            padding: 40px 20px 10px;
+        }
+
+        .resultado-cartao {
+            margin: 30px auto 0;
+            max-width: 340px;
+            animation: aparecer 0.8s ease-out;
+        }
+
+        @@keyframes aparecer {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .tabela-probabilidades {
+            margin: 40px auto 0;
+            max-width: 480px;
+        }
+    </style>
+}
+
+<section class="invocacao-zona">
+    <h1 class="titulo-seccao">Invocação</h1>
+    <p class="texto-suave">
+        Pede um desejo e invoca uma personagem aleatória.
+        Cada invocação fica registada no histórico (operação INSERT através da WebAPI).
+    </p>
+
+    <form method="post" asp-controller="Invocacao" asp-action="Invocar">
+        <button type="submit" class="botao botao-destaque botao-grande">&#10024; Invocar personagem</button>
+    </form>
+
+    @if (Model.Resultado != null)
+    {
+        <div class="cartao resultado-cartao">
+            <div class="cartao-imagem" style="--cor-raridade:@(Model.Resultado.Raridade?.Cor ?? "#9aa5b1")">
+                <img src="@(string.IsNullOrEmpty(Model.Resultado.ImagemUrl) ? "/img/personagens/desconhecido.svg" : Model.Resultado.ImagemUrl)" alt="Imagem da personagem @Model.Resultado.Nome" />
+            </div>
+            <div class="cartao-corpo">
+                <h3>Obtiveste: @Model.Resultado.Nome!</h3>
+                <span class="etiqueta-raridade" style="background:@(Model.Resultado.Raridade?.Cor ?? "#9aa5b1")">@(Model.Resultado.Raridade?.Nome ?? "Desconhecida")</span>
+                <p class="texto-suave">@Model.Resultado.Descricao</p>
+                <a class="botao botao-suave" asp-controller="Personagens" asp-action="Details" asp-route-id="@Model.Resultado.Id">Ver detalhes</a>
+            </div>
+        </div>
+    }
+
+    @if (Model.Raridades.Count > 0)
+    {
+        <table class="tabela tabela-probabilidades">
+            <caption>Probabilidades por raridade</caption>
+            <thead>
+                <tr>
+                    <th>Raridade</th>
+                    <th>Probabilidade</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var raridade in Model.Raridades)
+                {
+                    <tr>
+                        <td><span class="etiqueta-raridade" style="background:@raridade.Cor">@raridade.Nome</span></td>
+                        <td>@raridade.Probabilidade%</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>

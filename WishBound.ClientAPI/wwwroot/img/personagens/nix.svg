@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Personagem nix">
+  <defs>
+    <radialGradient id="aura-nix" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#9aa5b1" stop-opacity="0.55"/>
+      <stop offset="100%" stop-color="#9aa5b1" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="corpo-nix" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#7dd3fc"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+  </defs>
+
+  <!-- aura da raridade -->
+  <circle cx="100" cy="102" r="92" fill="url(#aura-nix)"/>
+
+  <!-- corpo do espírito -->
+  <path d="M100 44
+           C136 44 152 74 152 104
+           C152 132 140 148 128 156
+           L124 144 L114 160 L104 146 L96 162 L86 146 L76 158 L72 144
+           C60 148 48 132 48 104
+           C48 74 64 44 100 44 Z"
+        fill="url(#corpo-nix)" stroke="#14101f" stroke-width="4"/>
+
+  <path d="M62 52 L70 34 L80 54 Z" fill="#38bdf8"/>
+    <path d="M138 52 L130 34 L120 54 Z" fill="#38bdf8"/>
+
+  <!-- olhos -->
+  <ellipse cx="82" cy="98" rx="9" ry="13" fill="#14101f"/>
+  <ellipse cx="118" cy="98" rx="9" ry="13" fill="#14101f"/>
+  <circle cx="85" cy="93" r="3.4" fill="#ffffff"/>
+  <circle cx="121" cy="93" r="3.4" fill="#ffffff"/>
+
+  <!-- bochechas e boca -->
+  <ellipse cx="72" cy="116" rx="6" ry="4" fill="#ffffff" opacity="0.25"/>
+  <ellipse cx="128" cy="116" rx="6" ry="4" fill="#ffffff" opacity="0.25"/>
+  <path d="M94 122 Q100 128 106 122" fill="none" stroke="#14101f" stroke-width="3" stroke-linecap="round"/>
+
+  <!-- brilhos -->
+  <path d="M160 36 C161.4 43 164 45.6 171 47 C164 48.4 161.4 51 160 58 C158.6 51 156 48.4 149 47 C156 45.6 158.6 43 160 36 Z" fill="#ffe9a8"/>
+  <circle cx="38" cy="60" r="3" fill="#ffe9a8" opacity="0.85"/>
+  <circle cx="168" cy="140" r="2.6" fill="#ffe9a8" opacity="0.7"/>
+</svg>

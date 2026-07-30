@@ -1,0 +1,49 @@
+@{
+    ViewData["Title"] = "Sobre";
+}
+
+<section class="pagina-simples">
+    <h1>Sobre o WishBound</h1>
+
+    <p>
+        O <strong>WishBound</strong> é uma plataforma de coleção digital de personagens.
+        Os utilizadores podem invocar personagens através de um sistema de obtenção
+        aleatória baseado em raridades, consultar a coleção disponível e acompanhar
+        o histórico das suas invocações.
+    </p>
+
+    <p>
+        Esta versão foi desenvolvida como <strong>Projeto Final da UFCD 11027</strong> e é uma
+        versão simplificada do projeto WishBound completo (plataforma Web e Mobile com
+        autenticação, inventário, economia virtual, eventos temporários e sistema de amizade),
+        pensada para ser expandida no futuro.
+    </p>
+
+    <h2>Como funciona?</h2>
+    <p style="max-width:720px">
+        @* Exemplo de estilo inline (em linha) aplicado diretamente ao elemento *@
+        A aplicação está dividida em dois projetos: a <strong>WishBound.WebAPI</strong>, que expõe
+        os dados da base de dados SQL Server através de serviços REST, e o
+        <strong>WishBound.ClientAPI</strong>, o site que está a utilizar neste momento,
+        que consome esses serviços para mostrar e gerir a informação.
+    </p>
+
+    <h2>Tecnologias utilizadas</h2>
+    <p>
+        ASP.NET Core Web API e MVC (C#), Entity Framework Core, SQL Server (LocalDB),
+        HTML, CSS e Razor. As operações disponíveis sobre a base de dados são:
+        consulta (SELECT), criação (INSERT), atualização (UPDATE) e eliminação (DELETE).
+    </p>
+
+    <div class="destaque-caixa">
+        <h3>Raridades das personagens</h3>
+        <p>
+            Cada personagem pertence a uma de cinco raridades:
+            <span class="etiqueta-raridade" style="background:#9aa5b1">Comum</span>
+            <span class="etiqueta-raridade" style="background:#3b82f6">Raro</span>
+            <span class="etiqueta-raridade" style="background:#a855f7">Épico</span>
+            <span class="etiqueta-raridade" style="background:#f59e0b">Lendário</span>
+            <span class="etiqueta-raridade" style="background:#ef4444">Mítico</span>
+        </p>
+    </div>
+</section>

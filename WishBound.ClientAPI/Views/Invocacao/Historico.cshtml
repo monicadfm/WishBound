@@ -1,0 +1,57 @@
+@model List<Invocacao>
+@{
+    ViewData["Title"] = "Histórico";
+}
+
+<section class="seccao">
+    <h1 class="titulo-seccao">Histórico de invocações</h1>
+    <p class="texto-suave">As últimas 50 invocações realizadas na plataforma (operação SELECT através da WebAPI).</p>
+
+    @if (Model.Count == 0)
+    {
+        <div class="caixa-vazia">
+            <p>Ainda não foi realizada nenhuma invocação.</p>
+            <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Fazer a primeira invocação</a>
+        </div>
+    }
+    else
+    {
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Data e hora</th>
+                    <th>Personagem</th>
+                    <th>Raridade</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var invocacao in Model)
+                {
+                    <tr>
+                        <td>@invocacao.Data.ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td>
+                            @if (invocacao.Personagem != null)
+                            {
+                                <a class="ligacao" asp-controller="Personagens" asp-action="Details" asp-route-id="@invocacao.PersonagemId">@invocacao.Personagem.Nome</a>
+                            }
+                            else
+                            {
+                                <span class="texto-suave">Personagem removida</span>
+                            }
+                        </td>
+                        <td>
+                            @if (invocacao.Personagem?.Raridade != null)
+                            {
+                                <span class="etiqueta-raridade" style="background:@invocacao.Personagem.Raridade.Cor">@invocacao.Personagem.Raridade.Nome</span>
+                            }
+                            else
+                            {
+                                <span class="texto-suave">-</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>

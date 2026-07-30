@@ -1,0 +1,43 @@
+@model List<Personagem>
+@{
+    ViewData["Title"] = "Personagens";
+}
+
+<section class="seccao">
+    <h1 class="titulo-seccao">Personagens</h1>
+    <p class="texto-suave">Todas as personagens disponíveis na plataforma (operação SELECT através da WebAPI).</p>
+
+    @* Formulário de pesquisa com validação de dados de entrada *@
+    <form class="barra-pesquisa" method="get" asp-controller="Personagens" asp-action="Index">
+        <input type="text" name="pesquisa" value="@ViewBag.Pesquisa" placeholder="Pesquisar por nome..." maxlength="60" />
+        <button type="submit" class="botao">Pesquisar</button>
+        @if (!string.IsNullOrEmpty((string?)ViewBag.Pesquisa))
+        {
+            <a class="botao botao-suave" asp-controller="Personagens" asp-action="Index">Limpar</a>
+        }
+    </form>
+
+    @if (Model.Count == 0)
+    {
+        <div class="caixa-vazia">
+            <p>Nenhuma personagem encontrada.</p>
+        </div>
+    }
+    else
+    {
+        <div class="grelha-cartoes">
+            @foreach (var personagem in Model)
+            {
+                <a class="cartao" asp-controller="Personagens" asp-action="Details" asp-route-id="@personagem.Id">
+                    <div class="cartao-imagem" style="--cor-raridade:@(personagem.Raridade?.Cor ?? "#9aa5b1")">
+                        <img src="@(string.IsNullOrEmpty(personagem.ImagemUrl) ? "/img/personagens/desconhecido.svg" : personagem.ImagemUrl)" alt="Imagem da personagem @personagem.Nome" />
+                    </div>
+                    <div class="cartao-corpo">
+                        <h3>@personagem.Nome</h3>
+                        <span class="etiqueta-raridade" style="background:@(personagem.Raridade?.Cor ?? "#9aa5b1")">@(personagem.Raridade?.Nome ?? "Desconhecida")</span>
+                    </div>
+                </a>
+            }
+        </div>
+    }
+</section>

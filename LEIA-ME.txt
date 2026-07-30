@@ -1,0 +1,44 @@
+============================================================
+ WishBound - Plataforma de Coleção Digital de Personagens
+ Projeto Final UFCD 11027 (versão mini do projeto WishBound)
+============================================================
+
+REQUISITOS
+----------
+- Visual Studio 2022 com a workload "ASP.NET and web development"
+  (inclui o .NET 8 SDK e o SQL Server Express LocalDB);
+- Ligação à internet na primeira compilação (restauro de pacotes NuGet).
+
+COMO EXECUTAR
+-------------
+1. Abrir o ficheiro WishBound.sln no Visual Studio 2022.
+
+2. Configurar os dois projetos para arrancarem em simultâneo:
+   - Clicar com o botão direito na Solução -> "Configure Startup Projects...";
+   - Escolher "Multiple startup projects";
+   - Colocar "Start" em WishBound.WebAPI e em WishBound.ClientAPI
+     (a WebAPI deve ficar em primeiro lugar na lista);
+   - OK.
+
+3. Premir F5 (ou o botão Start).
+   - A WebAPI arranca em http://localhost:5240 (abre o Swagger);
+   - O site arranca em http://localhost:5100.
+
+4. A base de dados "WishBoundDb" é criada automaticamente no LocalDB
+   no primeiro arranque da WebAPI, já com 5 raridades e 8 personagens.
+
+NOTAS
+-----
+- A ligação à base de dados está em WishBound.WebAPI/appsettings.json
+  (por omissão usa (localdb)\MSSQLLocalDB);
+- O endereço da API usado pelo site está em
+  WishBound.ClientAPI/appsettings.json (WishBoundApi:BaseUrl);
+- Se alterar os modelos de dados, apague a base de dados WishBoundDb
+  (View -> SQL Server Object Explorer) para ela ser recriada;
+- A validação no lado do cliente usa jQuery Validation por CDN;
+  sem internet, a validação continua a funcionar no servidor.
+
+ESTRUTURA
+---------
+- WishBound.WebAPI   -> API REST (CRUD sobre SQL Server via EF Core)
+- WishBound.ClientAPI -> Site MVC que consome a API (HttpClient)

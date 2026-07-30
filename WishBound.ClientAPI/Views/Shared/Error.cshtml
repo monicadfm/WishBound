@@ -1,0 +1,16 @@
+@model ErrorViewModel
+@{
+    ViewData["Title"] = "Erro";
+}
+
+<section class="pagina-simples">
+    <h1>Ocorreu um erro</h1>
+    <p>Pedimos desculpa, algo correu mal ao processar o seu pedido.</p>
+
+    @if (Model.ShowRequestId)
+    {
+        <p class="texto-suave"><strong>Id do pedido:</strong> <code>@Model.RequestId</code></p>
+    }
+
+    <a class="botao" asp-controller="Home" asp-action="Index">Voltar ao início</a>
+</section>

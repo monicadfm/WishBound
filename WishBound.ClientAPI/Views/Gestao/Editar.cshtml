@@ -1,0 +1,50 @@
+@model Personagem
+@{
+    ViewData["Title"] = "Editar personagem";
+    Layout = "_LayoutGestao";
+}
+
+<h1>Editar personagem</h1>
+<p class="texto-suave">Altere os dados e guarde para atualizar a personagem (operação UPDATE).</p>
+
+<form class="formulario" method="post" asp-controller="Gestao" asp-action="Editar" asp-route-id="@Model.Id">
+    <div asp-validation-summary="ModelOnly" class="alerta alerta-erro alerta-validacao"></div>
+
+    <input type="hidden" asp-for="Id" />
+    <input type="hidden" asp-for="DataCriacao" />
+
+    <div class="campo">
+        <label asp-for="Nome"></label>
+        <input asp-for="Nome" />
+        <span asp-validation-for="Nome" class="erro-campo"></span>
+    </div>
+
+    <div class="campo">
+        <label asp-for="Descricao"></label>
+        <textarea asp-for="Descricao" rows="4"></textarea>
+        <span asp-validation-for="Descricao" class="erro-campo"></span>
+    </div>
+
+    <div class="campo">
+        <label asp-for="ImagemUrl"></label>
+        <input asp-for="ImagemUrl" />
+        <span asp-validation-for="ImagemUrl" class="erro-campo"></span>
+    </div>
+
+    <div class="campo">
+        <label asp-for="RaridadeId"></label>
+        <select asp-for="RaridadeId" asp-items="ViewBag.Raridades">
+            <option value="">-- Escolha a raridade --</option>
+        </select>
+        <span asp-validation-for="RaridadeId" class="erro-campo"></span>
+    </div>
+
+    <div class="formulario-acoes">
+        <button type="submit" class="botao botao-destaque">Guardar alterações</button>
+        <a class="botao botao-suave" asp-controller="Gestao" asp-action="Index">Cancelar</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

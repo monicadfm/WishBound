@@ -1,0 +1,106 @@
+/* ============================================================
+   WishBound - Estilos da área de GESTÃO (gestao.css)
+   Usados apenas pelas páginas que utilizam o segundo layout
+   (_LayoutGestao.cshtml - layout com barra lateral).
+   ============================================================ */
+
+.corpo-gestao {
+    background: #120e1d;
+}
+
+.gestao-grelha {
+    display: grid;
+    grid-template-columns: 240px 1fr;
+    min-height: 100vh;
+}
+
+/* ---------- Barra lateral ---------- */
+
+.gestao-lateral {
+    background: #191330;
+    border-right: 1px solid var(--borda);
+    padding: 24px 18px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+}
+
+.gestao-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-family: 'Cinzel', serif;
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--dourado);
+    margin-bottom: 18px;
+}
+
+.gestao-logo img {
+    height: 34px;
+}
+
+.gestao-titulo-menu {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 1.2px;
+    color: var(--texto-suave);
+    margin-top: 12px;
+}
+
+.gestao-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.gestao-menu a {
+    padding: 9px 12px;
+    border-radius: 8px;
+    color: var(--texto-suave);
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+}
+
+.gestao-menu a:hover {
+    background: var(--fundo-cartao);
+    color: var(--texto);
+}
+
+/* ---------- Conteúdo ---------- */
+
+.gestao-conteudo {
+    padding: 30px 36px 60px;
+    max-width: 1000px;
+}
+
+.gestao-topo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-bottom: 10px;
+}
+
+.gestao-topo h1 {
+    color: var(--dourado);
+    font-size: 1.6rem;
+}
+
+@media (max-width: 800px) {
+    .gestao-grelha {
+        grid-template-columns: 1fr;
+    }
+
+    .gestao-lateral {
+        position: static;
+        height: auto;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+}

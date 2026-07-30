@@ -1,0 +1,28 @@
+@model Personagem
+@{
+    ViewData["Title"] = Model.Nome;
+}
+
+<section class="seccao">
+    <div class="detalhe-grelha">
+        <div class="detalhe-imagem" style="--cor-raridade:@(Model.Raridade?.Cor ?? "#9aa5b1")">
+            <img src="@(string.IsNullOrEmpty(Model.ImagemUrl) ? "/img/personagens/desconhecido.svg" : Model.ImagemUrl)" alt="Imagem da personagem @Model.Nome" />
+        </div>
+
+        <div class="detalhe-info">
+            <h1>@Model.Nome</h1>
+            <span class="etiqueta-raridade" style="background:@(Model.Raridade?.Cor ?? "#9aa5b1")">@(Model.Raridade?.Nome ?? "Desconhecida")</span>
+
+            <p class="detalhe-descricao">
+                @(string.IsNullOrEmpty(Model.Descricao) ? "Esta personagem ainda não tem descrição." : Model.Descricao)
+            </p>
+
+            <p class="texto-suave">Na plataforma desde @Model.DataCriacao.ToString("dd/MM/yyyy").</p>
+
+            <div class="hero-botoes" style="justify-content:flex-start">
+                <a class="botao botao-suave" asp-controller="Personagens" asp-action="Index">&#8592; Voltar à lista</a>
+                <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Tentar invocar</a>
+            </div>
+        </div>
+    </div>
+</section>

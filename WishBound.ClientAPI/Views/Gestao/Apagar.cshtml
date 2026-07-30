@@ -1,0 +1,31 @@
+@model Personagem
+@{
+    ViewData["Title"] = "Apagar personagem";
+    Layout = "_LayoutGestao";
+}
+
+<h1>Apagar personagem</h1>
+
+<div class="alerta alerta-erro">
+    Atenção: esta operação é definitiva (operação DELETE).
+    As invocações associadas a esta personagem também serão removidas do histórico.
+</div>
+
+<div class="cartao" style="max-width:340px">
+    @* Estilo inline usado pontualmente para limitar a largura do cartão *@
+    <div class="cartao-imagem" style="--cor-raridade:@(Model.Raridade?.Cor ?? "#9aa5b1")">
+        <img src="@(string.IsNullOrEmpty(Model.ImagemUrl) ? "/img/personagens/desconhecido.svg" : Model.ImagemUrl)" alt="Imagem da personagem @Model.Nome" />
+    </div>
+    <div class="cartao-corpo">
+        <h3>@Model.Nome</h3>
+        <span class="etiqueta-raridade" style="background:@(Model.Raridade?.Cor ?? "#9aa5b1")">@(Model.Raridade?.Nome ?? "-")</span>
+        <p class="texto-suave">@Model.Descricao</p>
+    </div>
+</div>
+
+<form method="post" asp-controller="Gestao" asp-action="Apagar" asp-route-id="@Model.Id" style="margin-top:20px">
+    <div class="formulario-acoes">
+        <button type="submit" class="botao botao-perigo">Confirmar eliminação</button>
+        <a class="botao botao-suave" asp-controller="Gestao" asp-action="Index">Cancelar</a>
+    </div>
+</form>
