@@ -9,11 +9,21 @@ namespace WishBound.WebAPI.Controllers
     /// Sistema de invocação (gacha) simplificado:
     /// escolhe uma raridade de forma aleatória ponderada pelas probabilidades
     /// e devolve uma personagem dessa raridade. Guarda o resultado no histórico.
+    ///
+    /// NOTA (versão final): a tabela HistoricoInvocacoes exige o utilizador e
+    /// o banner. Enquanto não existir autenticação, todas as invocações são
+    /// registadas com o utilizador "Sistema" e o "Banner Permanente" criados
+    /// pelo script de migração. Quando o login estiver feito, estas constantes
+    /// serão substituídas pelo utilizador autenticado e pelo banner escolhido.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class InvocacoesController : ControllerBase
     {
+        // Ids fixos criados pelo script Database/01_Migracao_MiniParaFinal.sql
+        private const int UtilizadorSistemaId = 1;
+        private const int BannerPermanenteId = 1;
+
         private readonly WishBoundContext _contexto;
 
         public InvocacoesController(WishBoundContext contexto)
@@ -48,10 +58,11 @@ namespace WishBound.WebAPI.Controllers
         {
             try
             {
-                // Só considera raridades que tenham pelo menos uma personagem
+                // Só considera raridades com pelo menos uma personagem ativa
                 var raridades = await _contexto.Raridades
-                    .Where(r => r.Personagens!.Any())
-                    .Include(r => r.Personagens)
+                    .Where(r => r.Personagens!.Any(p => p.IsAtivo))
+                    .Include(r => r.Personagens!.Where(p => p.IsAtivo))
+                    .OrderBy(r => r.Ordem)
                     .ToListAsync();
 
                 if (raridades.Count == 0)
@@ -60,15 +71,18 @@ namespace WishBound.WebAPI.Controllers
                 }
 
                 // 1) Escolha ponderada da raridade
-                int somaPesos = raridades.Sum(r => r.Probabilidade);
-                int sorteio = Random.Shared.Next(1, somaPesos + 1);
+                //    As probabilidades são frações (ex.: 0.55 = 55%). O sorteio
+                //    gera um número entre 0 e a soma dos pesos, e percorre as
+                //    raridades acumulando até o ultrapassar.
+                decimal somaPesos = raridades.Sum(r => r.Probabilidade);
+                decimal sorteio = (decimal)Random.Shared.NextDouble() * somaPesos;
 
                 Raridade raridadeEscolhida = raridades[0];
-                int acumulado = 0;
+                decimal acumulado = 0;
                 foreach (var raridade in raridades)
                 {
                     acumulado += raridade.Probabilidade;
-                    if (sorteio <= acumulado)
+                    if (sorteio < acumulado)
                     {
                         raridadeEscolhida = raridade;
                         break;
@@ -82,8 +96,12 @@ namespace WishBound.WebAPI.Controllers
                 // 3) Regista a invocação no histórico (INSERT)
                 var invocacao = new Invocacao
                 {
+                    UtilizadorId = UtilizadorSistemaId,
+                    BannerId = BannerPermanenteId,
                     PersonagemId = personagem.Id,
-                    Data = DateTime.Now
+                    RaridadeId = raridadeEscolhida.Id,
+                    PityAtivado = false,
+                    Data = DateTime.UtcNow
                 };
 
                 _contexto.Invocacoes.Add(invocacao);
