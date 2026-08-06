@@ -1,0 +1,50 @@
+@model RegistoViewModel
+@{
+    ViewData["Title"] = "Criar conta";
+}
+
+<div class="autenticacao-cartao">
+    <h1>Criar conta</h1>
+    <p class="texto-suave">Registe-se para colecionar personagens, invocar e muito mais.</p>
+
+    <form class="formulario formulario-autenticacao" method="post" asp-controller="Conta" asp-action="Registar">
+        <div asp-validation-summary="ModelOnly" class="alerta alerta-erro alerta-validacao"></div>
+
+        <div class="campo">
+            <label asp-for="NomeUtilizador"></label>
+            <input asp-for="NomeUtilizador" placeholder="Ex.: CaçadorDeEstrelas" autofocus />
+            <span asp-validation-for="NomeUtilizador" class="erro-campo"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" placeholder="Ex.: nome@email.com" />
+            <span asp-validation-for="Email" class="erro-campo"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" placeholder="Mín. 8 caracteres, com maiúscula, número e símbolo" />
+            <span asp-validation-for="Password" class="erro-campo"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="ConfirmarPassword"></label>
+            <input asp-for="ConfirmarPassword" placeholder="Repita a password" />
+            <span asp-validation-for="ConfirmarPassword" class="erro-campo"></span>
+        </div>
+
+        <div class="formulario-acoes">
+            <button type="submit" class="botao botao-destaque">Registar</button>
+            <a class="botao botao-suave" asp-controller="Conta" asp-action="Login">Já tenho conta</a>
+        </div>
+    </form>
+
+    <p class="texto-suave autenticacao-nota">
+        Depois do registo é necessário validar o email antes de iniciar sessão.
+    </p>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

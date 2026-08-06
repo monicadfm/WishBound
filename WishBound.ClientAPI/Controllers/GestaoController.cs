@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using WishBound.ClientAPI.Models;
@@ -13,7 +14,13 @@ namespace WishBound.ClientAPI.Controllers
     ///   Editar -> UPDATE
     ///   Apagar -> DELETE
     /// Usa o segundo layout (_LayoutGestao, com barra lateral).
+    ///
+    /// [Authorize(Roles = "Admin")]: TODA a área de gestão exige sessão
+    /// iniciada com uma conta de administrador. Quem não tiver sessão é
+    /// enviado para o login; quem tiver sessão mas não for admin vê a
+    /// página "Acesso negado".
     /// </summary>
+    [Authorize(Roles = "Admin")]
     public class GestaoController : Controller
     {
         private readonly WishBoundApiService _api;

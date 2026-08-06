@@ -20,7 +20,7 @@ namespace WishBound.WebAPI.Controllers
     [ApiController]
     public class InvocacoesController : ControllerBase
     {
-        // Ids fixos criados pelo script Database/01_Migracao_MiniParaFinal.sql
+        // Ids fixos criados pelo script Database/Migracao01.sql
         private const int UtilizadorSistemaId = 1;
         private const int BannerPermanenteId = 1;
 

@@ -1,0 +1,30 @@
+@model RecuperarPasswordViewModel
+@{
+    ViewData["Title"] = "Reenviar validação de email";
+}
+
+<div class="autenticacao-cartao">
+    <h1>Reenviar validação</h1>
+    <p class="texto-suave">
+        Ainda não validou o email da sua conta? Indique-o para gerar um novo link de validação.
+    </p>
+
+    <form class="formulario formulario-autenticacao" method="post" asp-controller="Conta" asp-action="ReenviarValidacao">
+        <div asp-validation-summary="ModelOnly" class="alerta alerta-erro alerta-validacao"></div>
+
+        <div class="campo">
+            <label asp-for="Email"></label>
+            <input asp-for="Email" placeholder="Ex.: nome@email.com" autofocus />
+            <span asp-validation-for="Email" class="erro-campo"></span>
+        </div>
+
+        <div class="formulario-acoes">
+            <button type="submit" class="botao botao-destaque">Gerar novo link</button>
+            <a class="botao botao-suave" asp-controller="Conta" asp-action="Login">Voltar ao login</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

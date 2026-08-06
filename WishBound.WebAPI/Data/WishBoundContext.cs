@@ -26,5 +26,7 @@ namespace WishBound.WebAPI.Data
         public DbSet<Raridade> Raridades { get; set; }
         public DbSet<Personagem> Personagens { get; set; }
         public DbSet<Invocacao> Invocacoes { get; set; }
+        public DbSet<Utilizador> Utilizadores { get; set; }
+        public DbSet<TokenRecuperacaoPassword> TokensRecuperacao { get; set; }
     }
 }

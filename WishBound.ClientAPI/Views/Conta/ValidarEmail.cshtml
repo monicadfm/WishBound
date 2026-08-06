@@ -1,0 +1,22 @@
+@{
+    ViewData["Title"] = "Validação de email";
+    bool sucesso = ViewBag.Sucesso == true;
+}
+
+<div class="autenticacao-cartao">
+    <h1>Validação de email</h1>
+
+    @if (sucesso)
+    {
+        <div class="alerta alerta-sucesso">@ViewBag.Mensagem</div>
+        <a class="botao botao-destaque" asp-controller="Conta" asp-action="Login">Iniciar sessão</a>
+    }
+    else
+    {
+        <div class="alerta alerta-erro">@ViewBag.Mensagem</div>
+        <div class="formulario-acoes">
+            <a class="botao botao-destaque" asp-controller="Conta" asp-action="ReenviarValidacao">Gerar novo link</a>
+            <a class="botao botao-suave" asp-controller="Home" asp-action="Index">Voltar ao início</a>
+        </div>
+    }
+</div>

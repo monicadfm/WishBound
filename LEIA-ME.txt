@@ -1,13 +1,33 @@
 ============================================================
  WishBound - Plataforma de Coleção Digital de Personagens
- Projeto Final UFCD 11027 (versão mini do projeto WishBound)
+ Projeto Final UFCD 5425 (evolução da versão mini UFCD 11027)
 ============================================================
 
 REQUISITOS
 ----------
 - Visual Studio 2022 com a workload "ASP.NET and web development"
-  (inclui o .NET 8 SDK e o SQL Server Express LocalDB);
+  (inclui o .NET 8 SDK);
+- SQL Server Express (instância .\SQLEXPRESS) + SSMS;
 - Ligação à internet na primeira compilação (restauro de pacotes NuGet).
+
+BASE DE DADOS (executar no SSMS, por esta ordem, uma vez)
+---------------------------------------------------------
+1. Database\CriacaoBaseDados.sql  -> cria a base de dados "WishBound"
+                                     (20 tabelas + 3 views + seeds);
+2. Database\Migracao01.sql        -> insere as 8 personagens, o utilizador
+                                     "Sistema" (Id 1) e o Banner Permanente (Id 1);
+3. Database\Autenticacao.sql      -> corrige a restrição UNIQUE de GoogleId
+                                     e cria a conta de administrador.
+
+A aplicação NÃO cria nem altera a base de dados ("database first"):
+apenas verifica a ligação no arranque.
+
+CONTA DE ADMINISTRADOR (criada pelo Autenticacao.sql)
+-----------------------------------------------------
+   Utilizador: Admin
+   Password:   Admin123!
+Dá acesso à área de Gestão. As contas registadas no site são
+utilizadores normais (sem acesso à Gestão).
 
 COMO EXECUTAR
 -------------
@@ -24,21 +44,27 @@ COMO EXECUTAR
    - A WebAPI arranca em http://localhost:5240 (abre o Swagger);
    - O site arranca em http://localhost:5100.
 
-4. A base de dados "WishBoundDb" é criada automaticamente no LocalDB
-   no primeiro arranque da WebAPI, já com 5 raridades e 8 personagens.
+AUTENTICAÇÃO (modo de desenvolvimento)
+--------------------------------------
+- O registo exige validação de email antes do primeiro login;
+- A password deve ter no mínimo 8 caracteres e incluir pelo menos
+  1 letra maiúscula, 1 número e 1 símbolo (ex.: ! ou ?);
+- Ainda NÃO há envio real de emails: o link de validação/recuperação
+  é mostrado no ecrã numa caixa destacada (simula o email recebido);
+- Recuperação e alteração de password disponíveis nas páginas de Conta;
+- O botão de conta fica no canto superior esquerdo do site.
 
 NOTAS
 -----
 - A ligação à base de dados está em WishBound.WebAPI/appsettings.json
-  (por omissão usa (localdb)\MSSQLLocalDB);
+  (por omissão usa Server=.\SQLEXPRESS;Database=WishBound);
 - O endereço da API usado pelo site está em
   WishBound.ClientAPI/appsettings.json (WishBoundApi:BaseUrl);
-- Se alterar os modelos de dados, apague a base de dados WishBoundDb
-  (View -> SQL Server Object Explorer) para ela ser recriada;
 - A validação no lado do cliente usa jQuery Validation por CDN;
   sem internet, a validação continua a funcionar no servidor.
 
 ESTRUTURA
 ---------
-- WishBound.WebAPI   -> API REST (CRUD sobre SQL Server via EF Core)
+- WishBound.WebAPI    -> API REST (CRUD sobre SQL Server via EF Core)
 - WishBound.ClientAPI -> Site MVC que consome a API (HttpClient)
+- Database            -> Scripts SQL (criação, migração, autenticação)

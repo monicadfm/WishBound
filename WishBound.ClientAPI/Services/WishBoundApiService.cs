@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using WishBound.ClientAPI.Models;
+using WishBound.ClientAPI.Models.Conta;
 
 namespace WishBound.ClientAPI.Services
 {
@@ -112,6 +113,132 @@ namespace WishBound.ClientAPI.Services
         {
             return await _http.GetFromJsonAsync<List<Invocacao>>("api/invocacoes")
                    ?? new List<Invocacao>();
+        }
+
+        // ---------- Conta e autenticação ----------
+
+        /// <summary>Regista um novo utilizador. Devolve a resposta com o token de validação (modo dev).</summary>
+        public async Task<(TokenResposta? Resposta, string? Erro)> RegistarAsync(RegistoViewModel registo)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/conta/registar", new
+            {
+                registo.NomeUtilizador,
+                registo.Email,
+                registo.Password
+            });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<TokenResposta>(), null);
+        }
+
+        /// <summary>Verifica as credenciais. Devolve o utilizador se o login for válido.</summary>
+        public async Task<(UtilizadorSessao? Utilizador, string? Erro)> LoginAsync(string identificador, string password)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/conta/login", new
+            {
+                Identificador = identificador,
+                Password = password
+            });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<UtilizadorSessao>(), null);
+        }
+
+        /// <summary>Valida o email de uma conta com o token do link.</summary>
+        public async Task<(bool Sucesso, string Mensagem)> ValidarEmailAsync(string token)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/conta/validar-email", new { Token = token });
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>Pede um novo link de validação de email.</summary>
+        public async Task<(TokenResposta? Resposta, string? Erro)> ReenviarValidacaoAsync(string email)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/conta/reenviar-validacao", new { Email = email });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<TokenResposta>(), null);
+        }
+
+        /// <summary>Pede um link de recuperação de password.</summary>
+        public async Task<(TokenResposta? Resposta, string? Erro)> RecuperarPasswordAsync(string email)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/conta/recuperar-password", new { Email = email });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<TokenResposta>(), null);
+        }
+
+        /// <summary>Repõe a password usando o token do link de recuperação.</summary>
+        public async Task<(bool Sucesso, string Mensagem)> ReporPasswordAsync(string token, string novaPassword)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/conta/repor-password", new
+            {
+                Token = token,
+                NovaPassword = novaPassword
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>Altera a password de um utilizador autenticado.</summary>
+        public async Task<(bool Sucesso, string Mensagem)> AlterarPasswordAsync(int utilizadorId, string passwordAtual, string novaPassword)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/conta/alterar-password", new
+            {
+                UtilizadorId = utilizadorId,
+                PasswordAtual = passwordAtual,
+                NovaPassword = novaPassword
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>SELECT - obtém os dados públicos de um utilizador.</summary>
+        public async Task<UtilizadorSessao?> ObterUtilizadorAsync(int id)
+        {
+            var resposta = await _http.GetAsync("api/conta/" + id);
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await resposta.Content.ReadFromJsonAsync<UtilizadorSessao>();
+        }
+
+        /// <summary>UPDATE - atualiza o perfil e devolve os dados atualizados.</summary>
+        public async Task<(UtilizadorSessao? Utilizador, string? Erro)> AtualizarPerfilAsync(int utilizadorId, PerfilViewModel perfil)
+        {
+            var resposta = await _http.PutAsJsonAsync("api/conta/perfil", new
+            {
+                UtilizadorId = utilizadorId,
+                perfil.NomeUtilizador,
+                perfil.FotoPerfilUrl
+            });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<UtilizadorSessao>(), null);
         }
     }
 }

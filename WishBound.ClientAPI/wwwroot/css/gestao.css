@@ -104,3 +104,17 @@
         align-items: center;
     }
 }
+
+/* Sessão do administrador (fundo da barra lateral) */
+.gestao-sessao {
+    margin-top: auto;
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.gestao-sessao-nome {
+    font-weight: 600;
+    font-size: 0.95rem;
+}

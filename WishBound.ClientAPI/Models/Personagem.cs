@@ -21,7 +21,7 @@ namespace WishBound.ClientAPI.Models
         public string? Descricao { get; set; }
 
         [Display(Name = "Imagem (caminho ou URL)")]
-        [StringLength(300, ErrorMessage = "O caminho da imagem não pode ter mais de 300 caracteres.")]
+        [StringLength(255, ErrorMessage = "O caminho da imagem não pode ter mais de 255 caracteres.")]
         public string? ImagemUrl { get; set; }
 
         [Display(Name = "Raridade")]

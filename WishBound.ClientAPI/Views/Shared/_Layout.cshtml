@@ -19,20 +19,56 @@
     @await RenderSectionAsync("Estilos", required: false)
 </head>
 <body>
-    @* ===== LAYOUT 1: cabeçalho no topo + conteúdo + rodapé ===== *@
+    @* ===== LAYOUT 1: cabeçalho no topo + conteúdo + rodapé =====
+       Canto superior ESQUERDO: botão de conta (Entrar / menu do utilizador);
+       o logotipo e o menu de navegação ficam empurrados para a direita. *@
     <header class="cabecalho">
+        <div class="area-conta">
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @* Sessão iniciada: menu do utilizador *@
+                <details class="menu-conta">
+                    <summary class="botao botao-conta">
+                        <span class="conta-avatar">@(User.Identity.Name?[0])</span>
+                        <span>@User.Identity.Name</span>
+                        <span class="conta-seta">&#9662;</span>
+                    </summary>
+                    <div class="menu-conta-lista">
+                        <a asp-controller="Conta" asp-action="Perfil">O meu perfil</a>
+                        <a asp-controller="Conta" asp-action="AlterarPassword">Alterar password</a>
+                        @if (User.IsInRole("Admin"))
+                        {
+                            <a asp-controller="Gestao" asp-action="Index">Área de gestão</a>
+                        }
+                        <form method="post" asp-controller="Conta" asp-action="Logout">
+                            <button type="submit">Terminar sessão</button>
+                        </form>
+                    </div>
+                </details>
+            }
+            else
+            {
+                @* Sem sessão: botão de login no canto superior esquerdo *@
+                <a class="botao botao-destaque botao-conta" asp-controller="Conta" asp-action="Login">Entrar</a>
+            }
+        </div>
+
         <a class="cabecalho-logo" asp-controller="Home" asp-action="Index">
             @* Elemento multimédia: logotipo *@
             <img src="~/img/logo.svg" alt="Logotipo WishBound" class="logo-img" />
         </a>
 
-        @* Sistema de navegação entre as páginas *@
+        @* Sistema de navegação entre as páginas (empurrado para a direita) *@
         <nav class="navegacao">
             <a asp-controller="Home" asp-action="Index">Início</a>
             <a asp-controller="Personagens" asp-action="Index">Personagens</a>
             <a asp-controller="Invocacao" asp-action="Index">Invocação</a>
             <a asp-controller="Invocacao" asp-action="Historico">Histórico</a>
-            <a asp-controller="Gestao" asp-action="Index">Gestão</a>
+            @if (User.IsInRole("Admin"))
+            {
+                @* A gestão é exclusiva dos administradores *@
+                <a asp-controller="Gestao" asp-action="Index">Gestão</a>
+            }
             <a asp-controller="Home" asp-action="Sobre">Sobre</a>
         </nav>
     </header>
@@ -46,6 +82,15 @@
         @if (TempData["Erro"] != null)
         {
             <div class="alerta alerta-erro">@TempData["Erro"]</div>
+        }
+        @if (TempData["LinkDev"] != null)
+        {
+            @* MODO DE DESENVOLVIMENTO: sem envio real de emails, o link de
+               validação/recuperação é mostrado aqui (simula o email recebido) *@
+            <div class="caixa-link-dev">
+                <p><strong>@TempData["LinkDevTitulo"]</strong> <span class="texto-suave">(modo de desenvolvimento — este link seria enviado por email)</span></p>
+                <a class="ligacao" href="@TempData["LinkDev"]">@TempData["LinkDev"]</a>
+            </div>
         }
 
         @RenderBody()

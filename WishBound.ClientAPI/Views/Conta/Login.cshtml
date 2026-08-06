@@ -1,0 +1,45 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Iniciar sessão";
+}
+
+<div class="autenticacao-cartao">
+    <h1>Iniciar sessão</h1>
+    <p class="texto-suave">Bem-vindo(a) de volta ao WishBound.</p>
+
+    <form class="formulario formulario-autenticacao" method="post"
+          asp-controller="Conta" asp-action="Login" asp-route-returnUrl="@ViewBag.ReturnUrl">
+        <div asp-validation-summary="ModelOnly" class="alerta alerta-erro alerta-validacao"></div>
+
+        <div class="campo">
+            <label asp-for="Identificador"></label>
+            <input asp-for="Identificador" placeholder="Ex.: Luna ou luna@email.com" autofocus />
+            <span asp-validation-for="Identificador" class="erro-campo"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="Password"></label>
+            <input asp-for="Password" placeholder="A sua password" />
+            <span asp-validation-for="Password" class="erro-campo"></span>
+        </div>
+
+        <label class="campo-caixa-verificacao">
+            <input asp-for="Lembrar" />
+            <span>Manter sessão iniciada</span>
+        </label>
+
+        <div class="formulario-acoes">
+            <button type="submit" class="botao botao-destaque">Entrar</button>
+            <a class="botao botao-suave" asp-controller="Conta" asp-action="Registar">Criar conta</a>
+        </div>
+    </form>
+
+    <div class="autenticacao-ligacoes">
+        <a class="ligacao" asp-controller="Conta" asp-action="RecuperarPassword">Esqueci-me da password</a>
+        <a class="ligacao" asp-controller="Conta" asp-action="ReenviarValidacao">Reenviar validação de email</a>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

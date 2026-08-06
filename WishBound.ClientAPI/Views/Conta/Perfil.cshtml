@@ -1,0 +1,48 @@
+@model PerfilViewModel
+@{
+    ViewData["Title"] = "O meu perfil";
+}
+
+<div class="autenticacao-cartao perfil-cartao">
+    <h1>O meu perfil</h1>
+
+    <div class="perfil-cabecalho">
+        <img class="perfil-foto"
+             src="@(string.IsNullOrEmpty(Model.FotoPerfilUrl) ? "/img/personagens/desconhecido.svg" : Model.FotoPerfilUrl)"
+             alt="Foto de perfil" />
+        <div class="perfil-resumo">
+            <p><strong>@Model.NomeUtilizador</strong> @(Model.IsAdmin ? "· Administrador" : "")</p>
+            <p class="texto-suave">@Model.Email</p>
+            <p class="texto-suave">Conta criada em @Model.DataCriacao.ToLocalTime().ToString("dd/MM/yyyy")</p>
+            @if (Model.UltimoLogin != null)
+            {
+                <p class="texto-suave">Último login: @Model.UltimoLogin.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</p>
+            }
+        </div>
+    </div>
+
+    <form class="formulario formulario-autenticacao" method="post" asp-controller="Conta" asp-action="Perfil">
+        <div asp-validation-summary="ModelOnly" class="alerta alerta-erro alerta-validacao"></div>
+
+        <div class="campo">
+            <label asp-for="NomeUtilizador"></label>
+            <input asp-for="NomeUtilizador" />
+            <span asp-validation-for="NomeUtilizador" class="erro-campo"></span>
+        </div>
+
+        <div class="campo">
+            <label asp-for="FotoPerfilUrl"></label>
+            <input asp-for="FotoPerfilUrl" placeholder="Ex.: /img/personagens/luna.svg (opcional)" />
+            <span asp-validation-for="FotoPerfilUrl" class="erro-campo"></span>
+        </div>
+
+        <div class="formulario-acoes">
+            <button type="submit" class="botao botao-destaque">Guardar alterações</button>
+            <a class="botao botao-suave" asp-controller="Conta" asp-action="AlterarPassword">Alterar password</a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
