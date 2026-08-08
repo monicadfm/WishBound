@@ -55,8 +55,8 @@ img {
 
 /* ---------- Cabeçalho e navegação (Layout 1) ---------- */
 
-/* O botão de conta fica no canto superior ESQUERDO;
-   o menu de navegação é empurrado para a direita (margin-left: auto). */
+/* Logotipo e menu de navegação à esquerda; o botão de conta é
+   empurrado para o canto superior DIREITO (margin-left: auto). */
 .cabecalho {
     display: flex;
     align-items: center;
@@ -81,7 +81,6 @@ img {
     display: flex;
     gap: 6px;
     flex-wrap: wrap;
-    margin-left: auto; /* empurra o menu para o lado direito */
 }
 
 .navegacao a {
@@ -97,10 +96,11 @@ img {
     color: var(--texto);
 }
 
-/* ---------- Conta (canto superior esquerdo do cabeçalho) ---------- */
+/* ---------- Conta (canto superior direito do cabeçalho) ---------- */
 
 .area-conta {
     position: relative;
+    margin-left: auto; /* empurra o botão de conta para o lado direito */
 }
 
 .botao-conta {
@@ -143,7 +143,7 @@ img {
 .menu-conta-lista {
     position: absolute;
     top: calc(100% + 8px);
-    left: 0;
+    right: 0; /* alinhado ao lado direito, onde o botão agora vive */
     min-width: 210px;
     background: var(--fundo-cartao);
     border: 1px solid var(--borda);
@@ -231,6 +231,42 @@ img {
     width: 16px;
     height: 16px;
     accent-color: var(--roxo);
+}
+
+/* Separador "ou" entre o login local e o login com Google */
+.separador-ou {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 16px 0 4px;
+    color: var(--texto-suave);
+    font-size: 0.85rem;
+}
+
+.separador-ou::before,
+.separador-ou::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--borda);
+}
+
+/* Botão "Entrar com Google" (fundo claro, como pedem as normas da Google) */
+.botao-google {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    width: 100%;
+    background: #fff;
+    color: #1f1f1f;
+    border-color: #d0d0d0;
+}
+
+.google-icone {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
 }
 
 /* Caixa que simula o email recebido (modo de desenvolvimento) */

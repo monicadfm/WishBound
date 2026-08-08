@@ -23,10 +23,19 @@ namespace WishBound.ClientAPI.Controllers
     public class ContaController : Controller
     {
         private readonly WishBoundApiService _api;
+        private readonly IConfiguration _configuracao;
 
-        public ContaController(WishBoundApiService api)
+        public ContaController(WishBoundApiService api, IConfiguration configuracao)
         {
             _api = api;
+            _configuracao = configuracao;
+        }
+
+        /// <summary>Há credenciais Google no appsettings.json?</summary>
+        private bool GoogleConfigurado()
+        {
+            return !string.IsNullOrWhiteSpace(_configuracao["Autenticacao:Google:ClientId"]) &&
+                   !string.IsNullOrWhiteSpace(_configuracao["Autenticacao:Google:ClientSecret"]);
         }
 
         // ------------------------------------------------------------
@@ -100,6 +109,113 @@ namespace WishBound.ClientAPI.Controllers
             await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
             TempData["Sucesso"] = "Sessão terminada. Até à próxima!";
             return RedirectToAction("Index", "Home");
+        }
+
+        // ------------------------------------------------------------
+        // Login com Google (OAuth 2.0)
+        // ------------------------------------------------------------
+        // Fluxo completo:
+        //   1. O utilizador carrega em "Entrar com Google" (POST LoginGoogle);
+        //   2. O site redireciona para a página de login da Google (Challenge);
+        //   3. A Google confirma a identidade e devolve o utilizador ao site
+        //      (o resultado fica no cookie temporário "Externo");
+        //   4. O GoogleCallback lê esses dados, pede à WebAPI para iniciar
+        //      sessão (criando/ligando a conta se necessário) e cria o
+        //      cookie de sessão normal.
+
+        // POST: /Conta/LoginGoogle  (passo 1 - arranca o fluxo OAuth)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public IActionResult LoginGoogle(string? returnUrl = null)
+        {
+            // Se as credenciais Google não estiverem configuradas no
+            // appsettings.json, o botão nem aparece - isto é só uma rede
+            // de segurança para pedidos feitos "à mão".
+            if (!GoogleConfigurado())
+            {
+                TempData["Erro"] = "O login com Google não está configurado neste servidor.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Depois de a Google autenticar, volta ao GoogleCallback
+            var propriedades = new AuthenticationProperties
+            {
+                RedirectUri = Url.Action(nameof(GoogleCallback), new { returnUrl })
+            };
+
+            return Challenge(propriedades, "Google");
+        }
+
+        // GET: /Conta/GoogleCallback  (passo 4 - regresso da Google)
+        [HttpGet]
+        public async Task<IActionResult> GoogleCallback(string? returnUrl = null)
+        {
+            // Lê o resultado do OAuth guardado no cookie temporário
+            var resultado = await HttpContext.AuthenticateAsync("Externo");
+
+            if (!resultado.Succeeded || resultado.Principal == null)
+            {
+                TempData["Erro"] = "Não foi possível iniciar sessão com o Google.";
+                return RedirectToAction(nameof(Login));
+            }
+
+            // Dados confirmados pela Google
+            string? googleId = resultado.Principal.FindFirstValue(ClaimTypes.NameIdentifier);
+            string? email = resultado.Principal.FindFirstValue(ClaimTypes.Email);
+            string? nome = resultado.Principal.FindFirstValue(ClaimTypes.Name);
+            string? foto = resultado.Principal.FindFirstValue("urn:google:foto");
+
+            // Limites das colunas na base de dados: se o link da foto for
+            // maior do que 255 caracteres é mais seguro ignorá-lo do que
+            // falhar o login; o nome é apenas encurtado (máx. 100).
+            if (foto?.Length > 255)
+            {
+                foto = null;
+            }
+
+            if (nome?.Length > 100)
+            {
+                nome = nome[..100];
+            }
+
+            // O cookie temporário já cumpriu a sua função
+            await HttpContext.SignOutAsync("Externo");
+
+            if (string.IsNullOrEmpty(googleId) || string.IsNullOrEmpty(email))
+            {
+                TempData["Erro"] = "A conta Google não devolveu os dados necessários (id e email).";
+                return RedirectToAction(nameof(Login));
+            }
+
+            try
+            {
+                // A WebAPI inicia sessão, ligando ou criando a conta se necessário
+                var (utilizador, erro) = await _api.LoginGoogleAsync(googleId, email, nome, foto);
+
+                if (utilizador == null)
+                {
+                    TempData["Erro"] = string.IsNullOrWhiteSpace(erro)
+                        ? "Não foi possível iniciar sessão com o Google."
+                        : erro;
+                    return RedirectToAction(nameof(Login));
+                }
+
+                await IniciarSessaoAsync(utilizador, lembrar: false);
+
+                TempData["Sucesso"] = "Bem-vindo(a), " + utilizador.NomeUtilizador + "!";
+
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
+
+                return RedirectToAction("Index", "Home");
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+                return RedirectToAction(nameof(Login));
+            }
         }
 
         // ------------------------------------------------------------

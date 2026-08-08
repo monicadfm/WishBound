@@ -20,7 +20,7 @@ namespace WishBound.ClientAPI.Models.Conta
         [Display(Name = "Confirmar nova password")]
         [Required(ErrorMessage = "Confirme a nova password.")]
         [Compare(nameof(NovaPassword), ErrorMessage = "As passwords não coincidem.")]
-        [DataType(DataType.Password)]
+        [DataType(DataType.Password)] 
         public string ConfirmarPassword { get; set; } = string.Empty;
     }
 }

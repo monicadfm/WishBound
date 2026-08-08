@@ -149,6 +149,98 @@ namespace WishBound.WebAPI.Controllers
         }
 
         // ------------------------------------------------------------
+        // POST: api/conta/login-google  (login/registo com conta Google)
+        // ------------------------------------------------------------
+        // O ClientAPI chama este endpoint depois de a Google confirmar a
+        // identidade do utilizador (OAuth 2.0). Três cenários possíveis:
+        //   1. Já existe conta com este GoogleId        -> inicia sessão;
+        //   2. Existe conta com o mesmo email           -> liga o GoogleId
+        //      a essa conta (e valida o email, porque a Google confirmou-o);
+        //   3. Não existe nenhuma conta                 -> cria uma conta
+        //      nova SEM password local (PasswordHash = NULL).
+        [HttpPost("login-google")]
+        public async Task<ActionResult<UtilizadorResposta>> LoginGoogle(LoginGooglePedido pedido)
+        {
+            try
+            {
+                // Cenário 1: conta já ligada a esta conta Google
+                var utilizador = await _contexto.Utilizadores.FirstOrDefaultAsync(
+                    u => u.GoogleId == pedido.GoogleId);
+
+                // Cenário 2: conta local com o mesmo email -> ligar as duas
+                if (utilizador == null)
+                {
+                    utilizador = await _contexto.Utilizadores.FirstOrDefaultAsync(
+                        u => u.Email == pedido.Email);
+
+                    if (utilizador != null)
+                    {
+                        utilizador.GoogleId = pedido.GoogleId;
+                        // A Google já confirmou que o email pertence ao utilizador,
+                        // por isso a conta fica validada (mesmo que nunca tenha
+                        // aberto o nosso link de validação).
+                        utilizador.EmailValidado = true;
+                    }
+                }
+
+                if (utilizador != null)
+                {
+                    if (!utilizador.IsAtivo)
+                    {
+                        return Unauthorized("Esta conta está desativada.");
+                    }
+
+                    // Aproveita a foto da conta Google se ainda não tiver nenhuma
+                    if (string.IsNullOrEmpty(utilizador.FotoPerfilUrl) &&
+                        !string.IsNullOrEmpty(pedido.FotoUrl))
+                    {
+                        utilizador.FotoPerfilUrl = pedido.FotoUrl;
+                    }
+
+                    utilizador.UltimoLogin = DateTime.UtcNow;
+                    await _contexto.SaveChangesAsync();
+
+                    return Ok(ParaResposta(utilizador));
+                }
+
+                // Cenário 3: primeira vez -> criar conta nova (registo Google).
+                // Mesma transação do registo normal: utilizador + inventário +
+                // carteiras, tudo ou nada.
+                var novo = new Utilizador
+                {
+                    NomeUtilizador = await GerarNomeUtilizadorUnicoAsync(pedido.Nome, pedido.Email),
+                    Email = pedido.Email,
+                    PasswordHash = null,        // sem password local: entra sempre com Google
+                    GoogleId = pedido.GoogleId,
+                    EmailValidado = true,       // email confirmado pela Google
+                    FotoPerfilUrl = pedido.FotoUrl,
+                    IsAdmin = false,
+                    IsAtivo = true,
+                    DataCriacao = DateTime.UtcNow,
+                    UltimoLogin = DateTime.UtcNow
+                };
+
+                await using var transacao = await _contexto.Database.BeginTransactionAsync();
+
+                _contexto.Utilizadores.Add(novo);
+                await _contexto.SaveChangesAsync();
+
+                await _contexto.Database.ExecuteSqlAsync(
+                    $"INSERT INTO InventarioUtilizador (UtilizadorId, CapacidadeBase, CapacidadeExtra) VALUES ({novo.Id}, 100, 0)");
+                await _contexto.Database.ExecuteSqlAsync(
+                    $"INSERT INTO CarteirasUtilizador (UtilizadorId, TipoMoedaId, Saldo) SELECT {novo.Id}, TipoMoedaId, 0 FROM TiposMoeda");
+
+                await transacao.CommitAsync();
+
+                return Ok(ParaResposta(novo));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Erro ao iniciar sessão com Google: " + ex.Message);
+            }
+        }
+
+        // ------------------------------------------------------------
         // POST: api/conta/validar-email  (consome o token "EV.")
         // ------------------------------------------------------------
         [HttpPost("validar-email")]
@@ -416,6 +508,41 @@ namespace WishBound.WebAPI.Controllers
 
             return await _contexto.TokensRecuperacao.FirstOrDefaultAsync(
                 t => t.Token == valor && !t.Utilizado && t.DataExpiracao > DateTime.UtcNow);
+        }
+
+        /// <summary>
+        /// Gera um nome de utilizador único a partir do nome da conta Google
+        /// (ou do email, se não houver nome). Se já existir, acrescenta um
+        /// número: "Luna", "Luna2", "Luna3", ...
+        /// </summary>
+        private async Task<string> GerarNomeUtilizadorUnicoAsync(string? nome, string email)
+        {
+            // Base: nome Google sem espaços, ou a parte do email antes do "@"
+            string baseNome = string.IsNullOrWhiteSpace(nome)
+                ? email.Split('@')[0]
+                : nome.Replace(" ", "");
+
+            // Respeita as regras do NomeUtilizador (3 a 50 caracteres)
+            if (baseNome.Length > 47)
+            {
+                baseNome = baseNome[..47]; // deixa espaço para o sufixo numérico
+            }
+
+            while (baseNome.Length < 3)
+            {
+                baseNome += "0";
+            }
+
+            string candidato = baseNome;
+            int sufixo = 2;
+
+            while (await _contexto.Utilizadores.AnyAsync(u => u.NomeUtilizador == candidato))
+            {
+                candidato = baseNome + sufixo;
+                sufixo++;
+            }
+
+            return candidato;
         }
 
         /// <summary>Converte a entidade Utilizador na resposta pública (sem PasswordHash).</summary>

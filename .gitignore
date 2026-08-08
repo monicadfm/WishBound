@@ -361,3 +361,5 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
+# Segredos locais (credenciais Google OAuth, etc.) - nunca versionar
+appsettings.Local.json

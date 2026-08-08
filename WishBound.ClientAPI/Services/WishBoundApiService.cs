@@ -152,6 +152,30 @@ namespace WishBound.ClientAPI.Services
             return (await resposta.Content.ReadFromJsonAsync<UtilizadorSessao>(), null);
         }
 
+        /// <summary>
+        /// Login com Google: a API liga/cria a conta associada a esta conta
+        /// Google e devolve o utilizador (chamado APÓS a Google confirmar a
+        /// identidade no fluxo OAuth).
+        /// </summary>
+        public async Task<(UtilizadorSessao? Utilizador, string? Erro)> LoginGoogleAsync(
+            string googleId, string email, string? nome, string? fotoUrl)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/conta/login-google", new
+            {
+                GoogleId = googleId,
+                Email = email,
+                Nome = nome,
+                FotoUrl = fotoUrl
+            });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<UtilizadorSessao>(), null);
+        }
+
         /// <summary>Valida o email de uma conta com o token do link.</summary>
         public async Task<(bool Sucesso, string Mensagem)> ValidarEmailAsync(string token)
         {

@@ -37,6 +37,31 @@ namespace WishBound.WebAPI.Models
         public string Password { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// Pedido de login com Google. O ClientAPI só envia este pedido DEPOIS
+    /// de a Google confirmar a identidade do utilizador (OAuth 2.0), por
+    /// isso os dados chegam já verificados pela Google.
+    /// </summary>
+    public class LoginGooglePedido
+    {
+        [Required(ErrorMessage = "O identificador Google é obrigatório.")]
+        [StringLength(100)]
+        public string GoogleId { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "O email é obrigatório.")]
+        [EmailAddress(ErrorMessage = "O email não é válido.")]
+        [StringLength(150)]
+        public string Email { get; set; } = string.Empty;
+
+        // Nome apresentado na conta Google (usado para sugerir o nome de utilizador)
+        [StringLength(100)]
+        public string? Nome { get; set; }
+
+        // Fotografia de perfil da conta Google (opcional)
+        [StringLength(255)]
+        public string? FotoUrl { get; set; }
+    }
+
     /// <summary>Pedido de validação de email (token recebido "por email").</summary>
     public class ValidarEmailPedido
     {

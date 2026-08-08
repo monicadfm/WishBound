@@ -20,9 +20,29 @@
 </head>
 <body>
     @* ===== LAYOUT 1: cabeçalho no topo + conteúdo + rodapé =====
-       Canto superior ESQUERDO: botão de conta (Entrar / menu do utilizador);
-       o logotipo e o menu de navegação ficam empurrados para a direita. *@
+       Logotipo e menu de navegação à esquerda; o botão de conta
+       (Entrar / menu do utilizador) fica no canto superior DIREITO. *@
     <header class="cabecalho">
+        <a class="cabecalho-logo" asp-controller="Home" asp-action="Index">
+            @* Elemento multimédia: logotipo *@
+            <img src="~/img/logo.svg" alt="Logotipo WishBound" class="logo-img" />
+        </a>
+
+        @* Sistema de navegação entre as páginas *@
+        <nav class="navegacao">
+            <a asp-controller="Home" asp-action="Index">Início</a>
+            <a asp-controller="Personagens" asp-action="Index">Personagens</a>
+            <a asp-controller="Invocacao" asp-action="Index">Invocação</a>
+            <a asp-controller="Invocacao" asp-action="Historico">Histórico</a>
+            @if (User.IsInRole("Admin"))
+            {
+                @* A gestão é exclusiva dos administradores *@
+                <a asp-controller="Gestao" asp-action="Index">Gestão</a>
+            }
+            <a asp-controller="Home" asp-action="Sobre">Sobre</a>
+        </nav>
+
+        @* Botão de conta empurrado para o canto superior direito *@
         <div class="area-conta">
             @if (User.Identity?.IsAuthenticated == true)
             {
@@ -48,29 +68,10 @@
             }
             else
             {
-                @* Sem sessão: botão de login no canto superior esquerdo *@
+                @* Sem sessão: botão de login no canto superior direito *@
                 <a class="botao botao-destaque botao-conta" asp-controller="Conta" asp-action="Login">Entrar</a>
             }
         </div>
-
-        <a class="cabecalho-logo" asp-controller="Home" asp-action="Index">
-            @* Elemento multimédia: logotipo *@
-            <img src="~/img/logo.svg" alt="Logotipo WishBound" class="logo-img" />
-        </a>
-
-        @* Sistema de navegação entre as páginas (empurrado para a direita) *@
-        <nav class="navegacao">
-            <a asp-controller="Home" asp-action="Index">Início</a>
-            <a asp-controller="Personagens" asp-action="Index">Personagens</a>
-            <a asp-controller="Invocacao" asp-action="Index">Invocação</a>
-            <a asp-controller="Invocacao" asp-action="Historico">Histórico</a>
-            @if (User.IsInRole("Admin"))
-            {
-                @* A gestão é exclusiva dos administradores *@
-                <a asp-controller="Gestao" asp-action="Index">Gestão</a>
-            }
-            <a asp-controller="Home" asp-action="Sobre">Sobre</a>
-        </nav>
     </header>
 
     <main class="conteudo">
