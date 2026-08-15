@@ -5,12 +5,12 @@
 
 <section class="seccao">
     <h1 class="titulo-seccao">Histórico de invocações</h1>
-    <p class="texto-suave">As últimas 50 invocações realizadas na plataforma (operação SELECT através da WebAPI).</p>
+    <p class="texto-suave">As tuas últimas 50 invocações (operação SELECT através da WebAPI).</p>
 
     @if (Model.Count == 0)
     {
         <div class="caixa-vazia">
-            <p>Ainda não foi realizada nenhuma invocação.</p>
+            <p>Ainda não fizeste nenhuma invocação.</p>
             <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Fazer a primeira invocação</a>
         </div>
     }

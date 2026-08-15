@@ -6,10 +6,9 @@ namespace WishBound.WebAPI.Models
     /// <summary>
     /// Registo de uma invocação (obtenção aleatória de uma personagem).
     /// Mapeada para a tabela [HistoricoInvocacoes] da base de dados final.
-    /// A base de dados final regista também QUEM invocou (UtilizadorId) e em
-    /// QUE banner (BannerId). Enquanto não existir autenticação, a API usa o
-    /// utilizador "Sistema" (Id 1) e o "Banner Permanente" (Id 1) criados
-    /// pelo script de migração.
+    /// Regista QUEM invocou (UtilizadorId — o utilizador autenticado, enviado
+    /// pelo site) e em QUE banner (BannerId — por agora sempre o "Banner
+    /// Permanente" Id 1; a escolha de banner chega com os eventos).
     /// </summary>
     [Table("HistoricoInvocacoes")]
     public class Invocacao

@@ -6,22 +6,22 @@ using WishBound.WebAPI.Models;
 namespace WishBound.WebAPI.Controllers
 {
     /// <summary>
-    /// Sistema de invocação (gacha) simplificado:
+    /// Sistema de invocação (gacha):
     /// escolhe uma raridade de forma aleatória ponderada pelas probabilidades
     /// e devolve uma personagem dessa raridade. Guarda o resultado no histórico.
     ///
-    /// NOTA (versão final): a tabela HistoricoInvocacoes exige o utilizador e
-    /// o banner. Enquanto não existir autenticação, todas as invocações são
-    /// registadas com o utilizador "Sistema" e o "Banner Permanente" criados
-    /// pelo script de migração. Quando o login estiver feito, estas constantes
-    /// serão substituídas pelo utilizador autenticado e pelo banner escolhido.
+    /// Desde a versão com autenticação, cada invocação pertence a um utilizador
+    /// real: o site envia o Id do utilizador autenticado e o histórico é
+    /// consultado POR utilizador. O banner continua a ser o "Banner Permanente"
+    /// (Id 1) criado pela migração — a escolha de banner chega com a
+    /// funcionalidade de eventos/banners temporários.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class InvocacoesController : ControllerBase
     {
-        // Ids fixos criados pelo script Database/Migracao01.sql
-        private const int UtilizadorSistemaId = 1;
+        // Id fixo criado pelo script Database/Migracao01.sql.
+        // Será substituído pelo banner escolhido quando existirem banners de evento.
         private const int BannerPermanenteId = 1;
 
         private readonly WishBoundContext _contexto;
@@ -31,13 +31,19 @@ namespace WishBound.WebAPI.Controllers
             _contexto = contexto;
         }
 
-        // GET: api/invocacoes  (histórico - SELECT com JOIN)
+        // GET: api/invocacoes?utilizadorId=5  (histórico DO utilizador - SELECT com JOIN)
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Invocacao>>> GetInvocacoes()
+        public async Task<ActionResult<IEnumerable<Invocacao>>> GetInvocacoes([FromQuery] int utilizadorId)
         {
             try
             {
+                if (utilizadorId <= 0)
+                {
+                    return BadRequest("É necessário indicar o utilizador (utilizadorId).");
+                }
+
                 var historico = await _contexto.Invocacoes
+                    .Where(i => i.UtilizadorId == utilizadorId)
                     .Include(i => i.Personagem)
                         .ThenInclude(p => p!.Raridade)
                     .OrderByDescending(i => i.Data)
@@ -53,11 +59,20 @@ namespace WishBound.WebAPI.Controllers
         }
 
         // POST: api/invocacoes  (realiza uma invocação - INSERT)
+        // O corpo indica QUEM está a invocar: { "utilizadorId": 5 }
         [HttpPost]
-        public async Task<ActionResult<Personagem>> Invocar()
+        public async Task<ActionResult<Personagem>> Invocar([FromBody] InvocacaoPedido pedido)
         {
             try
             {
+                // O utilizador tem de existir e estar ativo — protege contra
+                // pedidos com Ids inventados (o histórico tem FK para Utilizadores).
+                var utilizador = await _contexto.Utilizadores.FindAsync(pedido.UtilizadorId);
+                if (utilizador == null || !utilizador.IsAtivo)
+                {
+                    return BadRequest("Utilizador inválido para invocar.");
+                }
+
                 // Só considera raridades com pelo menos uma personagem ativa
                 var raridades = await _contexto.Raridades
                     .Where(r => r.Personagens!.Any(p => p.IsAtivo))
@@ -93,10 +108,11 @@ namespace WishBound.WebAPI.Controllers
                 var candidatas = raridadeEscolhida.Personagens!.ToList();
                 var personagem = candidatas[Random.Shared.Next(candidatas.Count)];
 
-                // 3) Regista a invocação no histórico (INSERT)
+                // 3) Regista a invocação no histórico (INSERT) — agora em nome
+                //    do utilizador autenticado que o site enviou.
                 var invocacao = new Invocacao
                 {
-                    UtilizadorId = UtilizadorSistemaId,
+                    UtilizadorId = utilizador.Id,
                     BannerId = BannerPermanenteId,
                     PersonagemId = personagem.Id,
                     RaridadeId = raridadeEscolhida.Id,

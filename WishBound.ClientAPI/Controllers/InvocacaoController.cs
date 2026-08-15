@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WishBound.ClientAPI.Models;
 using WishBound.ClientAPI.Services;
@@ -6,8 +8,10 @@ namespace WishBound.ClientAPI.Controllers
 {
     /// <summary>
     /// Página de invocação (gacha) e histórico de invocações.
-    /// A invocação demonstra INSERT (regista no histórico) e SELECT.
+    /// Requer sessão iniciada: cada invocação é registada em nome do
+    /// utilizador autenticado e o histórico mostrado é apenas o dele.
     /// </summary>
+    [Authorize]
     public class InvocacaoController : Controller
     {
         private readonly WishBoundApiService _api;
@@ -44,7 +48,7 @@ namespace WishBound.ClientAPI.Controllers
             try
             {
                 modelo.Raridades = await _api.ObterRaridadesAsync();
-                modelo.Resultado = await _api.InvocarAsync();
+                modelo.Resultado = await _api.InvocarAsync(ObterUtilizadorId());
 
                 if (modelo.Resultado == null)
                 {
@@ -59,12 +63,12 @@ namespace WishBound.ClientAPI.Controllers
             return View("Index", modelo);
         }
 
-        // Página 4: Histórico
+        // Página 4: Histórico (apenas as invocações do utilizador autenticado)
         public async Task<IActionResult> Historico()
         {
             try
             {
-                var historico = await _api.ObterHistoricoAsync();
+                var historico = await _api.ObterHistoricoAsync(ObterUtilizadorId());
                 return View(historico);
             }
             catch (Exception)
@@ -72,6 +76,12 @@ namespace WishBound.ClientAPI.Controllers
                 TempData["Erro"] = "Não foi possível obter o histórico. Verifique se a WishBound.WebAPI está em execução.";
                 return View(new List<Invocacao>());
             }
+        }
+
+        /// <summary>Id do utilizador autenticado, guardado nos claims da sessão.</summary>
+        private int ObterUtilizadorId()
+        {
+            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
         }
     }
 }

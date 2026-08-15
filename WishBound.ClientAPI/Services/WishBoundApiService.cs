@@ -95,10 +95,16 @@ namespace WishBound.ClientAPI.Services
 
         // ---------- Invocações (gacha) ----------
 
-        /// <summary>Realiza uma invocação e devolve a personagem obtida.</summary>
-        public async Task<Personagem?> InvocarAsync()
+        /// <summary>
+        /// Realiza uma invocação em nome do utilizador autenticado e devolve
+        /// a personagem obtida.
+        /// </summary>
+        public async Task<Personagem?> InvocarAsync(int utilizadorId)
         {
-            var resposta = await _http.PostAsync("api/invocacoes", null);
+            var resposta = await _http.PostAsJsonAsync("api/invocacoes", new
+            {
+                UtilizadorId = utilizadorId
+            });
 
             if (!resposta.IsSuccessStatusCode)
             {
@@ -108,10 +114,10 @@ namespace WishBound.ClientAPI.Services
             return await resposta.Content.ReadFromJsonAsync<Personagem>();
         }
 
-        /// <summary>SELECT - obtém o histórico de invocações.</summary>
-        public async Task<List<Invocacao>> ObterHistoricoAsync()
+        /// <summary>SELECT - obtém o histórico de invocações DO utilizador.</summary>
+        public async Task<List<Invocacao>> ObterHistoricoAsync(int utilizadorId)
         {
-            return await _http.GetFromJsonAsync<List<Invocacao>>("api/invocacoes")
+            return await _http.GetFromJsonAsync<List<Invocacao>>("api/invocacoes?utilizadorId=" + utilizadorId)
                    ?? new List<Invocacao>();
         }
 
