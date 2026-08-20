@@ -38,6 +38,42 @@ namespace WishBound.ClientAPI.Controllers
                    !string.IsNullOrWhiteSpace(_configuracao["Autenticacao:Google:ClientSecret"]);
         }
 
+        /// <summary>
+        /// Devolve o endereço de regresso apenas quando é seguro utilizá-lo.
+        /// Além de ter de ser local, não pode apontar para as próprias páginas
+        /// de autenticação: se apontasse (por exemplo para /Conta/GoogleCallback,
+        /// como acontece quando o utilizador cancela no ecrã da Google), o login
+        /// seguinte voltaria a entrar nessas páginas já autenticado e mostraria
+        /// mensagens de erro que não fazem sentido.
+        /// </summary>
+        private string? UrlDeRegressoSegura(string? returnUrl)
+        {
+            if (string.IsNullOrWhiteSpace(returnUrl) || !Url.IsLocalUrl(returnUrl))
+            {
+                return null;
+            }
+
+            // Compara apenas o caminho (sem query string nem barra final)
+            string caminho = returnUrl.Split('?')[0].Split('#')[0].TrimEnd('/');
+
+            string[] paginasDeAutenticacao =
+            {
+                "/Conta/GoogleCallback",
+                "/Conta/LoginGoogle",
+                "/Conta/Login"
+            };
+
+            foreach (var pagina in paginasDeAutenticacao)
+            {
+                if (caminho.EndsWith(pagina, StringComparison.OrdinalIgnoreCase))
+                {
+                    return null;
+                }
+            }
+
+            return returnUrl;
+        }
+
         // ------------------------------------------------------------
         // Login / Logout
         // ------------------------------------------------------------
@@ -52,7 +88,7 @@ namespace WishBound.ClientAPI.Controllers
                 return RedirectToAction("Index", "Home");
             }
 
-            ViewBag.ReturnUrl = returnUrl;
+            ViewBag.ReturnUrl = UrlDeRegressoSegura(returnUrl);
             return View(new LoginViewModel());
         }
 
@@ -61,7 +97,7 @@ namespace WishBound.ClientAPI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Login(LoginViewModel modelo, string? returnUrl = null)
         {
-            ViewBag.ReturnUrl = returnUrl;
+            ViewBag.ReturnUrl = UrlDeRegressoSegura(returnUrl);
 
             if (!ModelState.IsValid)
             {
@@ -85,10 +121,11 @@ namespace WishBound.ClientAPI.Controllers
 
                 TempData["Sucesso"] = "Bem-vindo(a), " + utilizador.NomeUtilizador + "!";
 
-                // Volta à página que exigiu login (se existir e for local)
-                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                // Volta à página que exigiu login (se existir e for segura)
+                var destino = UrlDeRegressoSegura(returnUrl);
+                if (destino != null)
                 {
-                    return Redirect(returnUrl);
+                    return Redirect(destino);
                 }
 
                 return RedirectToAction("Index", "Home");
@@ -137,10 +174,13 @@ namespace WishBound.ClientAPI.Controllers
                 return RedirectToAction(nameof(Login));
             }
 
-            // Depois de a Google autenticar, volta ao GoogleCallback
+            // Depois de a Google autenticar, volta ao GoogleCallback.
+            // O returnUrl é limpo aqui: se o utilizador cancelou num login
+            // anterior, a página de login ficou com ReturnUrl=/Conta/GoogleCallback
+            // e não queremos arrastar esse valor para o fluxo seguinte.
             var propriedades = new AuthenticationProperties
             {
-                RedirectUri = Url.Action(nameof(GoogleCallback), new { returnUrl })
+                RedirectUri = Url.Action(nameof(GoogleCallback), new { returnUrl = UrlDeRegressoSegura(returnUrl) })
             };
 
             return Challenge(propriedades, "Google");
@@ -155,6 +195,14 @@ namespace WishBound.ClientAPI.Controllers
 
             if (!resultado.Succeeded || resultado.Principal == null)
             {
+                // Sem cookie temporário mas com sessão já iniciada significa que
+                // esta página foi alcançada por engano (ex.: um ReturnUrl antigo
+                // a apontar para aqui). Não é um erro: segue para a Home em silêncio.
+                if (User.Identity?.IsAuthenticated == true)
+                {
+                    return RedirectToAction("Index", "Home");
+                }
+
                 TempData["Erro"] = "Não foi possível iniciar sessão com o Google.";
                 return RedirectToAction(nameof(Login));
             }
@@ -204,9 +252,10 @@ namespace WishBound.ClientAPI.Controllers
 
                 TempData["Sucesso"] = "Bem-vindo(a), " + utilizador.NomeUtilizador + "!";
 
-                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                var destino = UrlDeRegressoSegura(returnUrl);
+                if (destino != null)
                 {
-                    return Redirect(returnUrl);
+                    return Redirect(destino);
                 }
 
                 return RedirectToAction("Index", "Home");
