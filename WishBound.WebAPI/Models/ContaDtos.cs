@@ -95,8 +95,13 @@ namespace WishBound.WebAPI.Models
         [Required]
         public int UtilizadorId { get; set; }
 
-        [Required(ErrorMessage = "A password atual é obrigatória.")]
-        public string PasswordAtual { get; set; } = string.Empty;
+        /// <summary>
+        /// Password atual. É obrigatória para contas normais, mas fica vazia
+        /// nas contas criadas com Google (que ainda não têm password local e
+        /// estão a DEFINIR a primeira). A verificação é feita no controller,
+        /// que sabe se a conta tem ou não password.
+        /// </summary>
+        public string? PasswordAtual { get; set; }
 
         [Required(ErrorMessage = "A nova password é obrigatória.")]
         [StringLength(100, MinimumLength = 8, ErrorMessage = "A password deve ter pelo menos 8 caracteres.")]
@@ -129,6 +134,13 @@ namespace WishBound.WebAPI.Models
         public string Email { get; set; } = string.Empty;
         public bool EmailValidado { get; set; }
         public bool IsAdmin { get; set; }
+
+        /// <summary>
+        /// false nas contas criadas com Google, que entram sempre pelo Google.
+        /// O site usa isto para mostrar "Definir password" em vez de
+        /// "Alterar password".
+        /// </summary>
+        public bool TemPasswordLocal { get; set; }
         public string? FotoPerfilUrl { get; set; }
         public DateTime DataCriacao { get; set; }
         public DateTime? UltimoLogin { get; set; }
@@ -138,14 +150,22 @@ namespace WishBound.WebAPI.Models
     /// Resposta das operações que geram um token (registo, reenvio de
     /// validação, recuperação de password).
     ///
-    /// NOTA (modo de desenvolvimento): como ainda não há envio real de
-    /// emails, o token é devolvido na resposta para o ClientAPI mostrar
-    /// o link no ecrã. Quando existir um serviço de email (SMTP), o token
-    /// passa a ser enviado por email e removido desta resposta.
+    /// Com SMTP configurado (secção "Email"), o link segue por email e o
+    /// token NÃO vem na resposta. Sem SMTP, mantém-se o modo de
+    /// desenvolvimento: o token vem na resposta e o site mostra o link no ecrã.
     /// </summary>
     public class TokenResposta
     {
         public string Mensagem { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Só vem preenchido quando NÃO houve envio de email (modo de
+        /// desenvolvimento): nesse caso o site mostra o link no ecrã.
+        /// Com SMTP configurado e envio bem sucedido, fica null.
+        /// </summary>
         public string? Token { get; set; }
+
+        /// <summary>true quando o email foi mesmo enviado.</summary>
+        public bool EmailEnviado { get; set; }
     }
 }

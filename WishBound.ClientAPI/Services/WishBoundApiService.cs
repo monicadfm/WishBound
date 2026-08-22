@@ -227,8 +227,12 @@ namespace WishBound.ClientAPI.Services
             return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
         }
 
-        /// <summary>Altera a password de um utilizador autenticado.</summary>
-        public async Task<(bool Sucesso, string Mensagem)> AlterarPasswordAsync(int utilizadorId, string passwordAtual, string novaPassword)
+        /// <summary>
+        /// Altera (ou define, nas contas Google sem password local) a password
+        /// de um utilizador autenticado. passwordAtual pode ir a null quando a
+        /// conta ainda não tem password — a API confirma esse caso.
+        /// </summary>
+        public async Task<(bool Sucesso, string Mensagem)> AlterarPasswordAsync(int utilizadorId, string? passwordAtual, string novaPassword)
         {
             var resposta = await _http.PostAsJsonAsync("api/conta/alterar-password", new
             {

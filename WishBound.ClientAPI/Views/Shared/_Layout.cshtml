@@ -55,7 +55,10 @@
                     </summary>
                     <div class="menu-conta-lista">
                         <a asp-controller="Conta" asp-action="Perfil">O meu perfil</a>
-                        <a asp-controller="Conta" asp-action="AlterarPassword">Alterar password</a>
+                        @* Contas criadas com Google ainda não têm password local *@
+                        <a asp-controller="Conta" asp-action="AlterarPassword">
+                            @(User.FindFirst("TemPasswordLocal")?.Value == "false" ? "Definir password" : "Alterar password")
+                        </a>
                         @if (User.IsInRole("Admin"))
                         {
                             <a asp-controller="Gestao" asp-action="Index">Área de gestão</a>

@@ -37,9 +37,11 @@ A aplicação NÃO cria nem altera a base de dados ("database first").
      Utilizador: Admin
      Password:   Admin123!
 - Registo normal no site: a password precisa de 8+ caracteres com
-  1 maiúscula, 1 número e 1 símbolo. NÃO há envio real de emails:
-  o link de validação aparece no ecrã numa caixa destacada
-  (simula o email) - abrir esse link antes do primeiro login.
+  1 maiúscula, 1 número e 1 símbolo. Sem servidor de email configurado
+  (ver secção 4), NÃO há envio real de emails: o link de validação
+  aparece no ecrã numa caixa destacada (simula o email) - abrir esse
+  link antes do primeiro login. Com email configurado, o link segue
+  para a caixa de correio e deixa de aparecer no ecrã.
 - "Entrar com Google": as credenciais OAuth vivem em
   WishBound.ClientAPI\appsettings.Local.json, um ficheiro que NÃO está
   no repositório (está no .gitignore, para o secret não ir para o
@@ -50,6 +52,44 @@ A aplicação NÃO cria nem altera a base de dados ("database first").
   URIs http://localhost:5100/signin-google e
   https://localhost:7100/signin-google). A app Google está em modo de
   teste: só entra quem estiver em "usuários de teste" (Público-alvo).
+- Contas criadas com Google não têm password própria. No menu da conta
+  aparece "Definir password": ao defini-la, essa conta passa a poder
+  entrar das duas maneiras (Google ou utilizador + password).
+
+4. ENVIO DE EMAILS (opcional)
+-----------------------------
+Por omissão não há envio de emails e o site mostra os links de
+validação/recuperação no ecrã (modo de desenvolvimento).
+Para enviar emails a sério, preencher a secção "Email" em
+WishBound.WebAPI\appsettings.Local.json (ficheiro fora do Git):
+
+  "Email": {
+    "Host": "smtp.gmail.com",
+    "Porta": 587,
+    "Utilizador": "a-minha-conta@gmail.com",
+    "Password": "password-de-aplicacao",
+    "Remetente": "a-minha-conta@gmail.com",
+    "NomeRemetente": "WishBound",
+    "UsarSsl": true
+  }
+
+No Gmail é preciso uma "password de aplicação" (a password normal da
+conta não serve). O endereço usado nos links dos emails vem de
+"Site:BaseUrl" (WishBound.WebAPI\appsettings.json).
+Se o envio falhar, o site volta a mostrar o link no ecrã.
+
+5. SEGURANÇA DA API
+--------------------
+A WebAPI só responde a pedidos que tragam o cabeçalho
+X-WishBound-Chave com a chave partilhada, e no browser só aceita
+pedidos vindos do próprio site (CORS limitado a localhost:5100/7100).
+A chave existe nos dois projetos e tem de ser igual:
+  - WishBound.WebAPI\appsettings.json     -> "Seguranca:ChaveApi"
+  - WishBound.ClientAPI\appsettings.json  -> "WishBoundApi:Chave"
+Numa instalação real deve ser substituída (nos dois projetos) através
+do appsettings.Local.json, que não vai para o Git.
+No Swagger, para experimentar os endpoints: botão "Authorize" ->
+colar a chave. Sem ela, os pedidos devolvem 401.
 
 NOTAS
 -----
@@ -57,8 +97,9 @@ NOTAS
   (por omissão Server=.\SQLEXPRESS;Database=WishBound);
 - Endereço da API usado pelo site: WishBound.ClientAPI\appsettings.json
   (WishBoundApi:BaseUrl);
-- Segredos (ex.: Google) ficam sempre no appsettings.Local.json,
-  nunca no appsettings.json versionado.
+- Segredos (Google, email, chave da API) ficam sempre no
+  appsettings.Local.json de cada projeto, nunca no appsettings.json
+  versionado.
 
 ESTRUTURA
 ---------

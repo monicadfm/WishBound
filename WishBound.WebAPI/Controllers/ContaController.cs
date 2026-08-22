@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using System.Net;
 using System.Security.Cryptography;
 using WishBound.WebAPI.Data;
 using WishBound.WebAPI.Models;
@@ -19,10 +20,12 @@ namespace WishBound.WebAPI.Controllers
     /// As passwords são guardadas apenas como hash PBKDF2
     /// (ver Services/PasswordHasher.cs).
     ///
-    /// NOTA (modo de desenvolvimento): ainda não há envio real de emails.
-    /// Os tokens de validação/recuperação são devolvidos na resposta para
-    /// o site mostrar o link no ecrã. Com SMTP configurado, passarão a ser
-    /// enviados por email.
+    /// EMAILS: com um servidor SMTP configurado (secção "Email" da
+    /// configuração — ver Services/ServicoEmail.cs), os links de validação de
+    /// conta e de recuperação de password são enviados por email e o token
+    /// NÃO volta na resposta. Sem SMTP configurado (ou se o envio falhar),
+    /// mantém-se o modo de desenvolvimento: o token vem na resposta e o site
+    /// mostra o link no ecrã.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -37,10 +40,14 @@ namespace WishBound.WebAPI.Controllers
         private static readonly TimeSpan ValidadeTokenRecuperacao = TimeSpan.FromHours(1);
 
         private readonly WishBoundContext _contexto;
+        private readonly IServicoEmail _email;
+        private readonly IConfiguration _configuracao;
 
-        public ContaController(WishBoundContext contexto)
+        public ContaController(WishBoundContext contexto, IServicoEmail email, IConfiguration configuracao)
         {
             _contexto = contexto;
+            _email = email;
+            _configuracao = configuracao;
         }
 
         // ------------------------------------------------------------
@@ -91,15 +98,30 @@ namespace WishBound.WebAPI.Controllers
                 await _contexto.Database.ExecuteSqlAsync(
                     $"INSERT INTO CarteirasUtilizador (UtilizadorId, TipoMoedaId, Saldo) SELECT {utilizador.Id}, TipoMoedaId, 0 FROM TiposMoeda");
 
-                // Token de validação de email (mostrado no ecrã em modo dev)
+                // Token de validação de email
                 string token = await CriarTokenAsync(utilizador.Id, PrefixoValidacaoEmail, ValidadeTokenEmail);
 
                 await transacao.CommitAsync();
 
+                // MODO DE DESENVOLVIMENTO = não há servidor de email configurado.
+                // Só nesse caso o token volta na resposta para o site mostrar o
+                // link no ecrã. Se HÁ email configurado mas o envio falha, o
+                // token NÃO é devolvido (senão bastava desligar o servidor de
+                // email para ver os links de outras contas).
+                bool modoDev = !_email.Configurado;
+                bool enviado = await EnviarEmailValidacaoAsync(utilizador, token);
+
                 return Ok(new TokenResposta
                 {
-                    Mensagem = "Conta criada com sucesso. Valide o seu email para poder iniciar sessão.",
-                    Token = token
+                    Mensagem = modoDev
+                        ? "Conta criada com sucesso. Valide o seu email para poder iniciar sessão."
+                        : enviado
+                            ? "Conta criada com sucesso. Enviámos um email para " + utilizador.Email +
+                              " com o link de validação (verifique também o spam)."
+                            : "Conta criada com sucesso, mas não foi possível enviar o email de validação. " +
+                              "Tente daqui a pouco a opção \"Reenviar validação\".",
+                    Token = modoDev ? token : null,
+                    EmailEnviado = enviado
                 });
             }
             catch (Exception ex)
@@ -306,10 +328,18 @@ namespace WishBound.WebAPI.Controllers
 
                 string token = await CriarTokenAsync(utilizador.Id, PrefixoValidacaoEmail, ValidadeTokenEmail);
 
+                bool modoDev = !_email.Configurado;
+                bool enviado = await EnviarEmailValidacaoAsync(utilizador, token);
+
                 return Ok(new TokenResposta
                 {
-                    Mensagem = "Novo link de validação gerado.",
-                    Token = token
+                    // Com email configurado a resposta é sempre a mesma, exista
+                    // ou não a conta (ver o caso acima): não revelamos nada.
+                    Mensagem = modoDev
+                        ? "Novo link de validação gerado."
+                        : "Se o email corresponder a uma conta por validar, foi enviado um novo link.",
+                    Token = modoDev ? token : null,
+                    EmailEnviado = enviado
                 });
             }
             catch (Exception ex)
@@ -340,10 +370,17 @@ namespace WishBound.WebAPI.Controllers
 
                 string token = await CriarTokenAsync(utilizador.Id, PrefixoRecuperacaoPassword, ValidadeTokenRecuperacao);
 
+                bool modoDev = !_email.Configurado;
+                bool enviado = await EnviarEmailRecuperacaoAsync(utilizador, token);
+
                 return Ok(new TokenResposta
                 {
-                    Mensagem = "Link de recuperação gerado.",
-                    Token = token
+                    // Mesma resposta exista ou não a conta (ver o caso acima)
+                    Mensagem = modoDev
+                        ? "Link de recuperação gerado."
+                        : "Se o email corresponder a uma conta, foi enviado um link de recuperação.",
+                    Token = modoDev ? token : null,
+                    EmailEnviado = enviado
                 });
             }
             catch (Exception ex)
@@ -389,6 +426,11 @@ namespace WishBound.WebAPI.Controllers
         // ------------------------------------------------------------
         // POST: api/conta/alterar-password  (utilizador autenticado)
         // ------------------------------------------------------------
+        // Serve para dois casos:
+        //   - ALTERAR: conta normal, tem de confirmar a password atual;
+        //   - DEFINIR: conta criada com Google (PasswordHash NULL), que nunca
+        //     teve password local — aqui não há password atual para confirmar.
+        //     A identidade já foi provada pela Google no início da sessão.
         [HttpPost("alterar-password")]
         public async Task<IActionResult> AlterarPassword(AlterarPasswordPedido pedido)
         {
@@ -400,15 +442,27 @@ namespace WishBound.WebAPI.Controllers
                     return NotFound("Utilizador não encontrado.");
                 }
 
-                if (!PasswordHasher.Verificar(pedido.PasswordAtual, utilizador.PasswordHash))
+                bool temPasswordLocal = !string.IsNullOrEmpty(utilizador.PasswordHash);
+
+                if (temPasswordLocal)
                 {
-                    return Unauthorized("A password atual está incorreta.");
+                    if (string.IsNullOrEmpty(pedido.PasswordAtual))
+                    {
+                        return BadRequest("A password atual é obrigatória.");
+                    }
+
+                    if (!PasswordHasher.Verificar(pedido.PasswordAtual, utilizador.PasswordHash))
+                    {
+                        return Unauthorized("A password atual está incorreta.");
+                    }
                 }
 
                 utilizador.PasswordHash = PasswordHasher.GerarHash(pedido.NovaPassword);
                 await _contexto.SaveChangesAsync();
 
-                return Ok("Password alterada com sucesso.");
+                return Ok(temPasswordLocal
+                    ? "Password alterada com sucesso."
+                    : "Password definida com sucesso. A partir de agora também pode entrar com o nome de utilizador e password.");
             }
             catch (Exception ex)
             {
@@ -545,6 +599,64 @@ namespace WishBound.WebAPI.Controllers
             return candidato;
         }
 
+        /// <summary>
+        /// Constrói um link do SITE a partir do endereço configurado em
+        /// "Site:BaseUrl" (ex.: http://localhost:5100/Conta/ValidarEmail?token=...).
+        /// </summary>
+        private string ConstruirLink(string caminho, string token)
+        {
+            string baseUrl = (_configuracao["Site:BaseUrl"] ?? "http://localhost:5100").TrimEnd('/');
+            return baseUrl + caminho + "?token=" + Uri.EscapeDataString(token);
+        }
+
+        /// <summary>Email com o link de validação de conta. false = não foi enviado.</summary>
+        private Task<bool> EnviarEmailValidacaoAsync(Utilizador utilizador, string token)
+        {
+            string link = ConstruirLink("/Conta/ValidarEmail", token);
+
+            return _email.EnviarAsync(
+                utilizador.Email,
+                "WishBound - confirme o seu email",
+                CorpoEmail(
+                    "Bem-vindo(a) ao WishBound, " + WebUtility.HtmlEncode(utilizador.NomeUtilizador) + "!",
+                    "Falta só confirmar o seu email para poder iniciar sessão.",
+                    "Confirmar email",
+                    link,
+                    "Este link é válido durante 24 horas. Se não foi você que criou a conta, ignore este email."));
+        }
+
+        /// <summary>Email com o link de recuperação de password. false = não foi enviado.</summary>
+        private Task<bool> EnviarEmailRecuperacaoAsync(Utilizador utilizador, string token)
+        {
+            string link = ConstruirLink("/Conta/ReporPassword", token);
+
+            return _email.EnviarAsync(
+                utilizador.Email,
+                "WishBound - recuperação de password",
+                CorpoEmail(
+                    "Olá, " + WebUtility.HtmlEncode(utilizador.NomeUtilizador) + "!",
+                    "Recebemos um pedido para definir uma nova password na sua conta WishBound.",
+                    "Definir nova password",
+                    link,
+                    "Este link é válido durante 1 hora. Se não foi você que fez o pedido, ignore este email — a password atual continua válida."));
+        }
+
+        /// <summary>Corpo HTML simples e igual para todos os emails da plataforma.</summary>
+        private static string CorpoEmail(string titulo, string texto, string textoBotao, string link, string rodape)
+        {
+            return $@"<div style=""font-family:Segoe UI,Arial,sans-serif;max-width:520px;margin:0 auto;color:#1f2430"">
+  <h2 style=""color:#6d5bd0"">{titulo}</h2>
+  <p>{texto}</p>
+  <p style=""margin:28px 0"">
+    <a href=""{link}"" style=""background:#6d5bd0;color:#fff;padding:12px 22px;border-radius:8px;text-decoration:none"">{textoBotao}</a>
+  </p>
+  <p style=""font-size:13px;color:#5b6472"">Se o botão não funcionar, copie este endereço para o browser:<br />{link}</p>
+  <hr style=""border:none;border-top:1px solid #e3e6ee"" />
+  <p style=""font-size:12px;color:#8a91a0"">{rodape}</p>
+  <p style=""font-size:12px;color:#8a91a0"">WishBound &middot; Plataforma de Coleção Digital de Personagens</p>
+</div>";
+        }
+
         /// <summary>Converte a entidade Utilizador na resposta pública (sem PasswordHash).</summary>
         private static UtilizadorResposta ParaResposta(Utilizador u)
         {
@@ -555,6 +667,7 @@ namespace WishBound.WebAPI.Controllers
                 Email = u.Email,
                 EmailValidado = u.EmailValidado,
                 IsAdmin = u.IsAdmin,
+                TemPasswordLocal = !string.IsNullOrEmpty(u.PasswordHash),
                 FotoPerfilUrl = u.FotoPerfilUrl,
                 DataCriacao = u.DataCriacao,
                 UltimoLogin = u.UltimoLogin

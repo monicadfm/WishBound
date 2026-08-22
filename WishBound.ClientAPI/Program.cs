@@ -86,6 +86,15 @@ builder.Services.AddHttpClient<WishBoundApiService>(client =>
     var baseUrl = builder.Configuration["WishBoundApi:BaseUrl"] ?? "http://localhost:5240/";
     client.BaseAddress = new Uri(baseUrl);
     client.Timeout = TimeSpan.FromSeconds(15);
+
+    // CHAVE DA API: a WebAPI só responde a pedidos que tragam este cabeçalho,
+    // para ninguém poder usar a API diretamente (porta 5240) fora do site.
+    // O valor tem de ser igual nos dois projetos.
+    var chaveApi = builder.Configuration["WishBoundApi:Chave"];
+    if (!string.IsNullOrWhiteSpace(chaveApi))
+    {
+        client.DefaultRequestHeaders.Add("X-WishBound-Chave", chaveApi);
+    }
 });
 
 var app = builder.Build();

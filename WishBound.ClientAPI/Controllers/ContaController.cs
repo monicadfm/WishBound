@@ -481,11 +481,16 @@ namespace WishBound.ClientAPI.Controllers
         // ------------------------------------------------------------
 
         // GET: /Conta/AlterarPassword
+        // A mesma página serve para ALTERAR a password (conta normal) e para
+        // DEFINIR a primeira (contas criadas com Google, sem password local).
         [Authorize]
         [HttpGet]
-        public IActionResult AlterarPassword()
+        public async Task<IActionResult> AlterarPassword()
         {
-            return View(new AlterarPasswordViewModel());
+            return View(new AlterarPasswordViewModel
+            {
+                TemPasswordLocal = await ContaTemPasswordLocalAsync()
+            });
         }
 
         // POST: /Conta/AlterarPassword
@@ -494,6 +499,17 @@ namespace WishBound.ClientAPI.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> AlterarPassword(AlterarPasswordViewModel modelo)
         {
+            // A resposta à pergunta "esta conta tem password?" vem SEMPRE da
+            // API, nunca do formulário — senão bastava enviar um campo
+            // escondido para saltar a confirmação da password atual.
+            // (A API faz a mesma verificação, por segurança.)
+            modelo.TemPasswordLocal = await ContaTemPasswordLocalAsync();
+
+            if (modelo.TemPasswordLocal && string.IsNullOrWhiteSpace(modelo.PasswordAtual))
+            {
+                ModelState.AddModelError(nameof(modelo.PasswordAtual), "A password atual é obrigatória.");
+            }
+
             if (!ModelState.IsValid)
             {
                 return View(modelo);
@@ -502,12 +518,22 @@ namespace WishBound.ClientAPI.Controllers
             try
             {
                 var (sucesso, mensagem) = await _api.AlterarPasswordAsync(
-                    ObterUtilizadorId(), modelo.PasswordAtual, modelo.NovaPassword);
+                    ObterUtilizadorId(),
+                    modelo.TemPasswordLocal ? modelo.PasswordAtual : null,
+                    modelo.NovaPassword);
 
                 if (!sucesso)
                 {
                     ModelState.AddModelError(string.Empty, mensagem);
                     return View(modelo);
+                }
+
+                // Se acabou de DEFINIR a primeira password, o cookie da sessão
+                // ainda diz que a conta não tem password local: renova-o para
+                // o menu passar a mostrar "Alterar password".
+                if (!modelo.TemPasswordLocal)
+                {
+                    await RenovarSessaoAsync();
                 }
 
                 TempData["Sucesso"] = mensagem;
@@ -629,6 +655,45 @@ namespace WishBound.ClientAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Pergunta à API se a conta autenticada já tem password local.
+        /// Se a API não responder, assume que sim (o pior que acontece é
+        /// pedir a password atual e a própria API recusar).
+        /// </summary>
+        private async Task<bool> ContaTemPasswordLocalAsync()
+        {
+            try
+            {
+                var utilizador = await _api.ObterUtilizadorAsync(ObterUtilizadorId());
+                return utilizador?.TemPasswordLocal ?? true;
+            }
+            catch (Exception)
+            {
+                return true;
+            }
+        }
+
+        /// <summary>
+        /// Volta a criar o cookie da sessão com os dados atuais da conta
+        /// (mantendo o "manter sessão iniciada" escolhido no login).
+        /// </summary>
+        private async Task RenovarSessaoAsync()
+        {
+            try
+            {
+                var utilizador = await _api.ObterUtilizadorAsync(ObterUtilizadorId());
+                if (utilizador != null)
+                {
+                    var autenticacao = await HttpContext.AuthenticateAsync();
+                    await IniciarSessaoAsync(utilizador, autenticacao.Properties?.IsPersistent ?? false);
+                }
+            }
+            catch (Exception)
+            {
+                // Sem API, o cookie fica como está: o menu volta ao normal no próximo login
+            }
+        }
+
         /// <summary>Id do utilizador autenticado (guardado no cookie).</summary>
         private int ObterUtilizadorId()
         {
@@ -655,6 +720,10 @@ namespace WishBound.ClientAPI.Controllers
             {
                 claims.Add(new Claim("FotoPerfilUrl", utilizador.FotoPerfilUrl));
             }
+
+            // Contas criadas com Google não têm password local: o menu mostra
+            // "Definir password" em vez de "Alterar password".
+            claims.Add(new Claim("TemPasswordLocal", utilizador.TemPasswordLocal ? "true" : "false"));
 
             var identidade = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
 
