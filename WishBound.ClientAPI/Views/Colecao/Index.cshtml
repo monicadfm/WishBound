@@ -1,0 +1,191 @@
+@using WishBound.ClientAPI.Models.Colecao
+@model ColecaoViewModel
+@{
+    ViewData["Title"] = "A minha coleção";
+}
+
+@* ESTILO LOCAL: barra de capacidade e detalhes dos cartões da coleção *@
+@section Estilos {
+    <style>
+        .colecao-topo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            align-items: flex-end;
+            justify-content: space-between;
+            margin-bottom: 22px;
+        }
+
+        .capacidade {
+            min-width: 260px;
+            flex: 1;
+        }
+
+        .capacidade-barra {
+            height: 10px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, .12);
+            overflow: hidden;
+            margin-top: 6px;
+        }
+
+        .capacidade-usado {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #6d5bd0, #b28cf0);
+        }
+
+        .capacidade-cheia .capacidade-usado {
+            background: linear-gradient(90deg, #c0483f, #e07a72);
+        }
+
+        .filtros-colecao {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .cartao-colecao {
+            position: relative;
+        }
+
+        .etiqueta-quantidade {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(15, 17, 26, .82);
+            color: #fff;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .etiqueta-favorito {
+            position: absolute;
+            top: 8px;
+            right: 10px;
+            font-size: 20px;
+            line-height: 1;
+        }
+
+        .cartao-acoes {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
+        .cartao-acoes button {
+            font-size: 13px;
+            padding: 6px 10px;
+        }
+    </style>
+}
+
+<section class="seccao">
+    <div class="colecao-topo">
+        <div>
+            <h1 class="titulo-seccao">A minha coleção</h1>
+            <p class="texto-suave">
+                @Model.PersonagensDistintas de @Model.PersonagensExistentes personagens diferentes.
+                As cópias repetidas também ocupam espaço.
+            </p>
+        </div>
+
+        <div class="capacidade @(Model.Cheia ? "capacidade-cheia" : "")">
+            <span class="texto-suave">Espaço: <strong>@Model.Ocupado / @Model.Capacidade</strong></span>
+            <div class="capacidade-barra">
+                <div class="capacidade-usado" style="width:@(Model.PercentagemOcupada)%"></div>
+            </div>
+            @if (Model.Cheia)
+            {
+                <p class="texto-suave">Coleção cheia — liberte cópias repetidas para poder invocar.</p>
+            }
+        </div>
+    </div>
+
+    @* Ordenação e filtro (GET, para o endereço poder ser guardado/partilhado) *@
+    <form class="filtros-colecao" method="get" asp-controller="Colecao" asp-action="Index">
+        <label for="ordenar">Ordenar por</label>
+        <select id="ordenar" name="ordenar" onchange="this.form.submit()">
+            <option value="raridade" selected="@(Model.Ordenar == "raridade")">Raridade</option>
+            <option value="nome" selected="@(Model.Ordenar == "nome")">Nome</option>
+            <option value="data" selected="@(Model.Ordenar == "data")">Data de obtenção</option>
+        </select>
+
+        <label>
+            <input type="checkbox" name="favoritos" value="true" onchange="this.form.submit()" checked="@Model.ApenasFavoritos" />
+            Apenas favoritas
+        </label>
+
+        <noscript><button type="submit" class="botao">Aplicar</button></noscript>
+    </form>
+
+    @if (Model.Itens.Count == 0)
+    {
+        <div class="caixa-vazia">
+            <p>
+                @(Model.ApenasFavoritos
+                    ? "Ainda não marcou nenhuma personagem como favorita."
+                    : "A sua coleção está vazia.")
+            </p>
+            <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Invocar uma personagem</a>
+        </div>
+    }
+    else
+    {
+        <div class="grelha-cartoes">
+            @foreach (var item in Model.Itens)
+            {
+                <div class="cartao cartao-colecao">
+                    <div class="cartao-imagem" style="--cor-raridade:@item.Cor">
+                        <img src="@item.Imagem" alt="Imagem da personagem @item.Nome" />
+                        @if (item.Quantidade > 1)
+                        {
+                            <span class="etiqueta-quantidade">&times;@item.Quantidade</span>
+                        }
+                        @if (item.IsFavorito)
+                        {
+                            <span class="etiqueta-favorito" title="Favorita">&#9733;</span>
+                        }
+                    </div>
+
+                    <div class="cartao-corpo">
+                        <h3>@item.Nome</h3>
+                        <span class="etiqueta-raridade" style="background:@item.Cor">@item.RaridadeNome</span>
+                        <p class="texto-suave">Obtida a @item.DataObtencao.ToString("dd/MM/yyyy")</p>
+
+                        <div class="cartao-acoes">
+                            <a class="botao botao-suave" asp-controller="Colecao" asp-action="Detalhes" asp-route-id="@item.PersonagemId">Detalhes</a>
+
+                            <form method="post" asp-controller="Colecao" asp-action="Favorito">
+                                <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                                <input type="hidden" name="favorito" value="@((!item.IsFavorito).ToString().ToLower())" />
+                                <input type="hidden" name="ordenar" value="@Model.Ordenar" />
+                                <input type="hidden" name="favoritos" value="@Model.ApenasFavoritos.ToString().ToLower()" />
+                                <button type="submit" class="botao botao-suave">
+                                    @(item.IsFavorito ? "Remover dos favoritos" : "Favorita")
+                                </button>
+                            </form>
+
+                            @if (item.Repetidas > 0)
+                            {
+                                <form method="post" asp-controller="Colecao" asp-action="Libertar">
+                                    <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                                    <input type="hidden" name="quantidade" value="1" />
+                                    <input type="hidden" name="ordenar" value="@Model.Ordenar" />
+                                    <input type="hidden" name="favoritos" value="@Model.ApenasFavoritos.ToString().ToLower()" />
+                                    <button type="submit" class="botao botao-suave" title="Devolve espaço ao inventário">
+                                        Libertar repetida (@item.Repetidas)
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>

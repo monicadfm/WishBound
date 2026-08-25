@@ -15,6 +15,12 @@ namespace WishBound.WebAPI.Controllers
     /// consultado POR utilizador. O banner continua a ser o "Banner Permanente"
     /// (Id 1) criado pela migração — a escolha de banner chega com a
     /// funcionalidade de eventos/banners temporários.
+    ///
+    /// A personagem obtida entra também na COLEÇÃO do utilizador
+    /// (ColecaoUtilizador): primeira vez cria a linha, repetida soma uma cópia.
+    /// Antes de sortear é verificado se ainda há espaço no inventário — cada
+    /// cópia ocupa um lugar — e, se não houver, a invocação é recusada sem
+    /// gastar nada.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -23,6 +29,10 @@ namespace WishBound.WebAPI.Controllers
         // Id fixo criado pelo script Database/Migracao01.sql.
         // Será substituído pelo banner escolhido quando existirem banners de evento.
         private const int BannerPermanenteId = 1;
+
+        // Primeiro nível de amizade ("Desconhecido") - usado ao criar a linha
+        // da coleção; a progressão chega com o sistema de amizade.
+        private const int NivelAmizadeInicialId = 1;
 
         private readonly WishBoundContext _contexto;
 
@@ -61,7 +71,7 @@ namespace WishBound.WebAPI.Controllers
         // POST: api/invocacoes  (realiza uma invocação - INSERT)
         // O corpo indica QUEM está a invocar: { "utilizadorId": 5 }
         [HttpPost]
-        public async Task<ActionResult<Personagem>> Invocar([FromBody] InvocacaoPedido pedido)
+        public async Task<ActionResult<InvocacaoResultado>> Invocar([FromBody] InvocacaoPedido pedido)
         {
             try
             {
@@ -71,6 +81,22 @@ namespace WishBound.WebAPI.Controllers
                 if (utilizador == null || !utilizador.IsAtivo)
                 {
                     return BadRequest("Utilizador inválido para invocar.");
+                }
+
+                // ESPAÇO NA COLEÇÃO: cada cópia (incluindo as repetidas) ocupa
+                // um lugar. Sem espaço, a invocação é recusada ANTES do sorteio,
+                // para o utilizador não perder uma invocação.
+                var inventario = await ObterOuCriarInventarioAsync(utilizador.Id);
+
+                int ocupado = await _contexto.Colecoes
+                    .Where(c => c.UtilizadorId == utilizador.Id)
+                    .SumAsync(c => (int?)c.Quantidade) ?? 0;
+
+                if (ocupado >= inventario.CapacidadeTotal)
+                {
+                    return BadRequest(
+                        "A sua coleção está cheia (" + ocupado + "/" + inventario.CapacidadeTotal +
+                        "). Liberte cópias repetidas na página da Coleção antes de invocar de novo.");
                 }
 
                 // Só considera raridades com pelo menos uma personagem ativa
@@ -108,8 +134,60 @@ namespace WishBound.WebAPI.Controllers
                 var candidatas = raridadeEscolhida.Personagens!.ToList();
                 var personagem = candidatas[Random.Shared.Next(candidatas.Count)];
 
-                // 3) Regista a invocação no histórico (INSERT) — agora em nome
-                //    do utilizador autenticado que o site enviou.
+                // 3) Atualiza a coleção e regista a invocação no histórico.
+                //    TRANSAÇÃO: são duas gravações (coleção e histórico) e têm
+                //    de ficar coerentes — ou entram as duas, ou não entra nada.
+                await using var transacao = await _contexto.Database.BeginTransactionAsync();
+
+                // 3a) Coleção: primeira vez cria a linha, repetida soma uma cópia
+                //     (a base de dados garante UNIQUE por utilizador+personagem).
+                var itemColecao = await _contexto.Colecoes.FirstOrDefaultAsync(
+                    c => c.UtilizadorId == utilizador.Id && c.PersonagemId == personagem.Id);
+
+                bool novo = itemColecao == null;
+
+                if (itemColecao == null)
+                {
+                    itemColecao = new ItemColecao
+                    {
+                        UtilizadorId = utilizador.Id,
+                        PersonagemId = personagem.Id,
+                        Quantidade = 1,
+                        IsFavorito = false,
+                        PontosAmizade = 0,
+                        NivelAmizadeId = NivelAmizadeInicialId,
+                        DataObtencao = DateTime.UtcNow
+                    };
+
+                    _contexto.Colecoes.Add(itemColecao);
+                }
+                else
+                {
+                    itemColecao.Quantidade++;
+                }
+
+                try
+                {
+                    await _contexto.SaveChangesAsync();
+                }
+                catch (DbUpdateException) when (novo)
+                {
+                    // Duas invocações ao mesmo tempo (dois separadores, duplo
+                    // clique): a outra criou a linha primeiro e o UNIQUE recusou
+                    // esta. Em vez de dar erro, lê a linha que já existe e soma
+                    // a cópia — o utilizador não perde a invocação.
+                    _contexto.Entry(itemColecao).State = EntityState.Detached;
+
+                    itemColecao = await _contexto.Colecoes.FirstAsync(
+                        c => c.UtilizadorId == utilizador.Id && c.PersonagemId == personagem.Id);
+
+                    itemColecao.Quantidade++;
+                    novo = false;
+
+                    await _contexto.SaveChangesAsync();
+                }
+
+                // 3b) Histórico da invocação
                 var invocacao = new Invocacao
                 {
                     UtilizadorId = utilizador.Id,
@@ -123,12 +201,47 @@ namespace WishBound.WebAPI.Controllers
                 _contexto.Invocacoes.Add(invocacao);
                 await _contexto.SaveChangesAsync();
 
-                return Ok(personagem);
+                await transacao.CommitAsync();
+
+                return Ok(new InvocacaoResultado
+                {
+                    Personagem = personagem,
+                    Novo = novo,
+                    Quantidade = itemColecao.Quantidade,
+                    Ocupado = ocupado + 1,
+                    Capacidade = inventario.CapacidadeTotal
+                });
             }
             catch (Exception ex)
             {
                 return StatusCode(500, "Erro ao realizar a invocação: " + ex.Message);
             }
+        }
+
+        /// <summary>
+        /// Inventário do utilizador (espaço da coleção). O registo cria esta
+        /// linha, mas as contas feitas por script (Admin, Sistema) podem não a
+        /// ter: aqui — no caminho de escrita — é criada com a capacidade base.
+        /// (Na consulta da coleção não se cria nada; ver ColecaoController.)
+        /// </summary>
+        private async Task<Inventario> ObterOuCriarInventarioAsync(int utilizadorId)
+        {
+            var inventario = await _contexto.Inventarios.FindAsync(utilizadorId);
+
+            if (inventario == null)
+            {
+                inventario = new Inventario
+                {
+                    UtilizadorId = utilizadorId,
+                    CapacidadeBase = 100,
+                    CapacidadeExtra = 0
+                };
+
+                _contexto.Inventarios.Add(inventario);
+                await _contexto.SaveChangesAsync();
+            }
+
+            return inventario;
         }
     }
 }

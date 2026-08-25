@@ -1,0 +1,78 @@
+@using WishBound.ClientAPI.Models.Colecao
+@model ItemColecao
+@{
+    ViewData["Title"] = Model.Nome;
+}
+
+@* ESTILO LOCAL: os botões desta página são formulários, por isso precisam
+   de uma linha flexível própria *@
+@section Estilos {
+    <style>
+        .detalhe-acoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-top: 18px;
+        }
+    </style>
+}
+
+<section class="seccao">
+    <div class="detalhe-grelha">
+        <div class="detalhe-imagem" style="--cor-raridade:@Model.Cor">
+            <img src="@Model.Imagem" alt="Imagem da personagem @Model.Nome" />
+        </div>
+
+        <div class="detalhe-info">
+            <h1>@Model.Nome@(Model.IsFavorito ? " ★" : "")</h1>
+            <span class="etiqueta-raridade" style="background:@Model.Cor">@Model.RaridadeNome</span>
+
+            <p class="detalhe-descricao">
+                @(string.IsNullOrEmpty(Model.Descricao) ? "Esta personagem ainda não tem descrição." : Model.Descricao)
+            </p>
+
+            <table class="tabela">
+                <tbody>
+                    <tr>
+                        <th>Cópias</th>
+                        <td>@Model.Quantidade @(Model.Repetidas > 0 ? "(" + Model.Repetidas + " repetida(s))" : "")</td>
+                    </tr>
+                    <tr>
+                        <th>Obtida em</th>
+                        <td>@Model.DataObtencao.ToString("dd/MM/yyyy HH:mm")</td>
+                    </tr>
+                    <tr>
+                        <th>Favorita</th>
+                        <td>@(Model.IsFavorito ? "Sim" : "Não")</td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <div class="detalhe-acoes">
+                <a class="botao botao-suave" asp-controller="Colecao" asp-action="Index">&#8592; Voltar à coleção</a>
+
+                <form method="post" asp-controller="Colecao" asp-action="Favorito">
+                    <input type="hidden" name="personagemId" value="@Model.PersonagemId" />
+                    <input type="hidden" name="favorito" value="@((!Model.IsFavorito).ToString().ToLower())" />
+                    <input type="hidden" name="voltar" value="detalhes" />
+                    <button type="submit" class="botao botao-suave">
+                        @(Model.IsFavorito ? "Remover dos favoritos" : "Marcar como favorita")
+                    </button>
+                </form>
+
+                @if (Model.Repetidas > 0)
+                {
+                    <form method="post" asp-controller="Colecao" asp-action="Libertar">
+                        <input type="hidden" name="personagemId" value="@Model.PersonagemId" />
+                        <input type="hidden" name="quantidade" value="0" />
+                        <input type="hidden" name="voltar" value="detalhes" />
+                        <button type="submit" class="botao botao-suave" title="Fica sempre com uma cópia">
+                            Libertar as @Model.Repetidas repetidas
+                        </button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using WishBound.ClientAPI.Models;
+using WishBound.ClientAPI.Models.Colecao;
 using WishBound.ClientAPI.Models.Conta;
 
 namespace WishBound.ClientAPI.Services
@@ -96,10 +97,11 @@ namespace WishBound.ClientAPI.Services
         // ---------- Invocações (gacha) ----------
 
         /// <summary>
-        /// Realiza uma invocação em nome do utilizador autenticado e devolve
-        /// a personagem obtida.
+        /// Realiza uma invocação em nome do utilizador autenticado. Devolve o
+        /// resultado (personagem, se é nova ou repetida, espaço ocupado) ou a
+        /// mensagem de erro da API — por exemplo quando a coleção está cheia.
         /// </summary>
-        public async Task<Personagem?> InvocarAsync(int utilizadorId)
+        public async Task<(ResultadoInvocacao? Resultado, string? Erro)> InvocarAsync(int utilizadorId)
         {
             var resposta = await _http.PostAsJsonAsync("api/invocacoes", new
             {
@@ -108,10 +110,10 @@ namespace WishBound.ClientAPI.Services
 
             if (!resposta.IsSuccessStatusCode)
             {
-                return null;
+                return (null, await resposta.Content.ReadAsStringAsync());
             }
 
-            return await resposta.Content.ReadFromJsonAsync<Personagem>();
+            return (await resposta.Content.ReadFromJsonAsync<ResultadoInvocacao>(), null);
         }
 
         /// <summary>SELECT - obtém o histórico de invocações DO utilizador.</summary>
@@ -119,6 +121,62 @@ namespace WishBound.ClientAPI.Services
         {
             return await _http.GetFromJsonAsync<List<Invocacao>>("api/invocacoes?utilizadorId=" + utilizadorId)
                    ?? new List<Invocacao>();
+        }
+
+        // ---------- Coleção pessoal ----------
+
+        /// <summary>SELECT - coleção do utilizador, já ordenada pela API.</summary>
+        public async Task<ColecaoViewModel> ObterColecaoAsync(int utilizadorId, string ordenar, bool apenasFavoritos)
+        {
+            string url = "api/colecao?utilizadorId=" + utilizadorId +
+                         "&ordenar=" + Uri.EscapeDataString(ordenar) +
+                         "&favoritos=" + (apenasFavoritos ? "true" : "false");
+
+            return await _http.GetFromJsonAsync<ColecaoViewModel>(url) ?? new ColecaoViewModel();
+        }
+
+        /// <summary>SELECT - uma personagem da coleção (null se não a tiver).</summary>
+        public async Task<ItemColecao?> ObterItemColecaoAsync(int utilizadorId, int personagemId)
+        {
+            var resposta = await _http.GetAsync(
+                "api/colecao/item?utilizadorId=" + utilizadorId + "&personagemId=" + personagemId);
+
+            // Só o 404 significa "não tem esta personagem"; qualquer outro erro
+            // (API em baixo, chave errada) deve rebentar para o controller
+            // mostrar a mensagem certa.
+            if (resposta.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            resposta.EnsureSuccessStatusCode();
+            return await resposta.Content.ReadFromJsonAsync<ItemColecao>();
+        }
+
+        /// <summary>UPDATE - marca ou desmarca uma personagem como favorita.</summary>
+        public async Task<(bool Sucesso, string Mensagem)> MarcarFavoritoAsync(int utilizadorId, int personagemId, bool favorito)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/colecao/favorito", new
+            {
+                UtilizadorId = utilizadorId,
+                PersonagemId = personagemId,
+                Favorito = favorito
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>UPDATE - liberta cópias repetidas (mantém sempre uma).</summary>
+        public async Task<(bool Sucesso, string Mensagem)> LibertarDuplicadosAsync(int utilizadorId, int personagemId, int quantidade)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/colecao/libertar", new
+            {
+                UtilizadorId = utilizadorId,
+                PersonagemId = personagemId,
+                Quantidade = quantidade
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
         }
 
         // ---------- Conta e autenticação ----------

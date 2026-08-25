@@ -40,24 +40,44 @@
     <h1 class="titulo-seccao">Invocação</h1>
     <p class="texto-suave">
         Pede um desejo e invoca uma personagem aleatória.
-        Cada invocação fica registada no teu histórico pessoal (operação INSERT através da WebAPI).
+        Cada invocação fica registada no teu histórico pessoal e a personagem
+        entra na tua coleção (operação INSERT através da WebAPI).
     </p>
 
     <form method="post" asp-controller="Invocacao" asp-action="Invocar">
         <button type="submit" class="botao botao-destaque botao-grande">&#10024; Invocar personagem</button>
     </form>
 
-    @if (Model.Resultado != null)
+    @if (Model.Resultado?.Personagem != null)
     {
+        var personagem = Model.Resultado.Personagem;
+        var cor = personagem.Raridade?.Cor ?? "#9aa5b1";
+
         <div class="cartao resultado-cartao">
-            <div class="cartao-imagem" style="--cor-raridade:@(Model.Resultado.Raridade?.Cor ?? "#9aa5b1")">
-                <img src="@(string.IsNullOrEmpty(Model.Resultado.ImagemUrl) ? "/img/personagens/desconhecido.svg" : Model.Resultado.ImagemUrl)" alt="Imagem da personagem @Model.Resultado.Nome" />
+            <div class="cartao-imagem" style="--cor-raridade:@cor">
+                <img src="@(string.IsNullOrEmpty(personagem.ImagemUrl) ? "/img/personagens/desconhecido.svg" : personagem.ImagemUrl)" alt="Imagem da personagem @personagem.Nome" />
             </div>
             <div class="cartao-corpo">
-                <h3>Obtiveste: @Model.Resultado.Nome!</h3>
-                <span class="etiqueta-raridade" style="background:@(Model.Resultado.Raridade?.Cor ?? "#9aa5b1")">@(Model.Resultado.Raridade?.Nome ?? "Desconhecida")</span>
-                <p class="texto-suave">@Model.Resultado.Descricao</p>
-                <a class="botao botao-suave" asp-controller="Personagens" asp-action="Details" asp-route-id="@Model.Resultado.Id">Ver detalhes</a>
+                <h3>Obtiveste: @personagem.Nome!</h3>
+                <span class="etiqueta-raridade" style="background:@cor">@(personagem.Raridade?.Nome ?? "Desconhecida")</span>
+
+                @* Novidade ou repetida: a personagem entrou na coleção *@
+                <p class="texto-suave">
+                    @if (Model.Resultado.Novo)
+                    {
+                        <strong>Nova na tua coleção!</strong>
+                    }
+                    else
+                    {
+                        <text>Repetida — ficas com @Model.Resultado.Quantidade cópias.</text>
+                    }
+                    <br />
+                    Espaço da coleção: @Model.Resultado.Ocupado / @Model.Resultado.Capacidade
+                </p>
+
+                <p class="texto-suave">@personagem.Descricao</p>
+
+                <a class="botao botao-suave" asp-controller="Colecao" asp-action="Detalhes" asp-route-id="@personagem.Id">Ver na coleção</a>
             </div>
         </div>
     }

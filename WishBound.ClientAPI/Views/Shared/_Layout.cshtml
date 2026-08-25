@@ -33,6 +33,11 @@
             <a asp-controller="Home" asp-action="Index">Início</a>
             <a asp-controller="Personagens" asp-action="Index">Personagens</a>
             <a asp-controller="Invocacao" asp-action="Index">Invocação</a>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                @* A coleção é pessoal: só faz sentido com sessão iniciada *@
+                <a asp-controller="Colecao" asp-action="Index">Coleção</a>
+            }
             <a asp-controller="Invocacao" asp-action="Historico">Histórico</a>
             @if (User.IsInRole("Admin"))
             {

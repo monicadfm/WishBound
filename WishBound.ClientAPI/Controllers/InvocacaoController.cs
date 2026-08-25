@@ -9,7 +9,8 @@ namespace WishBound.ClientAPI.Controllers
     /// <summary>
     /// Página de invocação (gacha) e histórico de invocações.
     /// Requer sessão iniciada: cada invocação é registada em nome do
-    /// utilizador autenticado e o histórico mostrado é apenas o dele.
+    /// utilizador autenticado, entra na coleção dele e o histórico mostrado
+    /// é apenas o seu.
     /// </summary>
     [Authorize]
     public class InvocacaoController : Controller
@@ -48,11 +49,17 @@ namespace WishBound.ClientAPI.Controllers
             try
             {
                 modelo.Raridades = await _api.ObterRaridadesAsync();
-                modelo.Resultado = await _api.InvocarAsync(ObterUtilizadorId());
 
-                if (modelo.Resultado == null)
+                var (resultado, erro) = await _api.InvocarAsync(ObterUtilizadorId());
+                modelo.Resultado = resultado;
+
+                if (resultado == null)
                 {
-                    TempData["Erro"] = "A invocação falhou. Confirme que existem personagens na base de dados.";
+                    // A API explica o motivo (ex.: coleção cheia); só usamos a
+                    // mensagem genérica quando não vem nenhuma.
+                    TempData["Erro"] = string.IsNullOrWhiteSpace(erro)
+                        ? "A invocação falhou. Confirme que existem personagens na base de dados."
+                        : erro;
                 }
             }
             catch (Exception)

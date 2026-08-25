@@ -97,6 +97,11 @@ NOTAS
   (por omissão Server=.\SQLEXPRESS;Database=WishBound);
 - Endereço da API usado pelo site: WishBound.ClientAPI\appsettings.json
   (WishBoundApi:BaseUrl);
+- Coleção: cada invocação junta a personagem à coleção do utilizador
+  (as repetidas somam cópias) e cada cópia ocupa um lugar do
+  inventário (100 por omissão). Com a coleção cheia, a invocação é
+  recusada — libertar cópias repetidas na página "Coleção". A
+  expansão do inventário com moeda chega com a economia.
 - Segredos (Google, email, chave da API) ficam sempre no
   appsettings.Local.json de cada projeto, nunca no appsettings.json
   versionado.
