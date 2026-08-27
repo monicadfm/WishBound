@@ -8,8 +8,9 @@ namespace WishBound.ClientAPI.Controllers
 {
     /// <summary>
     /// Coleção pessoal do utilizador autenticado: lista com ordenação e
-    /// filtro de favoritos, detalhe de cada personagem, marcação de favoritos
-    /// e libertação de cópias repetidas.
+    /// filtro de favoritos, detalhe de cada personagem, marcação de favoritos,
+    /// libertação de cópias repetidas (que dá Moedas) e compra de mais
+    /// lugares para a coleção.
     /// Requer sessão iniciada — a coleção é sempre a do próprio.
     /// </summary>
     [Authorize]
@@ -118,6 +119,32 @@ namespace WishBound.ClientAPI.Controllers
             }
 
             return VoltarPara(voltar, personagemId, ordenar, favoritos);
+        }
+
+        // POST: /Colecao/Expandir  (comprar mais lugares)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Expandir(string? ordenar = null, bool favoritos = false)
+        {
+            try
+            {
+                var (sucesso, mensagem) = await _api.ExpandirInventarioAsync(ObterUtilizadorId());
+
+                if (sucesso)
+                {
+                    TempData["Sucesso"] = mensagem;
+                }
+                else
+                {
+                    TempData["Erro"] = mensagem;
+                }
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            return RedirectToAction(nameof(Index), new { ordenar, favoritos });
         }
 
         /// <summary>

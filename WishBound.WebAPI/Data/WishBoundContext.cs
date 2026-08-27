@@ -30,5 +30,17 @@ namespace WishBound.WebAPI.Data
         public DbSet<TokenRecuperacaoPassword> TokensRecuperacao { get; set; }
         public DbSet<ItemColecao> Colecoes { get; set; }
         public DbSet<Inventario> Inventarios { get; set; }
+        public DbSet<Carteira> Carteiras { get; set; }
+        public DbSet<TransacaoMoeda> TransacoesMoeda { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            base.OnModelCreating(modelBuilder);
+
+            // A carteira não tem chave própria: é identificada pelo par
+            // utilizador + tipo de moeda (chave composta na base de dados).
+            modelBuilder.Entity<Carteira>()
+                .HasKey(c => new { c.UtilizadorId, c.TipoMoedaId });
+        }
     }
 }

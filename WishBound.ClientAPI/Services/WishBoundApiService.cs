@@ -179,6 +179,17 @@ namespace WishBound.ClientAPI.Services
             return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
         }
 
+        /// <summary>UPDATE - compra mais lugares para a coleção, pagos em Moedas.</summary>
+        public async Task<(bool Sucesso, string Mensagem)> ExpandirInventarioAsync(int utilizadorId)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/colecao/expandir", new
+            {
+                UtilizadorId = utilizadorId
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
         // ---------- Conta e autenticação ----------
 
         /// <summary>Regista um novo utilizador. Devolve a resposta com o token de validação (modo dev).</summary>

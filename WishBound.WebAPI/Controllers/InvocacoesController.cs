@@ -230,15 +230,14 @@ namespace WishBound.WebAPI.Controllers
 
             if (inventario == null)
             {
-                inventario = new Inventario
-                {
-                    UtilizadorId = utilizadorId,
-                    CapacidadeBase = 100,
-                    CapacidadeExtra = 0
-                };
+                // INSERT idempotente: se dois pedidos chegarem ao mesmo tempo,
+                // o segundo não rebenta com erro de chave duplicada.
+                await _contexto.Database.ExecuteSqlAsync(
+                    $@"INSERT INTO InventarioUtilizador (UtilizadorId, CapacidadeBase, CapacidadeExtra)
+                       SELECT {utilizadorId}, 100, 0
+                       WHERE NOT EXISTS (SELECT 1 FROM InventarioUtilizador WHERE UtilizadorId = {utilizadorId})");
 
-                _contexto.Inventarios.Add(inventario);
-                await _contexto.SaveChangesAsync();
+                inventario = await _contexto.Inventarios.FirstAsync(i => i.UtilizadorId == utilizadorId);
             }
 
             return inventario;

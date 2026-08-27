@@ -18,6 +18,18 @@ namespace WishBound.ClientAPI.Models.Colecao
 
         public int PersonagensExistentes { get; set; }
 
+        /// <summary>Saldo em "Moedas" (ganham-se a libertar cópias repetidas).</summary>
+        public decimal SaldoMoedas { get; set; }
+
+        /// <summary>Preço da próxima expansão do inventário.</summary>
+        public decimal PrecoProximaExpansao { get; set; }
+
+        /// <summary>Lugares que a expansão acrescenta (10).</summary>
+        public int LugaresPorExpansao { get; set; }
+
+        /// <summary>Já tem Moedas suficientes para comprar a próxima expansão?</summary>
+        public bool PodeExpandir => PrecoProximaExpansao > 0 && SaldoMoedas >= PrecoProximaExpansao;
+
         /// <summary>Ordenação escolhida: "raridade" (omissão), "nome" ou "data".</summary>
         public string Ordenar { get; set; } = "raridade";
 

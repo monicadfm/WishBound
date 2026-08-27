@@ -100,8 +100,11 @@ NOTAS
 - Coleção: cada invocação junta a personagem à coleção do utilizador
   (as repetidas somam cópias) e cada cópia ocupa um lugar do
   inventário (100 por omissão). Com a coleção cheia, a invocação é
-  recusada — libertar cópias repetidas na página "Coleção". A
-  expansão do inventário com moeda chega com a economia.
+  recusada. Libertar cópias repetidas devolve espaço e dá "Moedas"
+  conforme a raridade (Comum 10 ... Mítico 250); com essas Moedas
+  compram-se mais 10 lugares de cada vez, com preço a subir a cada
+  compra (90, 180, 270...). Todos os movimentos ficam registados na
+  tabela TransacoesMoeda.
 - Segredos (Google, email, chave da API) ficam sempre no
   appsettings.Local.json de cada projeto, nunca no appsettings.json
   versionado.

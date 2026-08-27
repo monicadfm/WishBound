@@ -43,6 +43,15 @@ namespace WishBound.WebAPI.Models
 
         /// <summary>Total de personagens ativas na plataforma (para "7 de 8").</summary>
         public int PersonagensExistentes { get; set; }
+
+        /// <summary>Saldo do utilizador em "Moedas" (a moeda normal).</summary>
+        public decimal SaldoMoedas { get; set; }
+
+        /// <summary>Quanto custa a próxima expansão do inventário.</summary>
+        public decimal PrecoProximaExpansao { get; set; }
+
+        /// <summary>Lugares que cada expansão acrescenta.</summary>
+        public int LugaresPorExpansao { get; set; }
     }
 
     /// <summary>Marcar/desmarcar uma personagem como favorita.</summary>
@@ -71,5 +80,12 @@ namespace WishBound.WebAPI.Models
 
         /// <summary>Quantas cópias libertar (0 ou menos = todas as repetidas).</summary>
         public int Quantidade { get; set; } = 1;
+    }
+
+    /// <summary>Comprar mais lugares para a coleção, pagando em Moedas.</summary>
+    public class ExpandirPedido
+    {
+        [Required]
+        public int UtilizadorId { get; set; }
     }
 }

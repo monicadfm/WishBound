@@ -70,6 +70,14 @@
             line-height: 1;
         }
 
+        .linha-expansao {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 10px;
+        }
+
         .cartao-acoes {
             display: flex;
             gap: 8px;
@@ -90,18 +98,40 @@
             <h1 class="titulo-seccao">A minha coleção</h1>
             <p class="texto-suave">
                 @Model.PersonagensDistintas de @Model.PersonagensExistentes personagens diferentes.
-                As cópias repetidas também ocupam espaço.
+                As cópias repetidas também ocupam espaço — libertá-las dá Moedas,
+                e as Moedas compram mais lugares.
             </p>
         </div>
 
         <div class="capacidade @(Model.Cheia ? "capacidade-cheia" : "")">
-            <span class="texto-suave">Espaço: <strong>@Model.Ocupado / @Model.Capacidade</strong></span>
+            <span class="texto-suave">
+                Espaço: <strong>@Model.Ocupado / @Model.Capacidade</strong>
+                &middot; Moedas: <strong>@Model.SaldoMoedas.ToString("0")</strong>
+            </span>
             <div class="capacidade-barra">
                 <div class="capacidade-usado" style="width:@(Model.PercentagemOcupada)%"></div>
             </div>
+
             @if (Model.Cheia)
             {
-                <p class="texto-suave">Coleção cheia — liberte cópias repetidas para poder invocar.</p>
+                <p class="texto-suave">Coleção cheia — liberte repetidas ou compre mais lugares para poder invocar.</p>
+            }
+
+            @* Expansão do inventário paga em Moedas (ganhas ao libertar repetidas).
+               Sem preço não há dados da API (ex.: API em baixo): não mostra nada. *@
+            @if (Model.PrecoProximaExpansao > 0)
+            {
+            <form class="linha-expansao" method="post" asp-controller="Colecao" asp-action="Expandir">
+                <input type="hidden" name="ordenar" value="@Model.Ordenar" />
+                <input type="hidden" name="favoritos" value="@Model.ApenasFavoritos.ToString().ToLower()" />
+                <button type="submit" class="botao @(Model.PodeExpandir ? "botao-destaque" : "botao-suave")">
+                    +@Model.LugaresPorExpansao lugares por @Model.PrecoProximaExpansao.ToString("0") Moedas
+                </button>
+                @if (!Model.PodeExpandir)
+                {
+                    <span class="texto-suave">Faltam @((Model.PrecoProximaExpansao - Model.SaldoMoedas).ToString("0")) Moedas</span>
+                }
+            </form>
             }
         </div>
     </div>
@@ -177,7 +207,7 @@
                                     <input type="hidden" name="quantidade" value="1" />
                                     <input type="hidden" name="ordenar" value="@Model.Ordenar" />
                                     <input type="hidden" name="favoritos" value="@Model.ApenasFavoritos.ToString().ToLower()" />
-                                    <button type="submit" class="botao botao-suave" title="Devolve espaço ao inventário">
+                                    <button type="submit" class="botao botao-suave" title="Liberta espaço e dá Moedas conforme a raridade">
                                         Libertar repetida (@item.Repetidas)
                                     </button>
                                 </form>

@@ -8,8 +8,8 @@ namespace WishBound.WebAPI.Models
     /// uma linha por utilizador, criada no registo).
     ///
     /// A capacidade total é CapacidadeBase + CapacidadeExtra: a base é a que
-    /// vem com a conta (100) e a extra é a comprada com moeda (funcionalidade
-    /// da economia, ainda por implementar). Cada CÓPIA de personagem ocupa um
+    /// vem com a conta (100) e a extra é a comprada com Moedas na página da
+    /// coleção (+10 lugares de cada vez). Cada CÓPIA de personagem ocupa um
     /// lugar, por isso as repetidas também contam.
     /// </summary>
     [Table("InventarioUtilizador")]
