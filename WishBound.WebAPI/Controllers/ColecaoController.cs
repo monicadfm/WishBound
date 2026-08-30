@@ -45,15 +45,16 @@ namespace WishBound.WebAPI.Controllers
         /// <summary>
         /// Moedas dadas por cada cópia repetida libertada, conforme a ordem da
         /// raridade (1 = Comum ... 5 = Mítico). Uma repetida mítica vale muito
-        /// mais do que uma comum.
+        /// mais do que uma comum, mas nenhuma paga uma invocação sozinha
+        /// (cada invocação custa 10 Moedas).
         /// </summary>
         private static decimal ValorPorRepetida(int ordemRaridade) => ordemRaridade switch
         {
-            5 => 250m,
-            4 => 120m,
-            3 => 60m,
-            2 => 25m,
-            _ => 10m
+            5 => 30m,   // Mítico
+            4 => 15m,   // Lendário
+            3 => 10m,   // Épico
+            2 => 5m,    // Raro
+            _ => 1m     // Comum
         };
 
         // ------------------------------------------------------------
@@ -96,6 +97,18 @@ namespace WishBound.WebAPI.Controllers
 
                 var itens = await consulta.ToListAsync();
 
+                // Resumo das repetidas (para o botão "libertar todas"): conta
+                // SEMPRE a coleção inteira, mesmo com o filtro de favoritas.
+                var todas = await _contexto.Colecoes
+                    .Where(c => c.UtilizadorId == utilizadorId && c.Quantidade > 1)
+                    .Include(c => c.Personagem)
+                        .ThenInclude(p => p!.Raridade)
+                    .ToListAsync();
+
+                int totalRepetidas = todas.Sum(c => c.Quantidade - 1);
+                decimal moedasPorRepetidas = todas.Sum(
+                    c => ValorPorRepetida(c.Personagem?.Raridade?.Ordem ?? 1) * (c.Quantidade - 1));
+
                 var inventario = await ObterInventarioAsync(utilizadorId);
 
                 // O espaço ocupado conta TODAS as cópias, incluindo as repetidas
@@ -115,7 +128,9 @@ namespace WishBound.WebAPI.Controllers
                     PersonagensExistentes = await _contexto.Personagens.CountAsync(p => p.IsAtivo),
                     SaldoMoedas = await ObterSaldoAsync(utilizadorId),
                     PrecoProximaExpansao = PrecoDaProximaExpansao(inventario),
-                    LugaresPorExpansao = LugaresPorExpansao
+                    LugaresPorExpansao = LugaresPorExpansao,
+                    TotalRepetidas = totalRepetidas,
+                    MoedasPorTodasRepetidas = moedasPorRepetidas
                 });
             }
             catch (Exception ex)
@@ -274,6 +289,88 @@ namespace WishBound.WebAPI.Controllers
                     : "Libertadas " + aLibertar + " cópias repetidas de " + (item.Personagem?.Nome ?? "personagem") + ".";
 
                 return Ok(quantas + " Ganhou " + ganho.ToString("0") + " Moedas (saldo: " + saldo.ToString("0") + ").");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Erro ao libertar as cópias repetidas: " + ex.Message);
+            }
+        }
+
+        // ------------------------------------------------------------
+        // POST: api/colecao/libertar-tudo  (UPDATE - todas as repetidas)
+        // ------------------------------------------------------------
+        // Liberta de uma vez as cópias repetidas de TODAS as personagens,
+        // mantendo sempre uma de cada. Paga as Moedas correspondentes.
+        [HttpPost("libertar-tudo")]
+        public async Task<IActionResult> LibertarTodosOsDuplicados(ExpandirPedido pedido)
+        {
+            try
+            {
+                if (pedido.UtilizadorId <= 0)
+                {
+                    return BadRequest("É necessário indicar o utilizador.");
+                }
+
+                var comRepetidas = await _contexto.Colecoes
+                    .Where(c => c.UtilizadorId == pedido.UtilizadorId && c.Quantidade > 1)
+                    .Include(c => c.Personagem)
+                        .ThenInclude(p => p!.Raridade)
+                    .ToListAsync();
+
+                if (comRepetidas.Count == 0)
+                {
+                    return BadRequest("Não tem cópias repetidas para libertar.");
+                }
+
+                await GarantirCarteiraAsync(pedido.UtilizadorId);
+
+                await using var transacao = await _contexto.Database.BeginTransactionAsync();
+
+                int libertadas = 0;
+                decimal ganho = 0m;
+
+                foreach (var item in comRepetidas)
+                {
+                    int aLibertar = item.Quantidade - 1;
+
+                    // Condicional, como no libertar de uma só personagem: se
+                    // entretanto chegou uma invocação, a linha não é tocada.
+                    int linhas = await _contexto.Database.ExecuteSqlAsync(
+                        $"UPDATE ColecaoUtilizador SET Quantidade = Quantidade - {aLibertar} WHERE ColecaoId = {item.Id} AND Quantidade > {aLibertar}");
+
+                    if (linhas == 1)
+                    {
+                        libertadas += aLibertar;
+                        ganho += ValorPorRepetida(item.Personagem?.Raridade?.Ordem ?? 1) * aLibertar;
+                    }
+                }
+
+                if (libertadas == 0)
+                {
+                    return BadRequest("Não tem cópias repetidas para libertar.");
+                }
+
+                await _contexto.Database.ExecuteSqlAsync(
+                    $"UPDATE CarteirasUtilizador SET Saldo = Saldo + {ganho} WHERE UtilizadorId = {pedido.UtilizadorId} AND TipoMoedaId = {MoedasId}");
+
+                _contexto.TransacoesMoeda.Add(new TransacaoMoeda
+                {
+                    UtilizadorId = pedido.UtilizadorId,
+                    TipoMoedaId = MoedasId,
+                    Montante = ganho,
+                    TipoTransacao = TransacaoMoeda.TipoGanho,
+                    Origem = "Libertar todas as repetidas",
+                    DataCriacao = DateTime.UtcNow
+                });
+
+                await _contexto.SaveChangesAsync();
+                await transacao.CommitAsync();
+
+                decimal saldo = await ObterSaldoAsync(pedido.UtilizadorId);
+
+                return Ok("Libertadas " + libertadas + (libertadas == 1 ? " cópia repetida" : " cópias repetidas") +
+                          " de " + comRepetidas.Count + (comRepetidas.Count == 1 ? " personagem" : " personagens") +
+                          ". Ganhou " + ganho.ToString("0") + " Moedas (saldo: " + saldo.ToString("0") + ").");
             }
             catch (Exception ex)
             {

@@ -96,16 +96,40 @@ namespace WishBound.ClientAPI.Services
 
         // ---------- Invocações (gacha) ----------
 
+        /// <summary>SELECT - banners a decorrer (o permanente e os de evento).</summary>
+        public async Task<List<Banner>> ObterBannersAsync()
+        {
+            return await _http.GetFromJsonAsync<List<Banner>>("api/banners")
+                   ?? new List<Banner>();
+        }
+
+        /// <summary>SELECT - contadores de garantia (pity) do utilizador num banner.</summary>
+        public async Task<EstadoPity?> ObterEstadoPityAsync(int utilizadorId, int bannerId)
+        {
+            var resposta = await _http.GetAsync(
+                "api/invocacoes/estado?utilizadorId=" + utilizadorId + "&bannerId=" + bannerId);
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await resposta.Content.ReadFromJsonAsync<EstadoPity>();
+        }
+
         /// <summary>
-        /// Realiza uma invocação em nome do utilizador autenticado. Devolve o
-        /// resultado (personagem, se é nova ou repetida, espaço ocupado) ou a
-        /// mensagem de erro da API — por exemplo quando a coleção está cheia.
+        /// Realiza 1 ou 10 invocações em nome do utilizador autenticado, no
+        /// banner escolhido. Devolve o resultado ou a mensagem de erro da API
+        /// — por exemplo quando não há espaço na coleção.
         /// </summary>
-        public async Task<(ResultadoInvocacao? Resultado, string? Erro)> InvocarAsync(int utilizadorId)
+        public async Task<(ResultadoInvocacao? Resultado, string? Erro)> InvocarAsync(
+            int utilizadorId, int bannerId, int quantidade)
         {
             var resposta = await _http.PostAsJsonAsync("api/invocacoes", new
             {
-                UtilizadorId = utilizadorId
+                UtilizadorId = utilizadorId,
+                BannerId = bannerId,
+                Quantidade = quantidade
             });
 
             if (!resposta.IsSuccessStatusCode)
@@ -174,6 +198,17 @@ namespace WishBound.ClientAPI.Services
                 UtilizadorId = utilizadorId,
                 PersonagemId = personagemId,
                 Quantidade = quantidade
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>UPDATE - liberta de uma vez as repetidas de todas as personagens.</summary>
+        public async Task<(bool Sucesso, string Mensagem)> LibertarTodosOsDuplicadosAsync(int utilizadorId)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/colecao/libertar-tudo", new
+            {
+                UtilizadorId = utilizadorId
             });
 
             return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());

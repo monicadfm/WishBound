@@ -11,6 +11,9 @@ namespace WishBound.ClientAPI.Controllers
     /// Requer sessão iniciada: cada invocação é registada em nome do
     /// utilizador autenticado, entra na coleção dele e o histórico mostrado
     /// é apenas o seu.
+    ///
+    /// O banner deixou de estar fixo: a página mostra os que estão a decorrer
+    /// e as garantias (pity) são contadas por banner.
     /// </summary>
     [Authorize]
     public class InvocacaoController : Controller
@@ -23,13 +26,13 @@ namespace WishBound.ClientAPI.Controllers
         }
 
         // Página 3: Invocação
-        public async Task<IActionResult> Index()
+        public async Task<IActionResult> Index(int bannerId = 0)
         {
-            var modelo = new InvocacaoViewModel();
+            var modelo = new InvocacaoViewModel { BannerId = bannerId };
 
             try
             {
-                modelo.Raridades = await _api.ObterRaridadesAsync();
+                await PreencherAsync(modelo);
             }
             catch (Exception)
             {
@@ -42,25 +45,32 @@ namespace WishBound.ClientAPI.Controllers
         // Botão "Invocar" (POST para evitar invocações acidentais por refresh/link)
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Invocar()
+        public async Task<IActionResult> Invocar(int bannerId = 0, int quantidade = 1)
         {
-            var modelo = new InvocacaoViewModel();
+            // Só existem invocações simples ou de 10
+            quantidade = quantidade == 10 ? 10 : 1;
+
+            var modelo = new InvocacaoViewModel { BannerId = bannerId };
 
             try
             {
-                modelo.Raridades = await _api.ObterRaridadesAsync();
-
-                var (resultado, erro) = await _api.InvocarAsync(ObterUtilizadorId());
+                var (resultado, erro) = await _api.InvocarAsync(ObterUtilizadorId(), bannerId, quantidade);
                 modelo.Resultado = resultado;
 
                 if (resultado == null)
                 {
-                    // A API explica o motivo (ex.: coleção cheia); só usamos a
-                    // mensagem genérica quando não vem nenhuma.
+                    // A API explica o motivo (ex.: sem espaço na coleção); só
+                    // usamos a mensagem genérica quando não vem nenhuma.
                     TempData["Erro"] = string.IsNullOrWhiteSpace(erro)
                         ? "A invocação falhou. Confirme que existem personagens na base de dados."
                         : erro;
                 }
+                else
+                {
+                    modelo.BannerId = resultado.BannerId;
+                }
+
+                await PreencherAsync(modelo);
             }
             catch (Exception)
             {
@@ -82,6 +92,27 @@ namespace WishBound.ClientAPI.Controllers
             {
                 TempData["Erro"] = "Não foi possível obter o histórico. Verifique se a WishBound.WebAPI está em execução.";
                 return View(new List<Invocacao>());
+            }
+        }
+
+        /// <summary>
+        /// Carrega o que a página precisa: banners a decorrer, probabilidades
+        /// e o estado das garantias no banner escolhido.
+        /// </summary>
+        private async Task PreencherAsync(InvocacaoViewModel modelo)
+        {
+            modelo.Banners = await _api.ObterBannersAsync();
+            modelo.Raridades = await _api.ObterRaridadesAsync();
+
+            // Sem escolha (ou com uma escolha que já não existe), fica o primeiro
+            if (modelo.Banners.Count > 0 && !modelo.Banners.Any(b => b.Id == modelo.BannerId))
+            {
+                modelo.BannerId = modelo.Banners[0].Id;
+            }
+
+            if (modelo.BannerId > 0)
+            {
+                modelo.Estado = await _api.ObterEstadoPityAsync(ObterUtilizadorId(), modelo.BannerId);
             }
         }
 

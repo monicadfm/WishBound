@@ -32,6 +32,9 @@ namespace WishBound.WebAPI.Data
         public DbSet<Inventario> Inventarios { get; set; }
         public DbSet<Carteira> Carteiras { get; set; }
         public DbSet<TransacaoMoeda> TransacoesMoeda { get; set; }
+        public DbSet<Banner> Banners { get; set; }
+        public DbSet<BannerPersonagem> BannerPersonagens { get; set; }
+        public DbSet<Pity> Pity { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -41,6 +44,14 @@ namespace WishBound.WebAPI.Data
             // utilizador + tipo de moeda (chave composta na base de dados).
             modelBuilder.Entity<Carteira>()
                 .HasKey(c => new { c.UtilizadorId, c.TipoMoedaId });
+
+            // Personagens de um banner: chave banner + personagem
+            modelBuilder.Entity<BannerPersonagem>()
+                .HasKey(bp => new { bp.BannerId, bp.PersonagemId });
+
+            // Contadores de pity: um por utilizador e banner
+            modelBuilder.Entity<Pity>()
+                .HasKey(p => new { p.UtilizadorId, p.BannerId });
         }
     }
 }

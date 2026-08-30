@@ -36,6 +36,12 @@ namespace WishBound.WebAPI.Controllers
         private const string PrefixoValidacaoEmail = "EV.";
         private const string PrefixoRecuperacaoPassword = "RP.";
 
+        /// <summary>Moeda normal (TiposMoeda: 1 = Gemas, 2 = Moedas).</summary>
+        private const int MoedasId = 2;
+
+        /// <summary>Moedas oferecidas a cada conta nova (dá para 50 invocações).</summary>
+        private const int SaldoInicialMoedas = 500;
+
         private static readonly TimeSpan ValidadeTokenEmail = TimeSpan.FromHours(24);
         private static readonly TimeSpan ValidadeTokenRecuperacao = TimeSpan.FromHours(1);
 
@@ -95,8 +101,24 @@ namespace WishBound.WebAPI.Controllers
                 // ainda não têm entidades EF mapeadas.
                 await _contexto.Database.ExecuteSqlAsync(
                     $"INSERT INTO InventarioUtilizador (UtilizadorId, CapacidadeBase, CapacidadeExtra) VALUES ({utilizador.Id}, 100, 0)");
+                // Carteiras: a conta nasce com 500 Moedas (TipoMoedaId 2) para
+                // poder invocar desde o início; as Gemas ficam a zero.
                 await _contexto.Database.ExecuteSqlAsync(
-                    $"INSERT INTO CarteirasUtilizador (UtilizadorId, TipoMoedaId, Saldo) SELECT {utilizador.Id}, TipoMoedaId, 0 FROM TiposMoeda");
+                    $@"INSERT INTO CarteirasUtilizador (UtilizadorId, TipoMoedaId, Saldo)
+                       SELECT {utilizador.Id}, TipoMoedaId,
+                              CASE WHEN TipoMoedaId = {MoedasId} THEN {SaldoInicialMoedas} ELSE 0 END
+                       FROM TiposMoeda");
+
+                _contexto.TransacoesMoeda.Add(new TransacaoMoeda
+                {
+                    UtilizadorId = utilizador.Id,
+                    TipoMoedaId = MoedasId,
+                    Montante = SaldoInicialMoedas,
+                    TipoTransacao = TransacaoMoeda.TipoGanho,
+                    Origem = "Bonus inicial",
+                    DataCriacao = DateTime.UtcNow
+                });
+                await _contexto.SaveChangesAsync();
 
                 // Token de validação de email
                 string token = await CriarTokenAsync(utilizador.Id, PrefixoValidacaoEmail, ValidadeTokenEmail);
@@ -249,8 +271,23 @@ namespace WishBound.WebAPI.Controllers
 
                 await _contexto.Database.ExecuteSqlAsync(
                     $"INSERT INTO InventarioUtilizador (UtilizadorId, CapacidadeBase, CapacidadeExtra) VALUES ({novo.Id}, 100, 0)");
+                // Também aqui a conta nasce com 500 Moedas
                 await _contexto.Database.ExecuteSqlAsync(
-                    $"INSERT INTO CarteirasUtilizador (UtilizadorId, TipoMoedaId, Saldo) SELECT {novo.Id}, TipoMoedaId, 0 FROM TiposMoeda");
+                    $@"INSERT INTO CarteirasUtilizador (UtilizadorId, TipoMoedaId, Saldo)
+                       SELECT {novo.Id}, TipoMoedaId,
+                              CASE WHEN TipoMoedaId = {MoedasId} THEN {SaldoInicialMoedas} ELSE 0 END
+                       FROM TiposMoeda");
+
+                _contexto.TransacoesMoeda.Add(new TransacaoMoeda
+                {
+                    UtilizadorId = novo.Id,
+                    TipoMoedaId = MoedasId,
+                    Montante = SaldoInicialMoedas,
+                    TipoTransacao = TransacaoMoeda.TipoGanho,
+                    Origem = "Bonus inicial",
+                    DataCriacao = DateTime.UtcNow
+                });
+                await _contexto.SaveChangesAsync();
 
                 await transacao.CommitAsync();
 

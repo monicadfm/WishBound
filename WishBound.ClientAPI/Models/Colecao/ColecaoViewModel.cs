@@ -27,6 +27,15 @@ namespace WishBound.ClientAPI.Models.Colecao
         /// <summary>Lugares que a expansão acrescenta (10).</summary>
         public int LugaresPorExpansao { get; set; }
 
+        /// <summary>Cópias repetidas que tem ao todo.</summary>
+        public int TotalRepetidas { get; set; }
+
+        /// <summary>Moedas que ganharia se libertasse todas as repetidas.</summary>
+        public decimal MoedasPorTodasRepetidas { get; set; }
+
+        /// <summary>Há repetidas para libertar de uma vez?</summary>
+        public bool TemRepetidas => TotalRepetidas > 0;
+
         /// <summary>Já tem Moedas suficientes para comprar a próxima expansão?</summary>
         public bool PodeExpandir => PrecoProximaExpansao > 0 && SaldoMoedas >= PrecoProximaExpansao;
 

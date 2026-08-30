@@ -17,7 +17,11 @@ REQUISITOS
 2. Database\Migracao01.sql              -> insere as 8 personagens, o utilizador
                                            "Sistema" (Id 1) e o Banner Permanente (Id 1);
 3. Database\Usados\Autenticacao.sql     -> corrige a restrição UNIQUE de GoogleId
-                                           e cria a conta de administrador.
+                                           e cria a conta de administrador;
+4. Database\Migracao02.sql              -> acrescenta o contador ContadorEpico
+                                           à tabela PityUtilizador (garantias do
+                                           sistema de invocação) e oferece 500
+                                           Moedas às contas já existentes.
 
 A aplicação NÃO cria nem altera a base de dados ("database first").
 
@@ -97,11 +101,21 @@ NOTAS
   (por omissão Server=.\SQLEXPRESS;Database=WishBound);
 - Endereço da API usado pelo site: WishBound.ClientAPI\appsettings.json
   (WishBoundApi:BaseUrl);
+- Invocação: a página deixa escolher o banner (por agora só o
+  Permanente) e invocar 1 ou 10 de cada vez. Cada invocação custa 10
+  Moedas (a x10 custa 100); cada conta nova começa com 500 Moedas e
+  ganham-se mais a libertar cópias repetidas na Coleção. Garantias contadas por
+  utilizador e por banner: uma Épica a cada 10 invocações sem nenhuma
+  (uma x10 traz sempre pelo menos uma) e uma Lendária/Mítica à 90.ª —
+  até à 80.ª valem as probabilidades normais, da 81.ª em diante sobem
+  10 pontos por invocação até à garantia. Uma x10 precisa de 10
+  lugares livres na coleção.
 - Coleção: cada invocação junta a personagem à coleção do utilizador
   (as repetidas somam cópias) e cada cópia ocupa um lugar do
   inventário (100 por omissão). Com a coleção cheia, a invocação é
   recusada. Libertar cópias repetidas devolve espaço e dá "Moedas"
-  conforme a raridade (Comum 10 ... Mítico 250); com essas Moedas
+  conforme a raridade (Comum 1, Raro 5, Épico 10, Lendário 15,
+  Mítico 30); com essas Moedas
   compram-se mais 10 lugares de cada vez, com preço a subir a cada
   compra (90, 180, 270...). Todos os movimentos ficam registados na
   tabela TransacoesMoeda.

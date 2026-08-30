@@ -52,6 +52,12 @@ namespace WishBound.WebAPI.Models
 
         /// <summary>Lugares que cada expansão acrescenta.</summary>
         public int LugaresPorExpansao { get; set; }
+
+        /// <summary>Cópias repetidas que o utilizador tem ao todo.</summary>
+        public int TotalRepetidas { get; set; }
+
+        /// <summary>Moedas que ganharia se libertasse todas as repetidas.</summary>
+        public decimal MoedasPorTodasRepetidas { get; set; }
     }
 
     /// <summary>Marcar/desmarcar uma personagem como favorita.</summary>

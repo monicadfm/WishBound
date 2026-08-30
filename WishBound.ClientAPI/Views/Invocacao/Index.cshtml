@@ -3,19 +3,106 @@
     ViewData["Title"] = "Invocação";
 }
 
-@* ESTILO LOCAL: animação usada apenas nesta página *@
+@* ESTILO LOCAL: animação e grelha de resultados usadas só nesta página *@
 @section Estilos {
     <style>
-        /* Estilo local da página de invocação */
         .invocacao-zona {
             text-align: center;
-            padding: 40px 20px 10px;
+            padding: 30px 20px 10px;
+        }
+
+        .escolha-banner {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 0 auto 22px;
+        }
+
+        .banner-opcao {
+            border: 1px solid rgba(255, 255, 255, .16);
+            border-radius: 10px;
+            padding: 10px 16px;
+            text-align: left;
+            min-width: 190px;
+        }
+
+        .banner-opcao.ativo {
+            border-color: #6d5bd0;
+            box-shadow: 0 0 0 1px #6d5bd0 inset;
+        }
+
+        .banner-opcao strong {
+            display: block;
+        }
+
+        .garantias {
+            max-width: 420px;
+            margin: 0 auto 24px;
+            text-align: left;
+        }
+
+        .garantia-barra {
+            height: 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, .12);
+            overflow: hidden;
+            margin: 6px 0 12px;
+        }
+
+        .garantia-usada {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #6d5bd0, #b28cf0);
+        }
+
+        .garantia-perto .garantia-usada {
+            background: linear-gradient(90deg, #F1C40F, #E74C3C);
+        }
+
+        .botoes-invocar {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            flex-wrap: wrap;
         }
 
         .resultado-cartao {
             margin: 30px auto 0;
             max-width: 340px;
             animation: aparecer 0.8s ease-out;
+        }
+
+        .grelha-resultados {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 14px;
+            margin: 28px auto 0;
+            max-width: 820px;
+            text-align: left;
+        }
+
+        .resultado-mini {
+            animation: aparecer 0.6s ease-out;
+        }
+
+        .marca-novo, .marca-pity {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 2px 8px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 6px;
+        }
+
+        .marca-novo {
+            background: #2f8f5b;
+            color: #fff;
+        }
+
+        .marca-pity {
+            background: #F1C40F;
+            color: #2b2b2b;
         }
 
         @@keyframes aparecer {
@@ -38,50 +125,158 @@
 
 <section class="invocacao-zona">
     <h1 class="titulo-seccao">Invocação</h1>
-    <p class="texto-suave">
-        Pede um desejo e invoca uma personagem aleatória.
-        Cada invocação fica registada no teu histórico pessoal e a personagem
-        entra na tua coleção (operação INSERT através da WebAPI).
-    </p>
 
-    <form method="post" asp-controller="Invocacao" asp-action="Invocar">
-        <button type="submit" class="botao botao-destaque botao-grande">&#10024; Invocar personagem</button>
-    </form>
-
-    @if (Model.Resultado?.Personagem != null)
+    @* ----- Escolha do banner (já não há banner fixo no código) ----- *@
+    @if (Model.Banners.Count > 0)
     {
-        var personagem = Model.Resultado.Personagem;
-        var cor = personagem.Raridade?.Cor ?? "#9aa5b1";
-
-        <div class="cartao resultado-cartao">
-            <div class="cartao-imagem" style="--cor-raridade:@cor">
-                <img src="@(string.IsNullOrEmpty(personagem.ImagemUrl) ? "/img/personagens/desconhecido.svg" : personagem.ImagemUrl)" alt="Imagem da personagem @personagem.Nome" />
-            </div>
-            <div class="cartao-corpo">
-                <h3>Obtiveste: @personagem.Nome!</h3>
-                <span class="etiqueta-raridade" style="background:@cor">@(personagem.Raridade?.Nome ?? "Desconhecida")</span>
-
-                @* Novidade ou repetida: a personagem entrou na coleção *@
-                <p class="texto-suave">
-                    @if (Model.Resultado.Novo)
-                    {
-                        <strong>Nova na tua coleção!</strong>
-                    }
-                    else
-                    {
-                        <text>Repetida — ficas com @Model.Resultado.Quantidade cópias.</text>
-                    }
-                    <br />
-                    Espaço da coleção: @Model.Resultado.Ocupado / @Model.Resultado.Capacidade
-                </p>
-
-                <p class="texto-suave">@personagem.Descricao</p>
-
-                <a class="botao botao-suave" asp-controller="Colecao" asp-action="Detalhes" asp-route-id="@personagem.Id">Ver na coleção</a>
-            </div>
+        <div class="escolha-banner">
+            @foreach (var banner in Model.Banners)
+            {
+                <a class="banner-opcao @(banner.Id == Model.BannerId ? "ativo" : "")"
+                   asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@banner.Id">
+                    <strong>@banner.Nome</strong>
+                    <span class="texto-suave">
+                        @banner.TotalPersonagens personagens
+                        @if (!banner.Permanente)
+                        {
+                            <text>&middot; até @banner.DataFim.ToString("dd/MM/yyyy")</text>
+                        }
+                    </span>
+                </a>
+            }
         </div>
     }
 
+    <p class="texto-suave">
+        Pede um desejo e invoca personagens aleatórias.
+        Cada invocação custa @(Model.Estado?.CustoInvocacao.ToString("0") ?? "10") Moedas,
+        fica registada no teu histórico e a personagem entra na tua coleção.
+    </p>
+
+    @if (Model.Estado != null)
+    {
+        <p class="texto-suave">
+            Tens <strong>@Model.Estado.SaldoMoedas.ToString("0") Moedas</strong>.
+            @if (!Model.Estado.PodeInvocar)
+            {
+                <text>Liberta cópias repetidas na Coleção para ganhar mais.</text>
+            }
+        </p>
+    }
+
+    @* ----- Contadores de garantia (pity) neste banner ----- *@
+    @if (Model.Estado != null)
+    {
+        <div class="garantias">
+            <span class="texto-suave">
+                Garantia de Lendária/Mítica:
+                <strong>@Model.Estado.ContadorLendario / @Model.Estado.LimiteLendario</strong>
+                (faltam @Model.Estado.FaltamParaLendario)
+            </span>
+            <div class="garantia-barra @(Model.Estado.EmSoftPity ? "garantia-perto" : "")">
+                <div class="garantia-usada" style="width:@(Model.Estado.PercentagemLendario)%"></div>
+            </div>
+
+            @if (Model.Estado.EmSoftPity)
+            {
+                <p class="texto-suave">
+                    Estás na zona em que a probabilidade sobe a cada invocação
+                    (a partir da @(Model.Estado.InicioSoftPity).ª).
+                </p>
+            }
+
+            <span class="texto-suave">
+                Garantia de Épica: <strong>@Model.Estado.ContadorEpico / @Model.Estado.LimiteEpico</strong>
+                (faltam @Model.Estado.FaltamParaEpico)
+            </span>
+        </div>
+    }
+
+    @* ----- Botões: 1 ou 10 de cada vez ----- *@
+    <form class="botoes-invocar" method="post" asp-controller="Invocacao" asp-action="Invocar">
+        <input type="hidden" name="bannerId" value="@Model.BannerId" />
+        <button type="submit" name="quantidade" value="1" class="botao botao-destaque botao-grande">
+            &#10024; Invocar (@(Model.Estado?.CustoInvocacao.ToString("0") ?? "10") Moedas)
+        </button>
+        <button type="submit" name="quantidade" value="10" class="botao botao-suave botao-grande">
+            &#10024; Invocar x10 (@(Model.Estado?.CustoDez.ToString("0") ?? "100") Moedas)
+        </button>
+    </form>
+
+    @* ----- Resultado ----- *@
+    @if (Model.Resultado != null && Model.Resultado.Personagens.Count == 1)
+    {
+        var obtida = Model.Resultado.Personagens[0];
+
+        <div class="cartao resultado-cartao">
+            <div class="cartao-imagem" style="--cor-raridade:@obtida.Cor">
+                <img src="@obtida.Imagem" alt="Imagem da personagem @obtida.Personagem?.Nome" />
+            </div>
+            <div class="cartao-corpo">
+                <h3>Obtiveste: @(obtida.Personagem?.Nome)!</h3>
+                <span class="etiqueta-raridade" style="background:@obtida.Cor">@(obtida.Personagem?.Raridade?.Nome ?? "Desconhecida")</span>
+
+                <p class="texto-suave">
+                    @if (obtida.Novo)
+                    {
+                        <span class="marca-novo">NOVA</span>
+                    }
+                    @if (obtida.PityAtivado)
+                    {
+                        <span class="marca-pity">GARANTIA</span>
+                    }
+                    @if (!obtida.Novo)
+                    {
+                        <text>Repetida — ficas com @obtida.Quantidade cópias.</text>
+                    }
+                    <br />
+                    Espaço da coleção: @Model.Resultado.Ocupado / @Model.Resultado.Capacidade
+                    &middot; saldo: @Model.Resultado.SaldoMoedas.ToString("0") Moedas
+                </p>
+
+                <a class="botao botao-suave" asp-controller="Colecao" asp-action="Detalhes" asp-route-id="@obtida.Personagem?.Id">Ver na coleção</a>
+            </div>
+        </div>
+    }
+    else if (Model.Resultado != null && Model.Resultado.Personagens.Count > 1)
+    {
+        <p class="texto-suave">
+            @Model.Resultado.Personagens.Count invocações em @Model.Resultado.BannerNome &middot;
+            @Model.Resultado.CustoTotal.ToString("0") Moedas gastas (saldo: @Model.Resultado.SaldoMoedas.ToString("0")) &middot;
+            espaço da coleção: @Model.Resultado.Ocupado / @Model.Resultado.Capacidade
+        </p>
+
+        <div class="grelha-resultados">
+            @foreach (var obtida in Model.Resultado.Personagens)
+            {
+                <div class="cartao resultado-mini">
+                    <div class="cartao-imagem" style="--cor-raridade:@obtida.Cor">
+                        <img src="@obtida.Imagem" alt="Imagem da personagem @obtida.Personagem?.Nome" />
+                    </div>
+                    <div class="cartao-corpo">
+                        <h3>@obtida.Personagem?.Nome</h3>
+                        <span class="etiqueta-raridade" style="background:@obtida.Cor">@(obtida.Personagem?.Raridade?.Nome ?? "Desconhecida")</span>
+                        <p class="texto-suave">
+                            @if (obtida.Novo)
+                            {
+                                <span class="marca-novo">NOVA</span>
+                            }
+                            @if (obtida.PityAtivado)
+                            {
+                                <span class="marca-pity">GARANTIA</span>
+                            }
+                            @if (!obtida.Novo)
+                            {
+                                <text>x@(obtida.Quantidade)</text>
+                            }
+                        </p>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    @* ----- Probabilidades e regras das garantias ----- *@
     @if (Model.Raridades.Count > 0)
     {
         <table class="tabela tabela-probabilidades">
@@ -102,5 +297,12 @@
                 }
             </tbody>
         </table>
+
+        <p class="texto-suave" style="max-width:480px;margin:14px auto 0">
+            Garantias: uma Épica (ou melhor) a cada 10 invocações sem nenhuma —
+            por isso uma invocação x10 traz sempre pelo menos uma Épica — e uma
+            Lendária ou Mítica à 90.ª. Até à 80.ª as probabilidades são as da
+            tabela; a partir da 81.ª sobem a cada invocação até à garantia.
+        </p>
     }
 </section>

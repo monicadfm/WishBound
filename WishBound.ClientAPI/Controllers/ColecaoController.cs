@@ -121,6 +121,32 @@ namespace WishBound.ClientAPI.Controllers
             return VoltarPara(voltar, personagemId, ordenar, favoritos);
         }
 
+        // POST: /Colecao/LibertarTudo  (todas as repetidas de uma vez)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> LibertarTudo(string? ordenar = null, bool favoritos = false)
+        {
+            try
+            {
+                var (sucesso, mensagem) = await _api.LibertarTodosOsDuplicadosAsync(ObterUtilizadorId());
+
+                if (sucesso)
+                {
+                    TempData["Sucesso"] = mensagem;
+                }
+                else
+                {
+                    TempData["Erro"] = mensagem;
+                }
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            return RedirectToAction(nameof(Index), new { ordenar, favoritos });
+        }
+
         // POST: /Colecao/Expandir  (comprar mais lugares)
         [HttpPost]
         [ValidateAntiForgeryToken]

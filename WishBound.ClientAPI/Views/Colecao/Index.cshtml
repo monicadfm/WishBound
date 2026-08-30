@@ -117,6 +117,20 @@
                 <p class="texto-suave">Coleção cheia — liberte repetidas ou compre mais lugares para poder invocar.</p>
             }
 
+            @* Libertar de uma vez as repetidas de todas as personagens *@
+            @if (Model.TemRepetidas)
+            {
+                <form class="linha-expansao" method="post" asp-controller="Colecao" asp-action="LibertarTudo">
+                    <input type="hidden" name="ordenar" value="@Model.Ordenar" />
+                    <input type="hidden" name="favoritos" value="@Model.ApenasFavoritos.ToString().ToLower()" />
+                    <button type="submit" class="botao botao-suave"
+                            title="Fica sempre com uma cópia de cada personagem">
+                        Libertar todas as repetidas (@Model.TotalRepetidas)
+                    </button>
+                    <span class="texto-suave">+@Model.MoedasPorTodasRepetidas.ToString("0") Moedas</span>
+                </form>
+            }
+
             @* Expansão do inventário paga em Moedas (ganhas ao libertar repetidas).
                Sem preço não há dados da API (ex.: API em baixo): não mostra nada. *@
             @if (Model.PrecoProximaExpansao > 0)
