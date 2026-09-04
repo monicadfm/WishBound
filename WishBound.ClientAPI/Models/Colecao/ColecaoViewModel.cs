@@ -33,6 +33,13 @@ namespace WishBound.ClientAPI.Models.Colecao
         /// <summary>Moedas que ganharia se libertasse todas as repetidas.</summary>
         public decimal MoedasPorTodasRepetidas { get; set; }
 
+        /// <summary>Interações do sistema de amizade que ainda tem hoje.</summary>
+        public int InteracoesRestantes { get; set; }
+
+        public int InteracoesPorDia { get; set; } = 3;
+
+        public bool TemInteracoes => InteracoesRestantes > 0;
+
         /// <summary>Há repetidas para libertar de uma vez?</summary>
         public bool TemRepetidas => TotalRepetidas > 0;
 

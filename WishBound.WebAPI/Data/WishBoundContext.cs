@@ -35,10 +35,33 @@ namespace WishBound.WebAPI.Data
         public DbSet<Banner> Banners { get; set; }
         public DbSet<BannerPersonagem> BannerPersonagens { get; set; }
         public DbSet<Pity> Pity { get; set; }
+        public DbSet<TipoMoeda> TiposMoeda { get; set; }
+        public DbSet<RecompensaEvento> RecompensasEvento { get; set; }
+        public DbSet<ParticipacaoEvento> ParticipacoesEventos { get; set; }
+
+        // Sistema de amizade (Migracao04)
+        public DbSet<NivelAmizade> NiveisAmizade { get; set; }
+        public DbSet<Emblema> Emblemas { get; set; }
+        public DbSet<EmblemaUtilizador> EmblemasUtilizador { get; set; }
+        public DbSet<Titulo> Titulos { get; set; }
+        public DbSet<TituloUtilizador> TitulosUtilizador { get; set; }
+        public DbSet<MolduraPerfil> MoldurasPerfil { get; set; }
+        public DbSet<MolduraUtilizador> MoldurasUtilizador { get; set; }
+        public DbSet<Notificacao> Notificacoes { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
+
+            // Recompensas ganhas por cada utilizador: chave utilizador + recompensa
+            modelBuilder.Entity<EmblemaUtilizador>()
+                .HasKey(e => new { e.UtilizadorId, e.EmblemaId });
+
+            modelBuilder.Entity<TituloUtilizador>()
+                .HasKey(t => new { t.UtilizadorId, t.TituloId });
+
+            modelBuilder.Entity<MolduraUtilizador>()
+                .HasKey(m => new { m.UtilizadorId, m.MolduraId });
 
             // A carteira não tem chave própria: é identificada pelo par
             // utilizador + tipo de moeda (chave composta na base de dados).

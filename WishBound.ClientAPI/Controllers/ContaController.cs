@@ -566,7 +566,7 @@ namespace WishBound.ClientAPI.Controllers
                     return RedirectToAction("Index", "Home");
                 }
 
-                return View(new PerfilViewModel
+                var modelo = new PerfilViewModel
                 {
                     NomeUtilizador = utilizador.NomeUtilizador,
                     FotoPerfilUrl = utilizador.FotoPerfilUrl,
@@ -574,7 +574,30 @@ namespace WishBound.ClientAPI.Controllers
                     DataCriacao = utilizador.DataCriacao,
                     UltimoLogin = utilizador.UltimoLogin,
                     IsAdmin = utilizador.IsAdmin
-                });
+                };
+
+                // Sistema de amizade: título, moldura e emblemas mostrados no
+                // perfil. Se falhar (ex.: Migracao04 por correr), o perfil
+                // continua a abrir sem estes elementos.
+                try
+                {
+                    var amizade = await _api.ObterAmizadeAsync(ObterUtilizadorId());
+                    modelo.TituloNome = amizade.TituloAtualNome;
+                    modelo.TituloCor = amizade.TituloAtualCor;
+                    modelo.MolduraNome = amizade.MolduraAtualNome;
+                    modelo.MolduraCor = amizade.MolduraAtualCor;
+                    modelo.Emblemas = amizade.EmblemasEquipados;
+                    modelo.EmblemasGanhos = amizade.Emblemas.Count;
+                    modelo.MaximoEmblemas = amizade.MaximoEmblemasEquipados;
+                    modelo.TitulosGanhos = amizade.Titulos.Count;
+                    modelo.MoldurasGanhas = amizade.Molduras.Count;
+                }
+                catch (Exception)
+                {
+                    // Perfil sem os elementos de amizade
+                }
+
+                return View(modelo);
             }
             catch (Exception)
             {

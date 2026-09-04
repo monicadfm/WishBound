@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WishBound.WebAPI.Data;
 using WishBound.WebAPI.Models;
+using WishBound.WebAPI.Services;
 
 namespace WishBound.WebAPI.Controllers
 {
@@ -19,8 +20,11 @@ namespace WishBound.WebAPI.Controllers
     ///     normais (3% no total); da 81 em diante sobem 10 pontos por
     ///     invocação (81 = 13%, 85 = 53%, 89 = 93%) até serem garantidas na 90.
     ///
-    /// Cada invocação custa 10 Moedas (uma x10 custa 100). O pagamento é
-    /// feito com um UPDATE condicional na carteira e fica registado em
+    /// Cada invocação custa 10 Moedas (uma x10 custa 100) — ou 1 BILHETE de
+    /// invocação (moeda 3, vindo da recompensa diária e dos eventos): os
+    /// bilhetes são gastos primeiro e as Moedas pagam só o que sobrar (uma
+    /// x10 com 4 bilhetes custa 4 bilhetes + 60 Moedas). O pagamento é feito
+    /// com UPDATEs condicionais nas carteiras e fica registado em
     /// TransacoesMoeda.
     ///
     /// A personagem obtida entra na COLEÇÃO (primeira vez cria a linha,
@@ -50,17 +54,22 @@ namespace WishBound.WebAPI.Controllers
         /// <summary>Primeiro nível de amizade ("Desconhecido") ao criar a linha da coleção.</summary>
         private const int NivelAmizadeInicialId = 1;
 
-        /// <summary>Moeda normal (TiposMoeda: 1 = Gemas, 2 = Moedas).</summary>
-        private const int MoedasId = 2;
+        /// <summary>Moeda normal (ver TiposMoedaIds).</summary>
+        private const int MoedasId = TiposMoedaIds.Moedas;
+
+        /// <summary>Bilhetes de invocação: cada um paga uma invocação inteira.</summary>
+        private const int BilhetesId = TiposMoedaIds.Bilhetes;
 
         /// <summary>Custo de cada invocação, em Moedas (uma x10 custa 100).</summary>
         private const int CustoInvocacao = 10;
 
         private readonly WishBoundContext _contexto;
+        private readonly ServicoAmizade _amizade;
 
-        public InvocacoesController(WishBoundContext contexto)
+        public InvocacoesController(WishBoundContext contexto, ServicoAmizade amizade)
         {
             _contexto = contexto;
+            _amizade = amizade;
         }
 
         // ------------------------------------------------------------
@@ -118,9 +127,17 @@ namespace WishBound.WebAPI.Controllers
                 int contadorLendario = pity?.ContadorAtual ?? 0;
                 int contadorEpico = pity?.ContadorEpico ?? 0;
 
+                var dono = await _contexto.Utilizadores.AsNoTracking()
+                    .Where(u => u.Id == utilizadorId)
+                    .Select(u => new { u.UltimoLoginDiario })
+                    .FirstOrDefaultAsync();
+
                 return Ok(new EstadoPityResposta
                 {
                     SaldoMoedas = await ObterSaldoAsync(utilizadorId),
+                    SaldoBilhetes = await ObterSaldoAsync(utilizadorId, BilhetesId),
+                    RecompensaDiariaDisponivel = dono != null &&
+                        dono.UltimoLoginDiario != DateOnly.FromDateTime(DateTime.UtcNow),
                     CustoInvocacao = CustoInvocacao,
                     BannerId = banner.Id,
                     BannerNome = banner.Nome,
@@ -182,7 +199,7 @@ namespace WishBound.WebAPI.Controllers
                     .Where(c => c.UtilizadorId == utilizador.Id)
                     .SumAsync(c => (int?)c.Quantidade) ?? 0;
 
-                if (ocupado + quantidade > inventario.CapacidadeTotal)
+                if (!utilizador.IsAdmin && ocupado + quantidade > inventario.CapacidadeTotal)
                 {
                     return BadRequest(
                         "Não há espaço para " + quantidade + (quantidade == 1 ? " invocação" : " invocações") +
@@ -190,35 +207,80 @@ namespace WishBound.WebAPI.Controllers
                         "). Liberte cópias repetidas ou compre mais lugares na página da Coleção.");
                 }
 
-                // PAGAMENTO: o UPDATE só desconta se houver saldo suficiente.
-                // Se devolver 0 linhas, não há Moedas que cheguem e nada é
-                // sorteado (a transação é desfeita ao sair).
-                decimal custoTotal = CustoInvocacao * quantidade;
+                // PAGAMENTO — primeiro os BILHETES (cada um paga uma invocação),
+                // depois as Moedas para o que sobrar. Os UPDATEs só descontam se
+                // houver saldo suficiente; se o das Moedas devolver 0 linhas,
+                // nada é sorteado e a transação é desfeita ao sair (os bilhetes
+                // descontados voltam também).
+                await GarantirCarteiraAsync(utilizador.Id, MoedasId);
+                await GarantirCarteiraAsync(utilizador.Id, BilhetesId);
 
-                await GarantirCarteiraAsync(utilizador.Id);
+                // ADMIN: invocações ilimitadas — não gasta bilhetes nem Moedas
+                // (nada fica em TransacoesMoeda; o histórico de invocações fica).
+                int bilhetesUsados = utilizador.IsAdmin
+                    ? 0
+                    : (int)Math.Min(quantidade, Math.Floor(await ObterSaldoAsync(utilizador.Id, BilhetesId)));
 
-                int pagas = await _contexto.Database.ExecuteSqlAsync(
-                    $@"UPDATE CarteirasUtilizador SET Saldo = Saldo - {custoTotal}
-                       WHERE UtilizadorId = {utilizador.Id} AND TipoMoedaId = {MoedasId} AND Saldo >= {custoTotal}");
-
-                if (pagas == 0)
+                if (bilhetesUsados > 0)
                 {
-                    decimal saldoAtual = await ObterSaldoAsync(utilizador.Id);
-                    return BadRequest(
-                        "Moedas insuficientes: " + (quantidade == 1 ? "uma invocação custa " : "uma invocação x10 custa ") +
-                        custoTotal.ToString("0") + " e tem " + saldoAtual.ToString("0") +
-                        ". Liberte cópias repetidas na página da Coleção para ganhar Moedas.");
+                    int descontados = await _contexto.Database.ExecuteSqlAsync(
+                        $@"UPDATE CarteirasUtilizador SET Saldo = Saldo - {bilhetesUsados}
+                           WHERE UtilizadorId = {utilizador.Id} AND TipoMoedaId = {BilhetesId} AND Saldo >= {bilhetesUsados}");
+
+                    // Outro pedido gastou os bilhetes entretanto: paga-se tudo em Moedas
+                    if (descontados == 0)
+                    {
+                        bilhetesUsados = 0;
+                    }
                 }
 
-                _contexto.TransacoesMoeda.Add(new TransacaoMoeda
+                decimal custoTotal = utilizador.IsAdmin ? 0 : CustoInvocacao * (quantidade - bilhetesUsados);
+
+                if (custoTotal > 0)
                 {
-                    UtilizadorId = utilizador.Id,
-                    TipoMoedaId = MoedasId,
-                    Montante = custoTotal,
-                    TipoTransacao = TransacaoMoeda.TipoGasto,
-                    Origem = quantidade == 1 ? "Invocacao" : "Invocacao x10",
-                    DataCriacao = DateTime.UtcNow
-                });
+                    int pagas = await _contexto.Database.ExecuteSqlAsync(
+                        $@"UPDATE CarteirasUtilizador SET Saldo = Saldo - {custoTotal}
+                           WHERE UtilizadorId = {utilizador.Id} AND TipoMoedaId = {MoedasId} AND Saldo >= {custoTotal}");
+
+                    if (pagas == 0)
+                    {
+                        decimal saldoAtual = await ObterSaldoAsync(utilizador.Id);
+                        string custo = bilhetesUsados > 0
+                            ? "além dos " + bilhetesUsados + (bilhetesUsados == 1 ? " bilhete faltam " : " bilhetes faltam ") + custoTotal.ToString("0") + " Moedas"
+                            : (quantidade == 1 ? "uma invocação custa " : "uma invocação x10 custa ") + custoTotal.ToString("0");
+                        return BadRequest(
+                            "Moedas insuficientes: " + custo + " e tem " + saldoAtual.ToString("0") +
+                            ". Recebe a recompensa diária na Carteira ou liberte cópias repetidas na Coleção para ganhar Moedas.");
+                    }
+                }
+
+                string sufixoOrigem = quantidade == 1 ? "Invocacao" : "Invocacao x10";
+
+                if (bilhetesUsados > 0)
+                {
+                    _contexto.TransacoesMoeda.Add(new TransacaoMoeda
+                    {
+                        UtilizadorId = utilizador.Id,
+                        TipoMoedaId = BilhetesId,
+                        Montante = bilhetesUsados,
+                        TipoTransacao = TransacaoMoeda.TipoGasto,
+                        Origem = sufixoOrigem + " (bilhetes)",
+                        DataCriacao = DateTime.UtcNow
+                    });
+                }
+
+                if (custoTotal > 0)
+                {
+                    _contexto.TransacoesMoeda.Add(new TransacaoMoeda
+                    {
+                        UtilizadorId = utilizador.Id,
+                        TipoMoedaId = MoedasId,
+                        Montante = custoTotal,
+                        TipoTransacao = TransacaoMoeda.TipoGasto,
+                        Origem = sufixoOrigem,
+                        DataCriacao = DateTime.UtcNow
+                    });
+                }
 
                 // Personagens ativas deste banner, agrupadas por raridade
                 var idsDoBanner = await _contexto.BannerPersonagens
@@ -343,6 +405,60 @@ namespace WishBound.WebAPI.Controllers
                                              WHERE UtilizadorId = {utilizador.Id} AND PersonagemId = {par.Key});");
                 }
 
+                // ---------- Amizade: as cópias REPETIDAS dão pontos ----------
+                // Cada repetida vale pontos conforme a raridade (o dobro num
+                // banner de evento). A primeira cópia de uma personagem nova
+                // não dá pontos — a amizade começa aí, em "Desconhecido".
+                var mensagensAmizade = new List<string>();
+                int multiplicador = banner.TipoBanner == Banner.TipoEvento ? ServicoAmizade.MultiplicadorEvento : 1;
+
+                foreach (var par in sorteadasPorPersonagem)
+                {
+                    int repetidas = par.Value - (colecaoAtual.ContainsKey(par.Key) ? 0 : 1);
+                    if (repetidas <= 0)
+                    {
+                        continue;
+                    }
+
+                    var daPersonagem = obtidas.Where(o => o.Personagem!.Id == par.Key).ToList();
+                    int pontosPorCopia = ServicoAmizade.PontosPorRepetida(daPersonagem[0].RaridadeOrdem) * multiplicador;
+
+                    var resultadoAmizade = await _amizade.AdicionarPontosAsync(
+                        utilizador.Id, par.Key, pontosPorCopia * repetidas, marcarInteracao: false);
+
+                    if (resultadoAmizade == null)
+                    {
+                        continue;
+                    }
+
+                    string nomePersonagem = daPersonagem[0].Personagem!.Nome;
+
+                    var recompensas = await _amizade.DesbloquearRecompensasAsync(
+                        utilizador.Id, par.Key, nomePersonagem, resultadoAmizade.NivelAnterior, resultadoAmizade.NivelAtual);
+
+                    foreach (var obtida in daPersonagem)
+                    {
+                        obtida.NivelAmizadeNome = resultadoAmizade.NivelAtual.Nome;
+                        if (!obtida.Novo)
+                        {
+                            obtida.PontosAmizadeGanhos = pontosPorCopia;
+                        }
+                    }
+
+                    if (resultadoAmizade.SubiuDeNivel)
+                    {
+                        daPersonagem[^1].SubiuDeNivel = true;
+
+                        string mensagem = "A tua amizade com " + nomePersonagem + " subiu para \"" +
+                                          resultadoAmizade.NivelAtual.Nome + "\"!";
+                        if (recompensas.Count > 0)
+                        {
+                            mensagem += " Desbloqueaste: " + string.Join(", ", recompensas.Select(ServicoAmizade.DescreverRecompensa)) + ".";
+                        }
+                        mensagensAmizade.Add(mensagem);
+                    }
+                }
+
                 foreach (var obtida in obtidas)
                 {
                     _contexto.Invocacoes.Add(new Invocacao
@@ -366,6 +482,7 @@ namespace WishBound.WebAPI.Controllers
                 return Ok(new InvocacaoResultado
                 {
                     Personagens = obtidas,
+                    MensagensAmizade = mensagensAmizade,
                     BannerId = banner.Id,
                     BannerNome = banner.Nome,
                     Ocupado = ocupado + quantidade,
@@ -375,7 +492,9 @@ namespace WishBound.WebAPI.Controllers
                     FaltamParaLendario = Math.Max(0, LimiteLendario - contadorLendario),
                     FaltamParaEpico = Math.Max(0, LimiteEpico - contadorEpico),
                     SaldoMoedas = await ObterSaldoAsync(utilizador.Id),
-                    CustoTotal = custoTotal
+                    SaldoBilhetes = await ObterSaldoAsync(utilizador.Id, BilhetesId),
+                    CustoTotal = custoTotal,
+                    BilhetesUsados = bilhetesUsados
                 });
             }
             catch (Exception ex)
@@ -486,25 +605,31 @@ namespace WishBound.WebAPI.Controllers
                 .FirstOrDefaultAsync();
         }
 
-        /// <summary>Saldo em Moedas do utilizador (0 se ainda não tiver carteira).</summary>
-        private async Task<decimal> ObterSaldoAsync(int utilizadorId)
+        /// <summary>
+        /// Saldo do utilizador numa moeda (Moedas por omissão; 0 se ainda não
+        /// tiver carteira). Lido sempre da base de dados — depois dos UPDATEs
+        /// diretos, o valor em memória do EF estaria desatualizado.
+        /// </summary>
+        private async Task<decimal> ObterSaldoAsync(int utilizadorId, int tipoMoedaId = MoedasId)
         {
-            var carteira = await _contexto.Carteiras.FindAsync(utilizadorId, MoedasId);
-            return carteira?.Saldo ?? 0m;
+            return await _contexto.Carteiras.AsNoTracking()
+                .Where(c => c.UtilizadorId == utilizadorId && c.TipoMoedaId == tipoMoedaId)
+                .Select(c => c.Saldo)
+                .FirstOrDefaultAsync();
         }
 
         /// <summary>
-        /// Garante que existe carteira de Moedas (contas criadas por script
-        /// podem não a ter). INSERT idempotente: dois pedidos ao mesmo tempo
-        /// não dão erro de chave duplicada.
+        /// Garante que existe carteira da moeda indicada (contas criadas por
+        /// script podem não a ter). INSERT idempotente: dois pedidos ao mesmo
+        /// tempo não dão erro de chave duplicada.
         /// </summary>
-        private async Task GarantirCarteiraAsync(int utilizadorId)
+        private async Task GarantirCarteiraAsync(int utilizadorId, int tipoMoedaId)
         {
             await _contexto.Database.ExecuteSqlAsync(
                 $@"INSERT INTO CarteirasUtilizador (UtilizadorId, TipoMoedaId, Saldo)
-                   SELECT {utilizadorId}, {MoedasId}, 0
+                   SELECT {utilizadorId}, {tipoMoedaId}, 0
                    WHERE NOT EXISTS (SELECT 1 FROM CarteirasUtilizador
-                                     WHERE UtilizadorId = {utilizadorId} AND TipoMoedaId = {MoedasId})");
+                                     WHERE UtilizadorId = {utilizadorId} AND TipoMoedaId = {tipoMoedaId})");
         }
 
         /// <summary>Contadores de garantia do utilizador neste banner (cria se faltar).</summary>

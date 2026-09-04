@@ -38,6 +38,11 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.Configure<DefinicoesEmail>(builder.Configuration.GetSection("Email"));
 builder.Services.AddSingleton<IServicoEmail, ServicoEmailSmtp>();
 
+// Sistema de amizade: regras de pontos e recompensas por nível, usadas
+// pelo AmizadeController (interações) e pelo InvocacoesController
+// (cópias repetidas). Scoped porque usa o DbContext do pedido.
+builder.Services.AddScoped<ServicoAmizade>();
+
 // Swagger - documentação e teste da API no browser.
 // Como a API passou a exigir uma chave, o Swagger ganha o botão "Authorize"
 // para a colar (senão todos os pedidos de teste dariam 401).

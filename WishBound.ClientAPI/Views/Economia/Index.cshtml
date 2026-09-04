@@ -1,0 +1,334 @@
+@using WishBound.ClientAPI.Models.Economia
+@model EconomiaViewModel
+@{
+    ViewData["Title"] = "Carteira";
+    var diaria = Model.RecompensaDiaria;
+    var diaDeHoje = diaria.DiaDeHoje;
+}
+
+@* ESTILO LOCAL: saldos, calendário de 28 dias e cartões dos eventos *@
+@section Estilos {
+    <style>
+        .saldos {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 14px;
+            margin: 18px 0 30px;
+        }
+
+        .saldo-cartao {
+            background: var(--fundo-cartao);
+            border: 1px solid var(--borda);
+            border-radius: 14px;
+            padding: 18px 20px;
+        }
+
+        .saldo-cartao .saldo-valor {
+            display: block;
+            font-family: 'Cinzel', serif;
+            font-size: 2rem;
+            color: var(--dourado);
+            line-height: 1.1;
+        }
+
+        .saldo-cartao.bilhetes .saldo-valor {
+            color: #b28cf0;
+        }
+
+        .bloco {
+            margin-top: 34px;
+        }
+
+        .bloco-topo {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+        }
+
+        .bloco-topo h2 {
+            font-size: 1.25rem;
+            color: var(--dourado);
+        }
+
+        .semana {
+            margin-top: 14px;
+        }
+
+        .semana-titulo {
+            display: block;
+            margin-bottom: 6px;
+            color: var(--texto-suave);
+            font-size: 0.9rem;
+        }
+
+        .calendario {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 8px;
+        }
+
+        .dia {
+            position: relative;
+            background: var(--fundo-cartao);
+            border: 1px solid var(--borda);
+            border-radius: 12px;
+            padding: 10px 6px;
+            text-align: center;
+            min-height: 86px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 4px;
+        }
+
+        .dia .dia-numero {
+            font-size: 0.75rem;
+            color: var(--texto-suave);
+        }
+
+        .dia .dia-recompensa {
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .dia.bilhete .dia-recompensa {
+            color: #b28cf0;
+        }
+
+        .dia.fim-semana {
+            border-color: var(--dourado);
+        }
+
+        .dia.fim-semana .dia-recompensa {
+            color: var(--dourado);
+        }
+
+        .dia.recebido {
+            opacity: 0.55;
+        }
+
+        .dia.recebido::after {
+            content: "\2713";
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            color: #2f8f5b;
+            font-weight: 700;
+        }
+
+        .dia.hoje {
+            border-color: #b28cf0;
+            box-shadow: 0 0 0 2px rgba(178, 140, 240, .45);
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        .evento-cartao {
+            background: var(--fundo-cartao);
+            border: 1px solid var(--borda);
+            border-radius: 16px;
+            padding: 20px;
+            margin-top: 14px;
+        }
+
+        .evento-dias {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(96px, 1fr));
+            gap: 8px;
+            margin: 14px 0;
+        }
+
+        .evento-prazo {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 3px 10px;
+            font-size: 0.8rem;
+            background: rgba(243, 192, 79, .15);
+            color: var(--dourado);
+        }
+
+        .acoes-linha {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+        }
+
+        @@media (max-width: 640px) {
+            .calendario {
+                grid-template-columns: repeat(4, minmax(0, 1fr));
+            }
+        }
+    </style>
+}
+
+<section class="seccao">
+    <div class="bloco-topo">
+        <h1 class="titulo-seccao">Carteira</h1>
+        <div class="acoes-linha">
+            <a class="botao botao-suave" asp-controller="Economia" asp-action="Transacoes">Histórico de transações</a>
+            <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Invocar</a>
+        </div>
+    </div>
+    <p class="texto-suave">
+        Ganha moeda todos os dias e gasta-a em invocações e em mais lugares para a coleção.
+        Com o saldo atual dá para <strong>@Model.InvocacoesPossiveis</strong>
+        @(Model.InvocacoesPossiveis == 1 ? "invocação" : "invocações").
+    </p>
+
+    @* ----- Saldos ----- *@
+    <div class="saldos">
+        <div class="saldo-cartao">
+            <span class="texto-suave">Moedas</span>
+            <span class="saldo-valor">@Model.SaldoMoedas.ToString("0")</span>
+            <span class="texto-suave">@Model.CustoInvocacao.ToString("0") por invocação · expandem a coleção</span>
+        </div>
+        <div class="saldo-cartao bilhetes">
+            <span class="texto-suave">Bilhetes de invocação</span>
+            <span class="saldo-valor">@Model.SaldoBilhetes.ToString("0")</span>
+            <span class="texto-suave">cada bilhete paga uma invocação inteira</span>
+        </div>
+        @foreach (var carteira in Model.Carteiras.Where(c => c.TipoMoedaId != 2 && c.TipoMoedaId != 3))
+        {
+            <div class="saldo-cartao">
+                <span class="texto-suave">@carteira.Nome</span>
+                <span class="saldo-valor">@carteira.Saldo.ToString("0")</span>
+                <span class="texto-suave">ainda sem uso</span>
+            </div>
+        }
+    </div>
+
+    @* ----- Recompensa diária: calendário de 28 dias ----- *@
+    <div class="bloco">
+        <div class="bloco-topo">
+            <h2>Recompensa diária</h2>
+            <form method="post" asp-controller="Economia" asp-action="ReceberDiaria">
+                @if (diaria.RecebidaHoje)
+                {
+                    <button type="submit" class="botao botao-suave" disabled>
+                        &#10003; Recebida hoje — volta amanhã
+                    </button>
+                }
+                else
+                {
+                    <button type="submit" class="botao botao-destaque botao-grande">
+                        &#127873; Receber o dia @diaria.ProximoDia
+                        @if (diaDeHoje != null)
+                        {
+                            <text>(@diaDeHoje.Texto)</text>
+                        }
+                    </button>
+                }
+            </form>
+        </div>
+        <p class="texto-suave">
+            Um calendário de 4 semanas: as Moedas sobem de semana para semana, o último
+            dia de cada semana dá o triplo e a última semana dá bilhetes de invocação.
+            Faltar um dia não faz perder o progresso — o calendário só avança nos dias em
+            que recebes. Dias recebidos: <strong>@diaria.DiasRecebidos / @diaria.Calendario.Count</strong>.
+        </p>
+
+        @foreach (var semana in diaria.PorSemana)
+        {
+            <div class="semana">
+                <span class="semana-titulo">
+                    Semana @semana.Key
+                    @if (semana.Key == 4)
+                    {
+                        <text>&middot; invocações a sério</text>
+                    }
+                </span>
+                <div class="calendario">
+                    @foreach (var dia in semana)
+                    {
+                        <div class="dia @(dia.Recebido ? "recebido" : "") @(dia.Hoje ? "hoje" : "") @(dia.FimDeSemana ? "fim-semana" : "") @(dia.TipoMoedaId == 3 ? "bilhete" : "")"
+                             title="Dia @dia.Dia — @dia.Texto">
+                            <span class="dia-numero">Dia @dia.Dia</span>
+                            <span class="dia-recompensa">@dia.Texto</span>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ----- Eventos a decorrer ----- *@
+    <div class="bloco">
+        <div class="bloco-topo">
+            <h2>Eventos</h2>
+        </div>
+
+        @if (Model.Eventos.Count == 0)
+        {
+            <p class="texto-suave">Não há eventos de recompensas a decorrer neste momento.</p>
+        }
+
+        @foreach (var evento in Model.Eventos)
+        {
+            <div class="evento-cartao">
+                <div class="bloco-topo">
+                    <div>
+                        <h3>@evento.Nome</h3>
+                        <span class="evento-prazo">
+                            @if (evento.DiasRestantes == 0)
+                            {
+                                <text>Termina hoje</text>
+                            }
+                            else
+                            {
+                                <text>Faltam @evento.DiasRestantes @(evento.DiasRestantes == 1 ? "dia" : "dias") &middot; até @evento.DataFim.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</text>
+                            }
+                        </span>
+                    </div>
+                    <form method="post" asp-controller="Economia" asp-action="ResgatarEvento">
+                        <input type="hidden" name="bannerId" value="@evento.BannerId" />
+                        @if (evento.Concluido)
+                        {
+                            <button type="submit" class="botao botao-suave" disabled>&#10003; Tudo recebido</button>
+                        }
+                        else if (evento.RecebidoHoje)
+                        {
+                            <button type="submit" class="botao botao-suave" disabled>&#10003; Recebido hoje — volta amanhã</button>
+                        }
+                        else
+                        {
+                            <button type="submit" class="botao botao-destaque">
+                                &#127873; Resgatar o dia @(evento.Progresso + 1)
+                                @if (evento.DiaDeHoje != null)
+                                {
+                                    <text>(@evento.DiaDeHoje.Texto)</text>
+                                }
+                            </button>
+                        }
+                    </form>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(evento.Descricao))
+                {
+                    <p class="texto-suave">@evento.Descricao</p>
+                }
+
+                <div class="evento-dias">
+                    @foreach (var dia in evento.Dias)
+                    {
+                        <div class="dia @(dia.Recebido ? "recebido" : "") @(dia.Hoje ? "hoje" : "") @(dia.TipoMoedaId == 3 ? "bilhete" : "")"
+                             title="@dia.Descricao">
+                            <span class="dia-numero">Dia @dia.Dia</span>
+                            <span class="dia-recompensa">@dia.Texto</span>
+                        </div>
+                    }
+                </div>
+
+                <p class="texto-suave">
+                    Progresso: <strong>@evento.Progresso / @evento.Dias.Count</strong> dias
+                    &middot; total do evento: @evento.TotalRecompensas.ToString("0")
+                    @(evento.Dias.FirstOrDefault()?.MoedaNome ?? "")
+                    &middot; este evento também é um banner de invocação — escolhe-o na página de Invocação.
+                </p>
+            </div>
+        }
+    </div>
+</section>

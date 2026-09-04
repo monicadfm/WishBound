@@ -4,12 +4,38 @@ using System.ComponentModel.DataAnnotations.Schema;
 namespace WishBound.WebAPI.Models
 {
     /// <summary>
+    /// Ids dos tipos de moeda semeados na base de dados (tabela [TiposMoeda]),
+    /// para não andarem números soltos pelos controllers.
+    ///   1 = Gemas    - moeda premium, ainda sem uso;
+    ///   2 = Moedas   - moeda normal: paga invocações e expansões do inventário;
+    ///   3 = Bilhetes - bilhetes de invocação (Migracao03): cada um paga uma
+    ///                  invocação inteira. Vêm da recompensa diária e dos eventos.
+    /// </summary>
+    public static class TiposMoedaIds
+    {
+        public const int Gemas = 1;
+        public const int Moedas = 2;
+        public const int Bilhetes = 3;
+    }
+
+    /// <summary>Tipo de moeda (tabela [TiposMoeda]) — só para ler os nomes.</summary>
+    [Table("TiposMoeda")]
+    public class TipoMoeda
+    {
+        [Key]
+        [Column("TipoMoedaId")]
+        public int Id { get; set; }
+
+        [StringLength(30)]
+        public string Nome { get; set; } = string.Empty;
+    }
+
+    /// <summary>
     /// Saldo de um utilizador numa moeda (tabela [CarteirasUtilizador]).
     /// A chave é composta — utilizador + tipo de moeda — e por isso é
     /// declarada no WishBoundContext (OnModelCreating).
     ///
-    /// Tipos de moeda semeados na base de dados: 1 = Gemas (moeda premium,
-    /// ainda sem uso), 2 = Moedas (moeda normal, usada na coleção).
+    /// Tipos de moeda: ver TiposMoedaIds.
     /// </summary>
     [Table("CarteirasUtilizador")]
     public class Carteira

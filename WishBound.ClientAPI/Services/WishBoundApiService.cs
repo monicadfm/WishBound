@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Json;
 using WishBound.ClientAPI.Models;
+using WishBound.ClientAPI.Models.Amizade;
 using WishBound.ClientAPI.Models.Colecao;
 using WishBound.ClientAPI.Models.Conta;
+using WishBound.ClientAPI.Models.Economia;
 
 namespace WishBound.ClientAPI.Services
 {
@@ -220,6 +222,133 @@ namespace WishBound.ClientAPI.Services
             var resposta = await _http.PostAsJsonAsync("api/colecao/expandir", new
             {
                 UtilizadorId = utilizadorId
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        // ---------- Economia (carteira, recompensas, transações) ----------
+
+        /// <summary>SELECT - saldos, recompensa diária e eventos a decorrer do utilizador.</summary>
+        public async Task<EconomiaViewModel> ObterEconomiaAsync(int utilizadorId)
+        {
+            return await _http.GetFromJsonAsync<EconomiaViewModel>("api/economia?utilizadorId=" + utilizadorId)
+                   ?? new EconomiaViewModel();
+        }
+
+        /// <summary>SELECT - últimos movimentos de moeda do utilizador.</summary>
+        public async Task<List<Transacao>> ObterTransacoesAsync(int utilizadorId, int limite = 100)
+        {
+            return await _http.GetFromJsonAsync<List<Transacao>>(
+                       "api/economia/transacoes?utilizadorId=" + utilizadorId + "&limite=" + limite)
+                   ?? new List<Transacao>();
+        }
+
+        /// <summary>UPDATE - recebe a recompensa de login diário (uma por dia).</summary>
+        public async Task<(RecompensaRecebida? Resultado, string? Erro)> ReceberLoginDiarioAsync(int utilizadorId)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/economia/login-diario", new
+            {
+                UtilizadorId = utilizadorId
+            });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<RecompensaRecebida>(), null);
+        }
+
+        /// <summary>UPDATE - resgata a recompensa do dia num evento a decorrer.</summary>
+        public async Task<(RecompensaRecebida? Resultado, string? Erro)> ResgatarEventoAsync(int utilizadorId, int bannerId)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/economia/evento/resgatar", new
+            {
+                UtilizadorId = utilizadorId,
+                BannerId = bannerId
+            });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<RecompensaRecebida>(), null);
+        }
+
+        // ---------- Amizade (interações, níveis, emblemas, títulos, molduras) ----------
+
+        /// <summary>SELECT - estado completo do sistema de amizade do utilizador.</summary>
+        public async Task<AmizadeViewModel> ObterAmizadeAsync(int utilizadorId)
+        {
+            return await _http.GetFromJsonAsync<AmizadeViewModel>("api/amizade?utilizadorId=" + utilizadorId)
+                   ?? new AmizadeViewModel();
+        }
+
+        /// <summary>SELECT - amizade com UMA personagem (níveis, recompensas, estado). null se não a tiver.</summary>
+        public async Task<AmizadePersonagem?> ObterAmizadePersonagemAsync(int utilizadorId, int personagemId)
+        {
+            var resposta = await _http.GetAsync(
+                "api/amizade/personagem?utilizadorId=" + utilizadorId + "&personagemId=" + personagemId);
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await resposta.Content.ReadFromJsonAsync<AmizadePersonagem>();
+        }
+
+        /// <summary>UPDATE - põe ou tira um emblema do perfil (máximo 3 equipados).</summary>
+        public async Task<(bool Sucesso, string Mensagem)> EquiparEmblemaAsync(int utilizadorId, int emblemaId, bool equipar)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/amizade/emblema", new
+            {
+                UtilizadorId = utilizadorId,
+                EmblemaId = emblemaId,
+                Equipar = equipar
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>UPDATE - gasta uma das 3 interações do dia numa personagem da coleção.</summary>
+        public async Task<(ResultadoInteracao? Resultado, string? Erro)> InteragirAsync(int utilizadorId, int personagemId)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/amizade/interagir", new
+            {
+                UtilizadorId = utilizadorId,
+                PersonagemId = personagemId
+            });
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<ResultadoInteracao>(), null);
+        }
+
+        /// <summary>UPDATE - escolhe o título do perfil (null = sem título).</summary>
+        public async Task<(bool Sucesso, string Mensagem)> EquiparTituloAsync(int utilizadorId, int? tituloId)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/amizade/titulo", new
+            {
+                UtilizadorId = utilizadorId,
+                TituloId = tituloId
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        /// <summary>UPDATE - escolhe a moldura do perfil (null = sem moldura).</summary>
+        public async Task<(bool Sucesso, string Mensagem)> EquiparMolduraAsync(int utilizadorId, int? molduraId)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/amizade/moldura", new
+            {
+                UtilizadorId = utilizadorId,
+                MolduraId = molduraId
             });
 
             return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());

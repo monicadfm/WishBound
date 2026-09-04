@@ -1,0 +1,101 @@
+@using WishBound.ClientAPI.Models.Economia
+@model List<Transacao>
+@{
+    ViewData["Title"] = "Transações";
+}
+
+@section Estilos {
+    <style>
+        .montante-ganho {
+            color: #4fc27a;
+            font-weight: 600;
+        }
+
+        .montante-gasto {
+            color: #e07a72;
+            font-weight: 600;
+        }
+
+        .etiqueta-moeda {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, .08);
+        }
+
+        .etiqueta-moeda.bilhetes {
+            background: rgba(178, 140, 240, .2);
+            color: #d7c6ff;
+        }
+
+        .resumo-transacoes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+            margin-top: 10px;
+        }
+    </style>
+}
+
+<section class="seccao">
+    <h1 class="titulo-seccao">Histórico de transações</h1>
+    <p class="texto-suave">
+        Todos os movimentos de moeda da tua conta — recompensas, invocações,
+        cópias libertadas e expansões da coleção (últimos @Model.Count registos).
+    </p>
+
+    @{
+        var ganhoMoedas = Model.Where(t => t.Ganho && t.TipoMoedaId == 2).Sum(t => t.Montante);
+        var gastoMoedas = Model.Where(t => !t.Ganho && t.TipoMoedaId == 2).Sum(t => t.Montante);
+    }
+    @if (Model.Count > 0)
+    {
+        <div class="resumo-transacoes texto-suave">
+            <span>Moedas ganhas: <span class="montante-ganho">+@ganhoMoedas.ToString("0")</span></span>
+            <span>Moedas gastas: <span class="montante-gasto">-@gastoMoedas.ToString("0")</span></span>
+            <a class="ligacao" asp-controller="Economia" asp-action="Index">&larr; Voltar à carteira</a>
+        </div>
+    }
+
+    @if (Model.Count == 0)
+    {
+        <div class="caixa-vazia">
+            <p>Ainda não há movimentos na tua carteira.</p>
+            <a class="botao botao-destaque" asp-controller="Economia" asp-action="Index">&#127873; Receber a recompensa diária</a>
+        </div>
+    }
+    else
+    {
+        <table class="tabela">
+            <thead>
+                <tr>
+                    <th>Data e hora</th>
+                    <th>Origem</th>
+                    <th>Moeda</th>
+                    <th>Montante</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var transacao in Model)
+                {
+                    <tr>
+                        <td>@transacao.Data.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                        <td>@transacao.Origem</td>
+                        <td><span class="etiqueta-moeda @(transacao.TipoMoedaId == 3 ? "bilhetes" : "")">@transacao.MoedaNome</span></td>
+                        <td>
+                            @if (transacao.Ganho)
+                            {
+                                <span class="montante-ganho">+@transacao.Montante.ToString("0")</span>
+                            }
+                            else
+                            {
+                                <span class="montante-gasto">-@transacao.Montante.ToString("0")</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>

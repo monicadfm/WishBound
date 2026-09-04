@@ -1,11 +1,13 @@
 @using WishBound.ClientAPI.Models.Colecao
-@model ItemColecao
+@using WishBound.ClientAPI.Models.Amizade
+@model DetalhesColecaoViewModel
 @{
-    ViewData["Title"] = Model.Nome;
+    var item = Model.Item;
+    var amizade = Model.Amizade;
+    ViewData["Title"] = item.Nome;
 }
 
-@* ESTILO LOCAL: os botões desta página são formulários, por isso precisam
-   de uma linha flexível própria *@
+@* ESTILO LOCAL: botões em formulários e o bloco de amizade por baixo da descrição *@
 @section Estilos {
     <style>
         .detalhe-acoes {
@@ -15,36 +17,330 @@
             align-items: center;
             margin-top: 18px;
         }
+
+        /* ----- Amizade com esta personagem ----- */
+        .amizade-painel {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 12px;
+            background: rgba(208, 70, 138, .10);
+            border: 1px solid rgba(243, 154, 198, .35);
+        }
+
+        .amizade-painel h2 {
+            font-size: 1.05rem;
+            margin-bottom: 4px;
+        }
+
+        .amizade-cabecalho {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .interacoes-pontos {
+            display: inline-flex;
+            gap: 6px;
+            vertical-align: middle;
+        }
+
+        .interacoes-pontos span {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid var(--dourado);
+        }
+
+        .interacoes-pontos span.cheio {
+            background: var(--dourado);
+            box-shadow: 0 0 8px rgba(243, 192, 79, .6);
+        }
+
+        .amizade-barra {
+            height: 8px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, .12);
+            overflow: hidden;
+            margin: 8px 0 6px;
+        }
+
+        .amizade-usado {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #d0468a, #f39ac6);
+        }
+
+        .nivel-maximo .amizade-usado {
+            background: linear-gradient(90deg, #f3c04f, #fff1b8);
+        }
+
+        /* Lista dos níveis: um por linha, com o que dá */
+        .niveis {
+            list-style: none;
+            margin: 12px 0 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .niveis li {
+            display: grid;
+            grid-template-columns: 26px 1fr auto;
+            gap: 10px;
+            align-items: center;
+            font-size: 0.92rem;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .04);
+        }
+
+        .niveis li .marca {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+            border: 1px solid var(--borda);
+            color: var(--texto-suave);
+        }
+
+        .niveis li.atingido .marca {
+            background: #d0468a;
+            border-color: #f39ac6;
+            color: #fff;
+        }
+
+        .niveis li.atual {
+            outline: 1px solid rgba(243, 154, 198, .6);
+        }
+
+        .niveis li.fora {
+            opacity: .45;
+        }
+
+        .niveis li .recompensa {
+            color: var(--texto-suave);
+        }
+
+        .niveis li .recompensa form {
+            display: inline;
+            margin-left: 8px;
+        }
+
+        .niveis li .recompensa button {
+            font-size: 12px;
+            padding: 3px 8px;
+        }
+
+        .titulo-cor {
+            font-weight: 600;
+        }
+
+        .amizade-painel .interagir {
+            margin-top: 12px;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
     </style>
 }
 
 <section class="seccao">
     <div class="detalhe-grelha">
-        <div class="detalhe-imagem" style="--cor-raridade:@Model.Cor">
-            <img src="@Model.Imagem" alt="Imagem da personagem @Model.Nome" />
+        <div class="detalhe-imagem" style="--cor-raridade:@item.Cor">
+            <img src="@item.Imagem" alt="Imagem da personagem @item.Nome" />
         </div>
 
         <div class="detalhe-info">
-            <h1>@Model.Nome@(Model.IsFavorito ? " ★" : "")</h1>
-            <span class="etiqueta-raridade" style="background:@Model.Cor">@Model.RaridadeNome</span>
+            <h1>@item.Nome@(item.IsFavorito ? " ★" : "")</h1>
+            <span class="etiqueta-raridade" style="background:@item.Cor">@item.RaridadeNome</span>
 
             <p class="detalhe-descricao">
-                @(string.IsNullOrEmpty(Model.Descricao) ? "Esta personagem ainda não tem descrição." : Model.Descricao)
+                @(string.IsNullOrEmpty(item.Descricao) ? "Esta personagem ainda não tem descrição." : item.Descricao)
             </p>
+
+            @* ============================================================
+               AMIZADE com esta personagem — logo por baixo da descrição
+               ============================================================ *@
+            @if (amizade != null)
+            {
+                <div class="amizade-painel @(amizade.NivelMaximo ? "nivel-maximo" : "")">
+                    <div class="amizade-cabecalho">
+                        <h2>Amizade: @amizade.NivelAmizadeNome <span class="texto-suave">(nível @amizade.NivelOrdem de @amizade.NivelMaximoOrdem)</span></h2>
+                        <span class="texto-suave">
+                            Interações de hoje@(amizade.InteracoesRestantes > amizade.InteracoesPorDia ? ": ∞" : "")
+                            <span class="interacoes-pontos">
+                                @for (int i = 0; i < amizade.InteracoesPorDia; i++)
+                                {
+                                    <span class="@(i < amizade.InteracoesRestantes ? "cheio" : "")"></span>
+                                }
+                            </span>
+                        </span>
+                    </div>
+
+                    <div class="amizade-barra" title="@amizade.ProgressoTexto">
+                        <div class="amizade-usado" style="width:@(amizade.Percentagem)%"></div>
+                    </div>
+                    <span class="texto-suave">
+                        @amizade.ProgressoTexto
+                        @if (amizade.UltimaInteracao != null)
+                        {
+                            <text>&middot; última interação a @amizade.UltimaInteracao.Value.ToString("dd/MM/yyyy")</text>
+                        }
+                    </span>
+
+                    @* Os níveis, com o que cada um dá para ESTA personagem *@
+                    <ul class="niveis">
+                        @foreach (var n in amizade.Niveis)
+                        {
+                            string classe = (n.Atingido ? "atingido" : "") + (n.Ordem == amizade.NivelOrdem ? " atual" : "") + (n.Alcancavel ? "" : " fora");
+                            <li class="@classe" title="@(n.Alcancavel ? "" : "Uma personagem " + amizade.RaridadeNome + " não chega a este nível")">
+                                <span class="marca">@(n.Atingido ? "✓" : n.Ordem.ToString())</span>
+                                <span><strong>@n.Nome</strong> <span class="texto-suave">· @n.PontosNecessarios pts</span></span>
+                                <span class="recompensa">
+                                    @switch (n.Ordem)
+                                    {
+                                        case 3:
+                                            if (amizade.Titulo != null)
+                                            {
+                                                <text>Título <strong>@amizade.Titulo.Nome</strong></text>
+                                                if (amizade.Titulo.Obtido)
+                                                {
+                                                    <form method="post" asp-controller="Colecao" asp-action="EquiparTitulo">
+                                                        @if (!amizade.Titulo.Equipado)
+                                                        {
+                                                            <input type="hidden" name="tituloId" value="@amizade.Titulo.Id" />
+                                                        }
+                                                        <input type="hidden" name="personagemId" value="@amizade.PersonagemId" />
+                                                        <button type="submit" class="botao @(amizade.Titulo.Equipado ? "botao-suave" : "botao-destaque")">
+                                                            @(amizade.Titulo.Equipado ? "Tirar do perfil" : "Usar no perfil")
+                                                        </button>
+                                                    </form>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <text>@n.Recompensa</text>
+                                            }
+                                            break;
+                                        case 4:
+                                            <text>Notificações personalizadas de @amizade.Nome</text>
+                                            if (amizade.NotificacoesAtivas)
+                                            {
+                                                <text> — <em>ativas</em></text>
+                                            }
+                                            break;
+                                        case 5:
+                                            if (amizade.Emblema != null)
+                                            {
+                                                <text>Emblema <strong>@amizade.Emblema.Nome</strong> <span class="texto-suave">(até @amizade.MaximoEmblemasEquipados no perfil)</span></text>
+                                                if (amizade.Emblema.Obtido)
+                                                {
+                                                    <form method="post" asp-controller="Colecao" asp-action="EquiparEmblema">
+                                                        <input type="hidden" name="emblemaId" value="@amizade.Emblema.Id" />
+                                                        <input type="hidden" name="equipar" value="@((!amizade.Emblema.Equipado).ToString().ToLower())" />
+                                                        <input type="hidden" name="personagemId" value="@amizade.PersonagemId" />
+                                                        <button type="submit" class="botao @(amizade.Emblema.Equipado ? "botao-suave" : "botao-destaque")">
+                                                            @(amizade.Emblema.Equipado ? "Tirar do perfil" : "Pôr no perfil")
+                                                        </button>
+                                                    </form>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <text>@n.Recompensa</text>
+                                            }
+                                            break;
+                                        case 6:
+                                            if (amizade.TituloUnico != null)
+                                            {
+                                                <text>Título único <span class="titulo-cor" style="color:@(amizade.TituloUnico.CorHex ?? item.Cor)">@amizade.TituloUnico.Nome</span></text>
+                                                if (amizade.TituloUnico.Obtido)
+                                                {
+                                                    <form method="post" asp-controller="Colecao" asp-action="EquiparTitulo">
+                                                        @if (!amizade.TituloUnico.Equipado)
+                                                        {
+                                                            <input type="hidden" name="tituloId" value="@amizade.TituloUnico.Id" />
+                                                        }
+                                                        <input type="hidden" name="personagemId" value="@amizade.PersonagemId" />
+                                                        <button type="submit" class="botao @(amizade.TituloUnico.Equipado ? "botao-suave" : "botao-destaque")">
+                                                            @(amizade.TituloUnico.Equipado ? "Tirar do perfil" : "Usar no perfil")
+                                                        </button>
+                                                    </form>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <text>@n.Recompensa</text>
+                                            }
+                                            break;
+                                        case 7:
+                                            if (amizade.Moldura != null)
+                                            {
+                                                <text>Moldura <strong>@amizade.Moldura.Nome</strong></text>
+                                                if (amizade.Moldura.Obtida)
+                                                {
+                                                    <form method="post" asp-controller="Colecao" asp-action="EquiparMoldura">
+                                                        @if (!amizade.Moldura.Equipada)
+                                                        {
+                                                            <input type="hidden" name="molduraId" value="@amizade.Moldura.Id" />
+                                                        }
+                                                        <input type="hidden" name="personagemId" value="@amizade.PersonagemId" />
+                                                        <button type="submit" class="botao @(amizade.Moldura.Equipada ? "botao-suave" : "botao-destaque")">
+                                                            @(amizade.Moldura.Equipada ? "Tirar do perfil" : "Pôr no perfil")
+                                                        </button>
+                                                    </form>
+                                                }
+                                            }
+                                            else
+                                            {
+                                                <text>@n.Recompensa</text>
+                                            }
+                                            break;
+                                        default:
+                                            <text>—</text>
+                                            break;
+                                    }
+                                </span>
+                            </li>
+                        }
+                    </ul>
+
+                    <form class="interagir" method="post" asp-controller="Colecao" asp-action="Interagir">
+                        <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                        <input type="hidden" name="voltar" value="detalhes" />
+                        <button type="submit" class="botao @(amizade.TemInteracoes ? "botao-destaque" : "botao-suave")"
+                                title="Gasta 1 das @amizade.InteracoesPorDia interações do dia (+@amizade.PontosPorInteracao pontos)">
+                            &#10084; Interagir com @item.Nome
+                        </button>
+                        <span class="texto-suave">
+                            +@amizade.PontosPorInteracao pontos por interação; as cópias repetidas também contam
+                            (@(ProgressoAmizade.PontosRepetida(item.RaridadeOrdem)) por cópia @item.RaridadeNome, o dobro num evento).
+                        </span>
+                    </form>
+                </div>
+            }
 
             <table class="tabela">
                 <tbody>
                     <tr>
                         <th>Cópias</th>
-                        <td>@Model.Quantidade @(Model.Repetidas > 0 ? "(" + Model.Repetidas + " repetida(s))" : "")</td>
+                        <td>@item.Quantidade @(item.Repetidas > 0 ? "(" + item.Repetidas + " repetida(s))" : "")</td>
                     </tr>
                     <tr>
                         <th>Obtida em</th>
-                        <td>@Model.DataObtencao.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@item.DataObtencao.ToString("dd/MM/yyyy HH:mm")</td>
                     </tr>
                     <tr>
                         <th>Favorita</th>
-                        <td>@(Model.IsFavorito ? "Sim" : "Não")</td>
+                        <td>@(item.IsFavorito ? "Sim" : "Não")</td>
                     </tr>
                 </tbody>
             </table>
@@ -53,22 +349,22 @@
                 <a class="botao botao-suave" asp-controller="Colecao" asp-action="Index">&#8592; Voltar à coleção</a>
 
                 <form method="post" asp-controller="Colecao" asp-action="Favorito">
-                    <input type="hidden" name="personagemId" value="@Model.PersonagemId" />
-                    <input type="hidden" name="favorito" value="@((!Model.IsFavorito).ToString().ToLower())" />
+                    <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                    <input type="hidden" name="favorito" value="@((!item.IsFavorito).ToString().ToLower())" />
                     <input type="hidden" name="voltar" value="detalhes" />
                     <button type="submit" class="botao botao-suave">
-                        @(Model.IsFavorito ? "Remover dos favoritos" : "Marcar como favorita")
+                        @(item.IsFavorito ? "Remover dos favoritos" : "Marcar como favorita")
                     </button>
                 </form>
 
-                @if (Model.Repetidas > 0)
+                @if (item.Repetidas > 0)
                 {
                     <form method="post" asp-controller="Colecao" asp-action="Libertar">
-                        <input type="hidden" name="personagemId" value="@Model.PersonagemId" />
+                        <input type="hidden" name="personagemId" value="@item.PersonagemId" />
                         <input type="hidden" name="quantidade" value="0" />
                         <input type="hidden" name="voltar" value="detalhes" />
                         <button type="submit" class="botao botao-suave" title="Fica sempre com uma cópia; recebe Moedas conforme a raridade">
-                            Libertar as @Model.Repetidas repetidas
+                            Libertar as @item.Repetidas repetidas
                         </button>
                     </form>
                 }

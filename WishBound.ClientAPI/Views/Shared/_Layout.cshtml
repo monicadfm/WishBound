@@ -35,8 +35,9 @@
             <a asp-controller="Invocacao" asp-action="Index">Invocação</a>
             @if (User.Identity?.IsAuthenticated == true)
             {
-                @* A coleção é pessoal: só faz sentido com sessão iniciada *@
+                @* A coleção e a carteira são pessoais: só fazem sentido com sessão iniciada *@
                 <a asp-controller="Colecao" asp-action="Index">Coleção</a>
+                <a asp-controller="Economia" asp-action="Index">Carteira</a>
             }
             <a asp-controller="Invocacao" asp-action="Historico">Histórico</a>
             @if (User.IsInRole("Admin"))
@@ -60,6 +61,7 @@
                     </summary>
                     <div class="menu-conta-lista">
                         <a asp-controller="Conta" asp-action="Perfil">O meu perfil</a>
+                        <a asp-controller="Economia" asp-action="Index">A minha carteira</a>
                         @* Contas criadas com Google ainda não têm password local *@
                         <a asp-controller="Conta" asp-action="AlterarPassword">
                             @(User.FindFirst("TemPasswordLocal")?.Value == "false" ? "Definir password" : "Alterar password")
@@ -91,6 +93,11 @@
         @if (TempData["Erro"] != null)
         {
             <div class="alerta alerta-erro">@TempData["Erro"]</div>
+        }
+        @if (TempData["Reacao"] != null)
+        {
+            @* Sistema de amizade: a "fala" da personagem depois de uma interação *@
+            <div class="caixa-reacao">&#10084; <em>@TempData["Reacao"]</em></div>
         }
         @if (TempData["LinkDev"] != null)
         {

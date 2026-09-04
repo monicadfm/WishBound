@@ -38,9 +38,40 @@ namespace WishBound.ClientAPI.Models
         /// <summary>Custo de uma invocação x10.</summary>
         public decimal CustoDez => CustoInvocacao * 10;
 
-        public bool PodeInvocar => SaldoMoedas >= CustoInvocacao;
+        /// <summary>Bilhetes de invocação (cada um paga uma invocação inteira).</summary>
+        public decimal SaldoBilhetes { get; set; }
 
-        public bool PodeInvocarDez => SaldoMoedas >= CustoDez;
+        /// <summary>Ainda não recebeu a recompensa diária de hoje.</summary>
+        public bool RecompensaDiariaDisponivel { get; set; }
+
+        /// <summary>Bilhetes que uma invocação de N usaria (gastos primeiro).</summary>
+        public int BilhetesPara(int quantidade) => (int)Math.Min(quantidade, Math.Floor(SaldoBilhetes));
+
+        /// <summary>Moedas que sobram para pagar depois dos bilhetes.</summary>
+        public decimal MoedasPara(int quantidade) => CustoInvocacao * (quantidade - BilhetesPara(quantidade));
+
+        /// <summary>Texto do preço no botão: "grátis", "3 bilhetes + 70 Moedas" ou "10 Moedas".</summary>
+        public string PrecoTexto(int quantidade)
+        {
+            int bilhetes = BilhetesPara(quantidade);
+            decimal moedas = MoedasPara(quantidade);
+
+            if (bilhetes == quantidade)
+            {
+                return quantidade == 1 ? "1 bilhete" : quantidade + " bilhetes";
+            }
+
+            if (bilhetes > 0)
+            {
+                return bilhetes + (bilhetes == 1 ? " bilhete + " : " bilhetes + ") + moedas.ToString("0") + " Moedas";
+            }
+
+            return moedas.ToString("0") + " Moedas";
+        }
+
+        public bool PodeInvocar => SaldoMoedas >= MoedasPara(1);
+
+        public bool PodeInvocarDez => SaldoMoedas >= MoedasPara(10);
 
         public int LimiteLendario { get; set; } = 90;
         public int LimiteEpico { get; set; } = 10;

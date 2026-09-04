@@ -32,6 +32,17 @@ namespace WishBound.WebAPI.Models
         public bool PityAtivado { get; set; }
 
         public int RaridadeOrdem { get; set; }
+
+        // ----- Sistema de amizade -----
+
+        /// <summary>Pontos de amizade dados por esta cópia (só as repetidas dão; 0 numa personagem nova).</summary>
+        public int PontosAmizadeGanhos { get; set; }
+
+        /// <summary>Nome do nível de amizade com a personagem depois desta invocação.</summary>
+        public string? NivelAmizadeNome { get; set; }
+
+        /// <summary>A amizade com a personagem subiu de nível nesta invocação.</summary>
+        public bool SubiuDeNivel { get; set; }
     }
 
     /// <summary>
@@ -41,6 +52,9 @@ namespace WishBound.WebAPI.Models
     public class InvocacaoResultado
     {
         public List<PersonagemObtida> Personagens { get; set; } = new List<PersonagemObtida>();
+
+        /// <summary>Subidas de nível de amizade e recompensas desbloqueadas nesta invocação.</summary>
+        public List<string> MensagensAmizade { get; set; } = new List<string>();
 
         public int BannerId { get; set; }
         public string BannerNome { get; set; } = string.Empty;
@@ -63,8 +77,14 @@ namespace WishBound.WebAPI.Models
         /// <summary>Saldo em Moedas depois de pagar as invocações.</summary>
         public decimal SaldoMoedas { get; set; }
 
-        /// <summary>Moedas gastas nesta invocação.</summary>
+        /// <summary>Moedas gastas nesta invocação (0 se foi toda paga com bilhetes).</summary>
         public decimal CustoTotal { get; set; }
+
+        /// <summary>Bilhetes de invocação gastos nesta invocação.</summary>
+        public int BilhetesUsados { get; set; }
+
+        /// <summary>Bilhetes que ainda tem depois de invocar.</summary>
+        public decimal SaldoBilhetes { get; set; }
     }
 
     /// <summary>
@@ -95,6 +115,12 @@ namespace WishBound.WebAPI.Models
 
         /// <summary>Quanto custa cada invocação (10 Moedas).</summary>
         public decimal CustoInvocacao { get; set; }
+
+        /// <summary>Bilhetes de invocação do utilizador (cada um paga uma invocação).</summary>
+        public decimal SaldoBilhetes { get; set; }
+
+        /// <summary>Ainda não recebeu a recompensa diária de hoje (para a página avisar).</summary>
+        public bool RecompensaDiariaDisponivel { get; set; }
     }
 
     /// <summary>Banner apresentado ao utilizador na página de invocação.</summary>

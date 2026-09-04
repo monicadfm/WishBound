@@ -7,11 +7,19 @@
     <h1>O meu perfil</h1>
 
     <div class="perfil-cabecalho">
-        <img class="perfil-foto"
+        @* A moldura (só as personagens Míticas dão) é um anel CSS com a cor da personagem *@
+        <img class="perfil-foto @(string.IsNullOrEmpty(Model.MolduraCor) ? "" : "perfil-com-moldura")"
+             style="@(string.IsNullOrEmpty(Model.MolduraCor) ? "" : "--cor-moldura:" + Model.MolduraCor)"
              src="@(string.IsNullOrEmpty(Model.FotoPerfilUrl) ? "/img/personagens/desconhecido.svg" : Model.FotoPerfilUrl)"
-             alt="Foto de perfil" />
+             alt="Foto de perfil"
+             title="@Model.MolduraNome" />
         <div class="perfil-resumo">
             <p><strong>@Model.NomeUtilizador</strong> @(Model.IsAdmin ? "· Administrador" : "")</p>
+            @if (!string.IsNullOrEmpty(Model.TituloNome))
+            {
+                @* Título escolhido no sistema de amizade (os de nível 6 têm a cor da raridade) *@
+                <p class="perfil-titulo" style="@(string.IsNullOrEmpty(Model.TituloCor) ? "" : "color:" + Model.TituloCor)">@Model.TituloNome</p>
+            }
             <p class="texto-suave">@Model.Email</p>
             <p class="texto-suave">Conta criada em @Model.DataCriacao.ToLocalTime().ToString("dd/MM/yyyy")</p>
             @if (Model.UltimoLogin != null)
@@ -20,6 +28,24 @@
             }
         </div>
     </div>
+
+    @* ----- Sistema de amizade: emblemas equipados (até 3) ----- *@
+    <div class="perfil-emblemas">
+        @foreach (var e in Model.Emblemas)
+        {
+            <form method="post" asp-controller="Colecao" asp-action="EquiparEmblema" title="@e.Nome — clicar para tirar do perfil">
+                <input type="hidden" name="emblemaId" value="@e.Id" />
+                <input type="hidden" name="equipar" value="false" />
+                <input type="hidden" name="voltar" value="perfil" />
+                <button type="submit" class="perfil-emblema-botao"><img src="@e.Imagem" alt="@e.Nome" /></button>
+            </form>
+        }
+    </div>
+    <p class="texto-suave">
+        Emblemas no perfil: @Model.Emblemas.Count / @Model.MaximoEmblemas (ganhos: @Model.EmblemasGanhos)
+        &middot; títulos: @Model.TitulosGanhos &middot; molduras: @Model.MoldurasGanhas
+        &middot; <a class="ligacao" asp-controller="Colecao" asp-action="Index">gerir na coleção</a>
+    </p>
 
     <form class="formulario formulario-autenticacao" method="post" asp-controller="Conta" asp-action="Perfil">
         <div asp-validation-summary="ModelOnly" class="alerta alerta-erro alerta-validacao"></div>

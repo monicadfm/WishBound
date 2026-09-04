@@ -89,6 +89,57 @@
             font-size: 13px;
             padding: 6px 10px;
         }
+
+        /* Amizade: nível e barra de progresso em cada cartão */
+        .etiqueta-nivel {
+            display: inline-block;
+            border-radius: 999px;
+            padding: 2px 10px;
+            font-size: 12px;
+            font-weight: 600;
+            background: rgba(208, 70, 138, .25);
+            border: 1px solid rgba(243, 154, 198, .5);
+            margin-left: 6px;
+        }
+
+        .amizade-barra {
+            height: 6px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, .12);
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .amizade-usado {
+            height: 100%;
+            border-radius: 6px;
+            background: linear-gradient(90deg, #d0468a, #f39ac6);
+        }
+
+        .interacoes-caixa {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .interacoes-pontos {
+            display: inline-flex;
+            gap: 6px;
+        }
+
+        .interacoes-pontos span {
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            border: 2px solid var(--dourado);
+        }
+
+        .interacoes-pontos span.cheio {
+            background: var(--dourado);
+            box-shadow: 0 0 8px rgba(243, 192, 79, .6);
+        }
     </style>
 }
 
@@ -116,6 +167,19 @@
             {
                 <p class="texto-suave">Coleção cheia — liberte repetidas ou compre mais lugares para poder invocar.</p>
             }
+
+            @* Sistema de amizade: interações que ainda tem hoje (3 por dia) *@
+            <div class="interacoes-caixa texto-suave">
+                <span>&#10084; Interações de hoje:</span>
+                <span class="interacoes-pontos">
+                    @for (int i = 0; i < Model.InteracoesPorDia; i++)
+                    {
+                        <span class="@(i < Model.InteracoesRestantes ? "cheio" : "")"></span>
+                    }
+                </span>
+                <strong>@(Model.InteracoesRestantes > Model.InteracoesPorDia ? "∞" : Model.InteracoesRestantes + " / " + Model.InteracoesPorDia)</strong>
+                <span>@(Model.TemInteracoes ? "· +25 pontos cada, em qualquer personagem" : "· voltam amanhã")</span>
+            </div>
 
             @* Libertar de uma vez as repetidas de todas as personagens *@
             @if (Model.TemRepetidas)
@@ -199,10 +263,24 @@
                     <div class="cartao-corpo">
                         <h3>@item.Nome</h3>
                         <span class="etiqueta-raridade" style="background:@item.Cor">@item.RaridadeNome</span>
+                        <span class="etiqueta-nivel" title="@item.NivelTexto — @item.ProgressoAmizadeTexto">@item.NivelAmizadeNome</span>
+                        <div class="amizade-barra" title="@item.ProgressoAmizadeTexto">
+                            <div class="amizade-usado" style="width:@(item.PercentagemAmizade)%"></div>
+                        </div>
                         <p class="texto-suave">Obtida a @item.DataObtencao.ToString("dd/MM/yyyy")</p>
 
                         <div class="cartao-acoes">
                             <a class="botao botao-suave" asp-controller="Colecao" asp-action="Detalhes" asp-route-id="@item.PersonagemId">Detalhes</a>
+
+                            @* Sistema de amizade: gasta 1 das 3 interações do dia nesta personagem *@
+                            <form method="post" asp-controller="Colecao" asp-action="Interagir">
+                                <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                                <input type="hidden" name="ordenar" value="@Model.Ordenar" />
+                                <input type="hidden" name="favoritos" value="@Model.ApenasFavoritos.ToString().ToLower()" />
+                                <button type="submit" class="botao @(Model.TemInteracoes ? "botao-destaque" : "botao-suave")" title="+25 pontos de amizade">
+                                    &#10084; Interagir
+                                </button>
+                            </form>
 
                             <form method="post" asp-controller="Colecao" asp-action="Favorito">
                                 <input type="hidden" name="personagemId" value="@item.PersonagemId" />

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using WishBound.ClientAPI.Models.Amizade;
 using WishBound.ClientAPI.Models.Colecao;
 using WishBound.ClientAPI.Services;
 
@@ -11,6 +12,12 @@ namespace WishBound.ClientAPI.Controllers
     /// filtro de favoritos, detalhe de cada personagem, marcação de favoritos,
     /// libertação de cópias repetidas (que dá Moedas) e compra de mais
     /// lugares para a coleção.
+    ///
+    /// SISTEMA DE AMIZADE: as 3 interações diárias (botão "Interagir" em
+    /// cada cartão e nos detalhes), o nível de amizade com cada personagem
+    /// e, na página de detalhes, os níveis com o que cada um dá e as
+    /// recompensas dessa personagem (título, emblema, moldura) para equipar
+    /// no perfil.
     /// Requer sessão iniciada — a coleção é sempre a do próprio.
     /// </summary>
     [Authorize]
@@ -60,7 +67,20 @@ namespace WishBound.ClientAPI.Controllers
                     return RedirectToAction(nameof(Index));
                 }
 
-                return View(item);
+                // Amizade com esta personagem (bloco por baixo da descrição).
+                // Se falhar (ex.: Migracao04/05 por correr), a página abre na
+                // mesma sem esse bloco.
+                AmizadePersonagem? amizade = null;
+                try
+                {
+                    amizade = await _api.ObterAmizadePersonagemAsync(ObterUtilizadorId(), id);
+                }
+                catch (Exception)
+                {
+                    // sem amizade
+                }
+
+                return View(new DetalhesColecaoViewModel { Item = item, Amizade = amizade });
             }
             catch (Exception)
             {
@@ -171,6 +191,115 @@ namespace WishBound.ClientAPI.Controllers
             }
 
             return RedirectToAction(nameof(Index), new { ordenar, favoritos });
+        }
+
+        // ------------------------------------------------------------
+        // Sistema de amizade
+        // ------------------------------------------------------------
+
+        // POST: /Colecao/Interagir  (gasta 1 das 3 interações do dia)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Interagir(int personagemId, string? ordenar = null, bool favoritos = false, string? voltar = null)
+        {
+            try
+            {
+                var (resultado, erro) = await _api.InteragirAsync(ObterUtilizadorId(), personagemId);
+
+                if (resultado != null)
+                {
+                    TempData["Sucesso"] = resultado.Mensagem;
+                    // A "fala" da personagem aparece numa caixa própria (ver _Layout)
+                    TempData["Reacao"] = resultado.Reacao;
+                }
+                else
+                {
+                    TempData["Erro"] = string.IsNullOrWhiteSpace(erro)
+                        ? "Não foi possível interagir com a personagem."
+                        : erro;
+                }
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            return VoltarPara(voltar, personagemId, ordenar, favoritos);
+        }
+
+        // POST: /Colecao/EquiparTitulo  (tituloId vazio = remover do perfil)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EquiparTitulo(int? tituloId, string? ordenar = null, bool favoritos = false, string? voltar = null, int personagemId = 0)
+        {
+            try
+            {
+                var (sucesso, mensagem) = await _api.EquiparTituloAsync(ObterUtilizadorId(), tituloId);
+                TempData[sucesso ? "Sucesso" : "Erro"] = mensagem;
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            if (voltar == "perfil")
+            {
+                return RedirectToAction("Perfil", "Conta");
+            }
+
+            return personagemId > 0
+                ? RedirectToAction(nameof(Detalhes), new { id = personagemId })
+                : RedirectToAction(nameof(Index), new { ordenar, favoritos });
+        }
+
+        // POST: /Colecao/EquiparMoldura  (molduraId vazio = remover do perfil)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EquiparMoldura(int? molduraId, string? ordenar = null, bool favoritos = false, string? voltar = null, int personagemId = 0)
+        {
+            try
+            {
+                var (sucesso, mensagem) = await _api.EquiparMolduraAsync(ObterUtilizadorId(), molduraId);
+                TempData[sucesso ? "Sucesso" : "Erro"] = mensagem;
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            if (voltar == "perfil")
+            {
+                return RedirectToAction("Perfil", "Conta");
+            }
+
+            return personagemId > 0
+                ? RedirectToAction(nameof(Detalhes), new { id = personagemId })
+                : RedirectToAction(nameof(Index), new { ordenar, favoritos });
+        }
+
+        // POST: /Colecao/EquiparEmblema  (põe/tira um emblema do perfil, até 3)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EquiparEmblema(int emblemaId, bool equipar, int personagemId = 0, string? voltar = null)
+        {
+            try
+            {
+                var (sucesso, mensagem) = await _api.EquiparEmblemaAsync(ObterUtilizadorId(), emblemaId, equipar);
+                TempData[sucesso ? "Sucesso" : "Erro"] = mensagem;
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            if (voltar == "perfil")
+            {
+                return RedirectToAction("Perfil", "Conta");
+            }
+
+            return personagemId > 0
+                ? RedirectToAction(nameof(Detalhes), new { id = personagemId })
+                : RedirectToAction(nameof(Index));
         }
 
         /// <summary>

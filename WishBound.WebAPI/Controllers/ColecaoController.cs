@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WishBound.WebAPI.Data;
 using WishBound.WebAPI.Models;
+using WishBound.WebAPI.Services;
 
 namespace WishBound.WebAPI.Controllers
 {
@@ -36,10 +37,12 @@ namespace WishBound.WebAPI.Controllers
         private const int PrecoBaseExpansao = 90;
 
         private readonly WishBoundContext _contexto;
+        private readonly ServicoAmizade _amizade;
 
-        public ColecaoController(WishBoundContext contexto)
+        public ColecaoController(WishBoundContext contexto, ServicoAmizade amizade)
         {
             _contexto = contexto;
+            _amizade = amizade;
         }
 
         /// <summary>
@@ -97,6 +100,16 @@ namespace WishBound.WebAPI.Controllers
 
                 var itens = await consulta.ToListAsync();
 
+                // Níveis de amizade (para o nome do nível e a barra de progresso)
+                var niveis = await _amizade.ObterNiveisAsync();
+
+                // Interações do sistema de amizade que ainda tem hoje
+                var utilizador = await _contexto.Utilizadores.AsNoTracking()
+                    .FirstOrDefaultAsync(u => u.Id == utilizadorId);
+                int interacoes = utilizador == null
+                    ? 0
+                    : AmizadeController.InteracoesDisponiveis(utilizador, DateOnly.FromDateTime(DateTime.UtcNow));
+
                 // Resumo das repetidas (para o botão "libertar todas"): conta
                 // SEMPRE a coleção inteira, mesmo com o filtro de favoritas.
                 var todas = await _contexto.Colecoes
@@ -121,7 +134,7 @@ namespace WishBound.WebAPI.Controllers
 
                 return Ok(new ColecaoResposta
                 {
-                    Itens = itens.Select(ParaResposta).ToList(),
+                    Itens = itens.Select(i => ParaResposta(i, niveis)).ToList(),
                     Ocupado = ocupado,
                     Capacidade = inventario.CapacidadeTotal,
                     PersonagensDistintas = distintas,
@@ -130,7 +143,9 @@ namespace WishBound.WebAPI.Controllers
                     PrecoProximaExpansao = PrecoDaProximaExpansao(inventario),
                     LugaresPorExpansao = LugaresPorExpansao,
                     TotalRepetidas = totalRepetidas,
-                    MoedasPorTodasRepetidas = moedasPorRepetidas
+                    MoedasPorTodasRepetidas = moedasPorRepetidas,
+                    InteracoesRestantes = interacoes,
+                    InteracoesPorDia = ServicoAmizade.InteracoesPorDia
                 });
             }
             catch (Exception ex)
@@ -163,7 +178,7 @@ namespace WishBound.WebAPI.Controllers
                     return NotFound("Esta personagem ainda não faz parte da coleção.");
                 }
 
-                return Ok(ParaResposta(item));
+                return Ok(ParaResposta(item, await _amizade.ObterNiveisAsync()));
             }
             catch (Exception ex)
             {
@@ -518,11 +533,23 @@ namespace WishBound.WebAPI.Controllers
                    ?? new Inventario { UtilizadorId = utilizadorId, CapacidadeBase = 100, CapacidadeExtra = 0 };
         }
 
-        /// <summary>Converte a linha da coleção no DTO enviado ao site.</summary>
-        private static ItemColecaoResposta ParaResposta(ItemColecao item)
+        /// <summary>Converte a linha da coleção no DTO enviado ao site (já com a amizade).</summary>
+        private static ItemColecaoResposta ParaResposta(ItemColecao item, List<NivelAmizade> niveis)
         {
+            var amizade = AmizadeController.ParaResposta(item, niveis);
+
             return new ItemColecaoResposta
             {
+                PontosAmizade = amizade.PontosAmizade,
+                NivelAmizadeId = amizade.NivelAmizadeId,
+                NivelAmizadeNome = amizade.NivelAmizadeNome,
+                NivelOrdem = amizade.NivelOrdem,
+                NivelMaximoOrdem = amizade.NivelMaximoOrdem,
+                NivelMaximoNome = amizade.NivelMaximoNome,
+                PontosNivelAtual = amizade.PontosNivelAtual,
+                PontosProximoNivel = amizade.PontosProximoNivel,
+                UltimaInteracao = amizade.UltimaInteracao,
+
                 PersonagemId = item.PersonagemId,
                 Nome = item.Personagem?.Nome ?? "Personagem removida",
                 Descricao = item.Personagem?.Descricao,

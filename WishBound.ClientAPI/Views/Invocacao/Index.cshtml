@@ -149,15 +149,21 @@
 
     <p class="texto-suave">
         Pede um desejo e invoca personagens aleatórias.
-        Cada invocação custa @(Model.Estado?.CustoInvocacao.ToString("0") ?? "10") Moedas,
-        fica registada no teu histórico e a personagem entra na tua coleção.
+        Cada invocação custa @(Model.Estado?.CustoInvocacao.ToString("0") ?? "10") Moedas — ou um
+        bilhete de invocação, gasto primeiro —, fica registada no teu histórico e a
+        personagem entra na tua coleção.
     </p>
 
     @if (Model.Estado != null)
     {
         <p class="texto-suave">
-            Tens <strong>@Model.Estado.SaldoMoedas.ToString("0") Moedas</strong>.
-            @if (!Model.Estado.PodeInvocar)
+            Tens <strong>@Model.Estado.SaldoMoedas.ToString("0") Moedas</strong>
+            e <strong>@Model.Estado.SaldoBilhetes.ToString("0") @(Model.Estado.SaldoBilhetes == 1 ? "bilhete" : "bilhetes")</strong>.
+            @if (Model.Estado.RecompensaDiariaDisponivel)
+            {
+                <a class="ligacao" asp-controller="Economia" asp-action="Index">&#127873; Tens a recompensa diária por receber</a>
+            }
+            else if (!Model.Estado.PodeInvocar)
             {
                 <text>Liberta cópias repetidas na Coleção para ganhar mais.</text>
             }
@@ -196,10 +202,10 @@
     <form class="botoes-invocar" method="post" asp-controller="Invocacao" asp-action="Invocar">
         <input type="hidden" name="bannerId" value="@Model.BannerId" />
         <button type="submit" name="quantidade" value="1" class="botao botao-destaque botao-grande">
-            &#10024; Invocar (@(Model.Estado?.CustoInvocacao.ToString("0") ?? "10") Moedas)
+            &#10024; Invocar (@(Model.Estado?.PrecoTexto(1) ?? "10 Moedas"))
         </button>
         <button type="submit" name="quantidade" value="10" class="botao botao-suave botao-grande">
-            &#10024; Invocar x10 (@(Model.Estado?.CustoDez.ToString("0") ?? "100") Moedas)
+            &#10024; Invocar x10 (@(Model.Estado?.PrecoTexto(10) ?? "100 Moedas"))
         </button>
     </form>
 
@@ -228,10 +234,15 @@
                     @if (!obtida.Novo)
                     {
                         <text>Repetida — ficas com @obtida.Quantidade cópias.</text>
+                        @if (obtida.PontosAmizadeGanhos > 0)
+                        {
+                            <text> +@obtida.PontosAmizadeGanhos amizade (@obtida.NivelAmizadeNome).</text>
+                        }
                     }
                     <br />
-                    Espaço da coleção: @Model.Resultado.Ocupado / @Model.Resultado.Capacidade
-                    &middot; saldo: @Model.Resultado.SaldoMoedas.ToString("0") Moedas
+                    @Model.Resultado.GastoTexto &middot;
+                    espaço da coleção: @Model.Resultado.Ocupado / @Model.Resultado.Capacidade
+                    &middot; saldo: @Model.Resultado.SaldoMoedas.ToString("0") Moedas, @Model.Resultado.SaldoBilhetes.ToString("0") bilhetes
                 </p>
 
                 <a class="botao botao-suave" asp-controller="Colecao" asp-action="Detalhes" asp-route-id="@obtida.Personagem?.Id">Ver na coleção</a>
@@ -242,7 +253,7 @@
     {
         <p class="texto-suave">
             @Model.Resultado.Personagens.Count invocações em @Model.Resultado.BannerNome &middot;
-            @Model.Resultado.CustoTotal.ToString("0") Moedas gastas (saldo: @Model.Resultado.SaldoMoedas.ToString("0")) &middot;
+            @Model.Resultado.GastoTexto (saldo: @Model.Resultado.SaldoMoedas.ToString("0") Moedas, @Model.Resultado.SaldoBilhetes.ToString("0") bilhetes) &middot;
             espaço da coleção: @Model.Resultado.Ocupado / @Model.Resultado.Capacidade
         </p>
 
@@ -268,11 +279,27 @@
                             @if (!obtida.Novo)
                             {
                                 <text>x@(obtida.Quantidade)</text>
+                                @if (obtida.PontosAmizadeGanhos > 0)
+                                {
+                                    <text> &middot; +@obtida.PontosAmizadeGanhos &#10084;</text>
+                                }
                             }
                         </p>
                     </div>
                 </div>
             }
+        </div>
+    }
+
+    @* ----- Amizade: subidas de nível provocadas por esta invocação ----- *@
+    @if (Model.Resultado != null && Model.Resultado.MensagensAmizade.Count > 0)
+    {
+        <div class="destaque-caixa">
+            @foreach (var mensagem in Model.Resultado.MensagensAmizade)
+            {
+                <p>&#10084; @mensagem</p>
+            }
+            <a class="ligacao" asp-controller="Colecao" asp-action="Index">ver na coleção</a>
         </div>
     }
 

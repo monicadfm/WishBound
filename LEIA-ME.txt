@@ -21,7 +21,31 @@ REQUISITOS
 4. Database\Migracao02.sql              -> acrescenta o contador ContadorEpico
                                            à tabela PityUtilizador (garantias do
                                            sistema de invocação) e oferece 500
-                                           Moedas às contas já existentes.
+                                           Moedas às contas já existentes;
+5. Database\Migracao03.sql              -> economia: cria a moeda 3 "Bilhetes"
+                                           (bilhetes de invocação) e as carteiras
+                                           em falta, acrescenta a coluna
+                                           DiaRecompensaDiaria a Utilizadores
+                                           (calendário de 28 dias do login diário)
+                                           e cria o evento de 7 dias "Festival de
+                                           Boas-Vindas" (10 bilhetes), que começa
+                                           no momento em que o script é executado;
+6. Database\Migracao04.sql              -> sistema de amizade: interações
+                                           diárias (colunas InteracoesRestantes e
+                                           DiaInteracoes em Utilizadores), título
+                                           do perfil (TituloAtualId), tabelas
+                                           Titulos/TitulosUtilizador, liga
+                                           Emblemas e MoldurasPerfil às
+                                           personagens/níveis e semeia 1 emblema
+                                           por personagem, títulos por nível
+                                           (personalizados nas Lendárias/Míticas)
+                                           e 1 moldura por personagem Mítica;
+7. Database\Migracao05.sql              -> amizade (regras finais): 7 níveis,
+                                           nível máximo por raridade, títulos só
+                                           nos níveis 3 e 6 (com cor), emblemas
+                                           ao nível 5 (equipáveis, até 3),
+                                           molduras ao nível 7; recalcula os
+                                           níveis de toda a gente.
 
 A aplicação NÃO cria nem altera a base de dados ("database first").
 
@@ -40,6 +64,12 @@ A aplicação NÃO cria nem altera a base de dados ("database first").
 - Administrador (acesso à área de Gestão):
      Utilizador: Admin
      Password:   Admin123!
+  A conta Admin tem invocações e interações ilimitadas (regra de
+  código: não gasta Moedas, bilhetes nem interações). Para lhe dar
+  também todas as personagens, amizades no máximo, todos os títulos/
+  emblemas/molduras e saldo enorme, correr Database\AdminAcessoTotal.sql
+  (depois das migrações; pode repetir-se sempre que houver personagens
+  novas).
 - Registo normal no site: a password precisa de 8+ caracteres com
   1 maiúscula, 1 número e 1 símbolo. Sem servidor de email configurado
   (ver secção 4), NÃO há envio real de emails: o link de validação
@@ -119,6 +149,24 @@ NOTAS
   compram-se mais 10 lugares de cada vez, com preço a subir a cada
   compra (90, 180, 270...). Todos os movimentos ficam registados na
   tabela TransacoesMoeda.
+- Amizade: cada personagem da coleção tem um nível de amizade com o
+  utilizador. 7 níveis (tabela NiveisAmizade): Desconhecido 0 ->
+  Conhecido 100 -> Melhor Amigo 300 -> Confidente 700 -> Inseparável
+  1500 -> Laço Especial 3000 -> Alma Gémea 5000. Cada personagem só
+  chega ao nível da sua raridade + 2: Comum 3, Raro 4, Épico 5,
+  Lendário 6, Mítico 7 (os pontos param aí). Pontos: 3 INTERAÇÕES por
+  dia (dia UTC), +25 cada, para gastar em qualquer personagem — até as
+  3 na mesma; cópias repetidas obtidas nas invocações (Comum 10,
+  Raro 20, Épico 40, Lendário 80, Mítico 160; o dobro num banner de
+  evento). Recompensas: nível 3 título "Melhor Amigo de X" (todas);
+  nível 4 notificações personalizadas da personagem (uma mensagem por
+  dia, na primeira interação do dia — tabela Notificacoes); nível 5
+  emblema ("rebento") da personagem para o perfil (até 3 equipados);
+  nível 6 título único na cor da raridade; nível 7 moldura de perfil.
+  Tudo se vê e equipa na página de detalhes de cada personagem
+  (Coleção -> Detalhes), por baixo da descrição; a Coleção mostra as
+  interações do dia e o nível em cada cartão; o Perfil mostra o
+  título (colorido), os emblemas equipados e a moldura.
 - Segredos (Google, email, chave da API) ficam sempre no
   appsettings.Local.json de cada projeto, nunca no appsettings.json
   versionado.

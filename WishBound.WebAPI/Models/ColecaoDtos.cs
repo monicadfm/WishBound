@@ -22,6 +22,24 @@ namespace WishBound.WebAPI.Models
         public int Quantidade { get; set; }
         public bool IsFavorito { get; set; }
         public DateTime DataObtencao { get; set; }
+
+        // ----- Amizade com esta personagem (sistema de amizade) -----
+        public int PontosAmizade { get; set; }
+        public int NivelAmizadeId { get; set; }
+        public string NivelAmizadeNome { get; set; } = string.Empty;
+        public int NivelOrdem { get; set; }
+
+        /// <summary>Nível mais alto que esta personagem pode atingir (Comum 3 ... Mítico 7).</summary>
+        public int NivelMaximoOrdem { get; set; }
+        public string NivelMaximoNome { get; set; } = string.Empty;
+
+        /// <summary>Pontos onde começa o nível atual (para a barra de progresso).</summary>
+        public int PontosNivelAtual { get; set; }
+
+        /// <summary>Pontos do próximo nível (null quando já está no máximo).</summary>
+        public int? PontosProximoNivel { get; set; }
+
+        public DateOnly? UltimaInteracao { get; set; }
     }
 
     /// <summary>
@@ -58,6 +76,11 @@ namespace WishBound.WebAPI.Models
 
         /// <summary>Moedas que ganharia se libertasse todas as repetidas.</summary>
         public decimal MoedasPorTodasRepetidas { get; set; }
+
+        /// <summary>Interações do sistema de amizade que ainda tem hoje (3 por dia).</summary>
+        public int InteracoesRestantes { get; set; }
+
+        public int InteracoesPorDia { get; set; }
     }
 
     /// <summary>Marcar/desmarcar uma personagem como favorita.</summary>

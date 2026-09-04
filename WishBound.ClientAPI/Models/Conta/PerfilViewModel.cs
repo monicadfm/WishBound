@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using WishBound.ClientAPI.Models.Amizade;
 
 namespace WishBound.ClientAPI.Models.Conta
 {
@@ -19,5 +20,17 @@ namespace WishBound.ClientAPI.Models.Conta
         public DateTime DataCriacao { get; set; }
         public DateTime? UltimoLogin { get; set; }
         public bool IsAdmin { get; set; }
+
+        // ----- Sistema de amizade: o que está no perfil -----
+        public string? TituloNome { get; set; }
+        public string? TituloCor { get; set; }
+        public string? MolduraNome { get; set; }
+        public string? MolduraCor { get; set; }
+        /// <summary>Emblemas equipados (até 3).</summary>
+        public List<Emblema> Emblemas { get; set; } = new List<Emblema>();
+        public int EmblemasGanhos { get; set; }
+        public int MaximoEmblemas { get; set; } = 3;
+        public int TitulosGanhos { get; set; }
+        public int MoldurasGanhas { get; set; }
     }
 }
