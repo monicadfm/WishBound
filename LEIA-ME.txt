@@ -46,6 +46,13 @@ REQUISITOS
                                            ao nível 5 (equipáveis, até 3),
                                            molduras ao nível 7; recalcula os
                                            níveis de toda a gente.
+8. Database\Migracao06.sql              -> administração de contas: colunas
+                                           UtilizadorAlvoId e Detalhes na tabela
+                                           LogsAdministrador (registo de ações
+                                           dos administradores) + índices.
+                                           Sem isto a área Gestão -> Utilizadores
+                                           falha com "Invalid column name
+                                           'UtilizadorAlvoId'".
 
 A aplicação NÃO cria nem altera a base de dados ("database first").
 
@@ -89,6 +96,31 @@ A aplicação NÃO cria nem altera a base de dados ("database first").
 - Contas criadas com Google não têm password própria. No menu da conta
   aparece "Definir password": ao defini-la, essa conta passa a poder
   entrar das duas maneiras (Google ou utilizador + password).
+- Gestão de contas (Gestão -> Utilizadores, só para administradores):
+  lista de todas as contas com pesquisa (nome/email), filtros (ativas,
+  desativadas, administradores, email por validar) e paginação. Ao
+  abrir uma conta vê-se tudo (carteiras, inventário, coleção com a
+  amizade, títulos/emblemas/molduras, últimas transações e últimas
+  ações de administração) e pode-se:
+    . ativar/desativar a conta, promover/despromover a administrador,
+      marcar o email como validado, repor a password (sem a antiga);
+    . dar ou tirar Moedas, Bilhetes ou Gemas (fica em TransacoesMoeda
+      com origem "Admin: motivo"; tirar nunca deixa o saldo negativo);
+    . dar ou tirar cópias de personagens (respeita o espaço do
+      inventário; tirar a última cópia apaga a amizade com ela) e
+      definir a capacidade extra do inventário;
+    . definir os pontos de amizade com uma personagem (limitados ao
+      máximo da raridade; se o nível subir, as recompensas desses
+      níveis são desbloqueadas como numa interação);
+    . conceder ou revogar títulos, emblemas e molduras diretamente.
+  Cada ação leva um motivo opcional e fica no REGISTO DE AÇÕES
+  (tabela LogsAdministrador: quem, a quem, o quê, porquê, quando),
+  visível em Gestão -> Registo de ações. Proteções: um administrador
+  não pode desativar nem despromover a própria conta, e a última conta
+  de administrador ativa nunca pode ser desativada/despromovida. Os
+  endpoints são api/admin/... e recebem o AdminId da sessão — a API
+  confirma que é uma conta de administrador ativa (mesma fronteira de
+  confiança do resto da API: chave partilhada + Id enviado pelo site).
 
 4. ENVIO DE EMAILS (opcional)
 -----------------------------

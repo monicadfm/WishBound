@@ -49,6 +49,10 @@ namespace WishBound.WebAPI.Data
         public DbSet<MolduraUtilizador> MoldurasUtilizador { get; set; }
         public DbSet<Notificacao> Notificacoes { get; set; }
 
+        // Administração de contas (Migracao06): registo de ações dos
+        // administradores — tabela do esquema original, agora usada.
+        public DbSet<LogAdministrador> LogsAdministrador { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

@@ -1,18 +1,32 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
+using System.Security.Claims;
 using WishBound.ClientAPI.Models;
+using WishBound.ClientAPI.Models.Gestao;
 using WishBound.ClientAPI.Services;
 
 namespace WishBound.ClientAPI.Controllers
 {
     /// <summary>
-    /// Área de gestão (administração) das personagens.
-    /// Aqui demonstra-se o CRUD completo através da WebAPI:
+    /// Área de gestão (administração).
+    ///
+    /// PERSONAGENS — o CRUD completo através da WebAPI:
     ///   Index  -> SELECT
     ///   Criar  -> INSERT
     ///   Editar -> UPDATE
     ///   Apagar -> DELETE
+    ///
+    /// CONTAS (api/admin) — ver e gerir as contas dos utilizadores:
+    ///   Utilizadores -> lista com pesquisa, filtro e paginação
+    ///   Utilizador   -> detalhe de uma conta + formulários das ações
+    ///   AlterarEstado / ReporPassword / AjustarMoeda / AjustarPersonagem /
+    ///   DefinirInventario / DefinirAmizade / AjustarRecompensa -> ações
+    ///   (POST) que voltam ao detalhe da conta com a mensagem da API
+    ///   Acoes        -> registo de tudo o que os administradores fizeram
+    /// Todas as ações enviam o Id do administrador com sessão iniciada
+    /// (claim NameIdentifier) e um motivo opcional que fica no registo.
+    ///
     /// Usa o segundo layout (_LayoutGestao, com barra lateral).
     ///
     /// [Authorize(Roles = "Admin")]: TODA a área de gestão exige sessão
@@ -215,6 +229,203 @@ namespace WishBound.ClientAPI.Controllers
                 TempData["Erro"] = "Não foi possível apagar a personagem. Verifique se a WishBound.WebAPI está em execução.";
                 return RedirectToAction(nameof(Index));
             }
+        }
+    
+
+        // ============================================================
+        //  CONTAS DOS UTILIZADORES
+        // ============================================================
+
+        /// <summary>Id do administrador com sessão iniciada (claim NameIdentifier).</summary>
+        private int ObterAdminId()
+        {
+            return int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+        }
+
+        // GET: /Gestao/Utilizadores?pesquisa=ana&filtro=ativos&pagina=2
+        public async Task<IActionResult> Utilizadores(string? pesquisa, string filtro = "todos", int pagina = 1)
+        {
+            try
+            {
+                var modelo = await _api.AdminObterContasAsync(ObterAdminId(), pesquisa, filtro, Math.Max(1, pagina));
+                modelo.Pesquisa = pesquisa;
+                modelo.Filtro = filtro;
+                return View(modelo);
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível obter as contas. Verifique se a WishBound.WebAPI está em execução.";
+                return View(new ListaContasViewModel { Pesquisa = pesquisa, Filtro = filtro });
+            }
+        }
+
+        // GET: /Gestao/Utilizador/5
+        public async Task<IActionResult> Utilizador(int id)
+        {
+            try
+            {
+                var modelo = await _api.AdminObterContaAsync(ObterAdminId(), id);
+
+                if (modelo == null)
+                {
+                    TempData["Erro"] = "A conta que tentou abrir não existe.";
+                    return RedirectToAction(nameof(Utilizadores));
+                }
+
+                modelo.EhAPropriaConta = modelo.Conta.Id == ObterAdminId();
+                return View(modelo);
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível obter a conta. Verifique se a WishBound.WebAPI está em execução.";
+                return RedirectToAction(nameof(Utilizadores));
+            }
+        }
+
+        // POST: /Gestao/AlterarEstado/5  (acao: ativar | desativar | promover | despromover | validar-email)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AlterarEstado(int id, string acao, string? motivo)
+        {
+            bool? isAtivo = null, isAdmin = null, emailValidado = null;
+
+            switch (acao)
+            {
+                case "ativar": isAtivo = true; break;
+                case "desativar": isAtivo = false; break;
+                case "promover": isAdmin = true; break;
+                case "despromover": isAdmin = false; break;
+                case "validar-email": emailValidado = true; break;
+                default:
+                    TempData["Erro"] = "Ação desconhecida.";
+                    return RedirectToAction(nameof(Utilizador), new { id });
+            }
+
+            return await ExecutarAcaoAsync(id, () => _api.AdminAlterarEstadoAsync(ObterAdminId(), id, isAtivo, isAdmin, emailValidado, motivo));
+        }
+
+        // POST: /Gestao/ReporPassword/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ReporPassword(int id, ReporPasswordAdminViewModel modelo)
+        {
+            if (!ModelState.IsValid)
+            {
+                TempData["Erro"] = string.Join(" ", ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage));
+                return RedirectToAction(nameof(Utilizador), new { id });
+            }
+
+            return await ExecutarAcaoAsync(id, () => _api.AdminReporPasswordAsync(ObterAdminId(), id, modelo.NovaPassword, modelo.Motivo));
+        }
+
+        // POST: /Gestao/AjustarMoeda/5  (operacao: dar | tirar)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AjustarMoeda(int id, int tipoMoedaId, decimal quantidade, string operacao, string? motivo)
+        {
+            if (quantidade <= 0)
+            {
+                TempData["Erro"] = "Indique uma quantidade maior do que zero.";
+                return RedirectToAction(nameof(Utilizador), new { id });
+            }
+
+            decimal assinada = operacao == "tirar" ? -quantidade : quantidade;
+            return await ExecutarAcaoAsync(id, () => _api.AdminAjustarMoedaAsync(ObterAdminId(), id, tipoMoedaId, assinada, motivo));
+        }
+
+        // POST: /Gestao/AjustarPersonagem/5  (operacao: dar | tirar)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AjustarPersonagem(int id, int personagemId, int quantidade, string operacao, string? motivo)
+        {
+            if (quantidade <= 0)
+            {
+                TempData["Erro"] = "Indique uma quantidade maior do que zero.";
+                return RedirectToAction(nameof(Utilizador), new { id });
+            }
+
+            int assinada = operacao == "tirar" ? -quantidade : quantidade;
+            return await ExecutarAcaoAsync(id, () => _api.AdminAjustarPersonagemAsync(ObterAdminId(), id, personagemId, assinada, motivo));
+        }
+
+        // POST: /Gestao/DefinirInventario/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DefinirInventario(int id, int capacidadeExtra, string? motivo)
+        {
+            if (capacidadeExtra < 0)
+            {
+                TempData["Erro"] = "A capacidade extra não pode ser negativa.";
+                return RedirectToAction(nameof(Utilizador), new { id });
+            }
+
+            return await ExecutarAcaoAsync(id, () => _api.AdminDefinirInventarioAsync(ObterAdminId(), id, capacidadeExtra, motivo));
+        }
+
+        // POST: /Gestao/DefinirAmizade/5
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DefinirAmizade(int id, int personagemId, int pontos, string? motivo)
+        {
+            if (pontos < 0)
+            {
+                TempData["Erro"] = "Os pontos não podem ser negativos.";
+                return RedirectToAction(nameof(Utilizador), new { id });
+            }
+
+            return await ExecutarAcaoAsync(id, () => _api.AdminDefinirAmizadeAsync(ObterAdminId(), id, personagemId, pontos, motivo));
+        }
+
+        // POST: /Gestao/AjustarRecompensa/5  (tipo: Titulo | Emblema | Moldura; conceder: true/false)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> AjustarRecompensa(int id, string tipo, int recompensaId, bool conceder, string? motivo)
+        {
+            return await ExecutarAcaoAsync(id, () => _api.AdminRecompensaAsync(ObterAdminId(), id, tipo, recompensaId, conceder, motivo));
+        }
+
+        // GET: /Gestao/Acoes?utilizadorId=5&autorId=1
+        public async Task<IActionResult> Acoes(int? utilizadorId, int? autorId)
+        {
+            try
+            {
+                ViewBag.UtilizadorId = utilizadorId;
+                ViewBag.AutorId = autorId;
+                var acoes = await _api.AdminObterAcoesAsync(ObterAdminId(), utilizadorId, autorId, 200);
+                return View(acoes);
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível obter o registo de ações. Verifique se a WishBound.WebAPI está em execução.";
+                return View(new List<AcaoAdmin>());
+            }
+        }
+
+        /// <summary>
+        /// Corre uma ação de administração e volta ao detalhe da conta com a
+        /// mensagem da API (sucesso a verde, recusa a vermelho).
+        /// </summary>
+        private async Task<IActionResult> ExecutarAcaoAsync(int id, Func<Task<(ResultadoAcaoAdmin? Resultado, string? Erro)>> acao)
+        {
+            try
+            {
+                var (resultado, erro) = await acao();
+
+                if (resultado == null)
+                {
+                    TempData["Erro"] = "A API recusou a operação: " + erro;
+                }
+                else
+                {
+                    TempData["Sucesso"] = resultado.Mensagem;
+                }
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível concluir a operação. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            return RedirectToAction(nameof(Utilizador), new { id });
         }
     }
 }

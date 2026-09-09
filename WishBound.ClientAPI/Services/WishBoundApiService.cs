@@ -5,6 +5,7 @@ using WishBound.ClientAPI.Models.Amizade;
 using WishBound.ClientAPI.Models.Colecao;
 using WishBound.ClientAPI.Models.Conta;
 using WishBound.ClientAPI.Models.Economia;
+using WishBound.ClientAPI.Models.Gestao;
 
 namespace WishBound.ClientAPI.Services
 {
@@ -352,6 +353,153 @@ namespace WishBound.ClientAPI.Services
             });
 
             return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        // ---------- Administração de contas (api/admin) ----------
+        // Todos os pedidos levam o Id do administrador com sessão iniciada;
+        // a API confirma que é mesmo uma conta de administrador ativa.
+
+        /// <summary>SELECT - lista paginada de contas, com pesquisa e filtro.</summary>
+        public async Task<ListaContasViewModel> AdminObterContasAsync(int adminId, string? pesquisa, string? filtro, int pagina, int tamanho = 20)
+        {
+            string url = "api/admin/utilizadores?adminId=" + adminId +
+                         "&pagina=" + pagina + "&tamanho=" + tamanho +
+                         "&filtro=" + Uri.EscapeDataString(filtro ?? "todos");
+
+            if (!string.IsNullOrWhiteSpace(pesquisa))
+            {
+                url += "&pesquisa=" + Uri.EscapeDataString(pesquisa.Trim());
+            }
+
+            return await _http.GetFromJsonAsync<ListaContasViewModel>(url) ?? new ListaContasViewModel();
+        }
+
+        /// <summary>SELECT - detalhe completo de uma conta (null se não existir).</summary>
+        public async Task<ContaDetalheViewModel?> AdminObterContaAsync(int adminId, int utilizadorId)
+        {
+            var resposta = await _http.GetAsync("api/admin/utilizadores/" + utilizadorId + "?adminId=" + adminId);
+
+            if (resposta.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            resposta.EnsureSuccessStatusCode();
+            return await resposta.Content.ReadFromJsonAsync<ContaDetalheViewModel>();
+        }
+
+        /// <summary>SELECT - registo de ações (opcionalmente filtrado pela conta alvo ou pelo autor).</summary>
+        public async Task<List<AcaoAdmin>> AdminObterAcoesAsync(int adminId, int? utilizadorId = null, int? autorId = null, int limite = 100)
+        {
+            string url = "api/admin/acoes?adminId=" + adminId + "&limite=" + limite;
+            if (utilizadorId.HasValue) url += "&utilizadorId=" + utilizadorId.Value;
+            if (autorId.HasValue) url += "&autorId=" + autorId.Value;
+
+            return await _http.GetFromJsonAsync<List<AcaoAdmin>>(url) ?? new List<AcaoAdmin>();
+        }
+
+        /// <summary>UPDATE - ativar/desativar, promover/despromover, validar email (só os campos não nulos).</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminAlterarEstadoAsync(
+            int adminId, int utilizadorId, bool? isAtivo, bool? isAdmin, bool? emailValidado, string? motivo)
+        {
+            return EnviarAcaoAdminAsync("api/admin/utilizadores/" + utilizadorId + "/estado", new
+            {
+                AdminId = adminId,
+                IsAtivo = isAtivo,
+                IsAdmin = isAdmin,
+                EmailValidado = emailValidado,
+                Motivo = motivo
+            });
+        }
+
+        /// <summary>UPDATE - define uma nova password para a conta.</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminReporPasswordAsync(
+            int adminId, int utilizadorId, string novaPassword, string? motivo)
+        {
+            return EnviarAcaoAdminAsync("api/admin/utilizadores/" + utilizadorId + "/repor-password", new
+            {
+                AdminId = adminId,
+                NovaPassword = novaPassword,
+                Motivo = motivo
+            });
+        }
+
+        /// <summary>UPDATE - dá (positivo) ou tira (negativo) moeda.</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminAjustarMoedaAsync(
+            int adminId, int utilizadorId, int tipoMoedaId, decimal quantidade, string? motivo)
+        {
+            return EnviarAcaoAdminAsync("api/admin/utilizadores/" + utilizadorId + "/moeda", new
+            {
+                AdminId = adminId,
+                TipoMoedaId = tipoMoedaId,
+                Quantidade = quantidade,
+                Motivo = motivo
+            });
+        }
+
+        /// <summary>UPDATE - dá (positivo) ou tira (negativo) cópias de uma personagem.</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminAjustarPersonagemAsync(
+            int adminId, int utilizadorId, int personagemId, int quantidade, string? motivo)
+        {
+            return EnviarAcaoAdminAsync("api/admin/utilizadores/" + utilizadorId + "/personagem", new
+            {
+                AdminId = adminId,
+                PersonagemId = personagemId,
+                Quantidade = quantidade,
+                Motivo = motivo
+            });
+        }
+
+        /// <summary>UPDATE - define a capacidade extra do inventário.</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminDefinirInventarioAsync(
+            int adminId, int utilizadorId, int capacidadeExtra, string? motivo)
+        {
+            return EnviarAcaoAdminAsync("api/admin/utilizadores/" + utilizadorId + "/inventario", new
+            {
+                AdminId = adminId,
+                CapacidadeExtra = capacidadeExtra,
+                Motivo = motivo
+            });
+        }
+
+        /// <summary>UPDATE - define os pontos de amizade com uma personagem.</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminDefinirAmizadeAsync(
+            int adminId, int utilizadorId, int personagemId, int pontos, string? motivo)
+        {
+            return EnviarAcaoAdminAsync("api/admin/utilizadores/" + utilizadorId + "/amizade", new
+            {
+                AdminId = adminId,
+                PersonagemId = personagemId,
+                Pontos = pontos,
+                Motivo = motivo
+            });
+        }
+
+        /// <summary>UPDATE - concede ou revoga um título/emblema/moldura.</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminRecompensaAsync(
+            int adminId, int utilizadorId, string tipo, int id, bool conceder, string? motivo)
+        {
+            return EnviarAcaoAdminAsync("api/admin/utilizadores/" + utilizadorId + "/recompensa", new
+            {
+                AdminId = adminId,
+                Tipo = tipo,
+                Id = id,
+                Conceder = conceder,
+                Motivo = motivo
+            });
+        }
+
+        /// <summary>POST comum das ações de administração: resultado ou texto do erro.</summary>
+        private async Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> EnviarAcaoAdminAsync(string url, object corpo)
+        {
+            var resposta = await _http.PostAsJsonAsync(url, corpo);
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<ResultadoAcaoAdmin>(), null);
         }
 
         // ---------- Conta e autenticação ----------

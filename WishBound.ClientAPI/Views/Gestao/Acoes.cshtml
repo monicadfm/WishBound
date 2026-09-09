@@ -1,0 +1,75 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model List<AcaoAdmin>
+@{
+    ViewData["Title"] = "Registo de ações";
+    Layout = "_LayoutGestao";
+    int? utilizadorId = ViewBag.UtilizadorId as int?;
+    int? autorId = ViewBag.AutorId as int?;
+}
+
+<div class="gestao-topo">
+    <h1>Registo de ações</h1>
+    <a class="botao botao-suave" asp-controller="Gestao" asp-action="Utilizadores">&larr; Contas</a>
+</div>
+
+<p class="texto-suave">
+    Tudo o que os administradores fizeram às contas — quem, a quem, o quê e
+    porquê (tabela LogsAdministrador, últimos @Model.Count registos).
+    @if (utilizadorId.HasValue)
+    {
+        <span>Filtrado pela conta #@utilizadorId.</span>
+        <a class="ligacao" asp-controller="Gestao" asp-action="Acoes">Ver todas</a>
+    }
+    @if (autorId.HasValue)
+    {
+        <span>Filtrado pelo administrador #@autorId.</span>
+        <a class="ligacao" asp-controller="Gestao" asp-action="Acoes">Ver todas</a>
+    }
+</p>
+
+@if (Model.Count == 0)
+{
+    <div class="caixa-vazia">
+        <p>Ainda não há ações registadas.</p>
+    </div>
+}
+else
+{
+    <table class="tabela tabela-acoes-admin">
+        <thead>
+            <tr>
+                <th>Data e hora</th>
+                <th>Administrador</th>
+                <th>Conta</th>
+                <th>Ação</th>
+                <th>Detalhes</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var acao in Model)
+            {
+                <tr>
+                    <td>@acao.Data.ToLocalTime().ToString("dd/MM/yyyy HH:mm:ss")</td>
+                    <td>
+                        <a class="ligacao" asp-controller="Gestao" asp-action="Acoes" asp-route-autorId="@acao.AdminId" title="Só as ações deste administrador">@acao.AdminNome</a>
+                    </td>
+                    <td>
+                        @if (acao.UtilizadorAlvoId.HasValue)
+                        {
+                            <a class="ligacao" asp-controller="Gestao" asp-action="Utilizador" asp-route-id="@acao.UtilizadorAlvoId">@acao.UtilizadorAlvoNome</a>
+                        }
+                        else
+                        {
+                            <span class="texto-suave">—</span>
+                        }
+                    </td>
+                    <td>
+                        <span class="etiqueta-categoria categoria-@acao.Categoria.ToLowerInvariant()">@acao.Categoria</span>
+                        @acao.Acao.Substring(Math.Min(acao.Acao.Length, acao.Categoria.Length + 1)).Trim()
+                    </td>
+                    <td class="texto-suave">@acao.Detalhes</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

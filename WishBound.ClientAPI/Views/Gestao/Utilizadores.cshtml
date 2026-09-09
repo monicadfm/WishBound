@@ -1,0 +1,152 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model ListaContasViewModel
+@{
+    ViewData["Title"] = "Contas";
+    Layout = "_LayoutGestao";
+
+    var filtros = new[]
+    {
+        ("todos", "Todas"),
+        ("ativos", "Ativas"),
+        ("inativos", "Desativadas"),
+        ("admins", "Administradores"),
+        ("porvalidar", "Email por validar")
+    };
+}
+
+<div class="gestao-topo">
+    <h1>Contas dos utilizadores</h1>
+    <a class="botao botao-suave" asp-controller="Gestao" asp-action="Acoes">&#128220; Registo de ações</a>
+</div>
+
+<p class="texto-suave">
+    Consulte e gira as contas da plataforma: estado, moeda, personagens,
+    amizade e recompensas. Tudo o que fizer fica no registo de ações.
+</p>
+
+@* ----- Contadores ----- *@
+<div class="gestao-estatisticas">
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.TotalContas</span>
+        <span class="gestao-estatistica-nome">contas</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.TotalAtivas</span>
+        <span class="gestao-estatistica-nome">ativas</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.TotalAdmins</span>
+        <span class="gestao-estatistica-nome">administradores</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.TotalPorValidar</span>
+        <span class="gestao-estatistica-nome">por validar</span>
+    </div>
+</div>
+
+@* ----- Pesquisa e filtros ----- *@
+<form method="get" asp-controller="Gestao" asp-action="Utilizadores" class="gestao-filtros">
+    <input type="hidden" name="filtro" value="@Model.Filtro" />
+    <input type="search" name="pesquisa" value="@Model.Pesquisa" placeholder="Pesquisar por nome ou email…" />
+    <button type="submit" class="botao botao-pequeno">Pesquisar</button>
+    @if (!string.IsNullOrEmpty(Model.Pesquisa))
+    {
+        <a class="ligacao" asp-controller="Gestao" asp-action="Utilizadores" asp-route-filtro="@Model.Filtro">Limpar</a>
+    }
+</form>
+
+<div class="gestao-chips">
+    @foreach (var (valor, texto) in filtros)
+    {
+        <a class="gestao-chip @(Model.Filtro == valor ? "ativo" : "")"
+           asp-controller="Gestao" asp-action="Utilizadores"
+           asp-route-filtro="@valor" asp-route-pesquisa="@Model.Pesquisa">@texto</a>
+    }
+</div>
+
+@if (Model.Itens.Count == 0)
+{
+    <div class="caixa-vazia">
+        <p>Nenhuma conta corresponde à pesquisa.</p>
+    </div>
+}
+else
+{
+    <table class="tabela tabela-contas">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Conta</th>
+                <th>Estado</th>
+                <th>Moedas</th>
+                <th>Bilhetes</th>
+                <th>Coleção</th>
+                <th>Último login</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var conta in Model.Itens)
+            {
+                <tr class="@(conta.IsAtivo ? "" : "linha-inativa")">
+                    <td>@conta.Id</td>
+                    <td>
+                        <div class="conta-celula">
+                            <img class="tabela-miniatura conta-miniatura" src="@(string.IsNullOrEmpty(conta.FotoPerfilUrl) ? "/img/personagens/desconhecido.svg" : conta.FotoPerfilUrl)" alt="" />
+                            <div>
+                                <strong>@conta.NomeUtilizador</strong>
+                                <div class="texto-suave">@conta.Email</div>
+                            </div>
+                        </div>
+                    </td>
+                    <td>
+                        @if (conta.IsAdmin)
+                        {
+                            <span class="etiqueta-estado admin">Admin</span>
+                        }
+                        @if (!conta.IsAtivo)
+                        {
+                            <span class="etiqueta-estado inativo">Desativada</span>
+                        }
+                        @if (!conta.EmailValidado)
+                        {
+                            <span class="etiqueta-estado aviso">Email por validar</span>
+                        }
+                        @if (conta.ContaGoogle)
+                        {
+                            <span class="etiqueta-estado google">Google</span>
+                        }
+                        @if (conta.IsAtivo && conta.EmailValidado && !conta.IsAdmin && !conta.ContaGoogle)
+                        {
+                            <span class="etiqueta-estado ok">Ativa</span>
+                        }
+                    </td>
+                    <td>@conta.SaldoMoedas.ToString("0")</td>
+                    <td>@conta.SaldoBilhetes.ToString("0")</td>
+                    <td>@conta.PersonagensDistintas <span class="texto-suave">(@conta.TotalCopias cópias)</span></td>
+                    <td>@(conta.UltimoLogin.HasValue ? conta.UltimoLogin.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "—")</td>
+                    <td class="tabela-acoes">
+                        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Utilizador" asp-route-id="@conta.Id">Abrir</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    @if (Model.TotalPaginas > 1)
+    {
+        <div class="gestao-paginacao">
+            @if (Model.Pagina > 1)
+            {
+                <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Utilizadores"
+                   asp-route-pagina="@(Model.Pagina - 1)" asp-route-filtro="@Model.Filtro" asp-route-pesquisa="@Model.Pesquisa">&larr; Anterior</a>
+            }
+            <span class="texto-suave">Página @Model.Pagina de @Model.TotalPaginas (@Model.Total contas)</span>
+            @if (Model.Pagina < Model.TotalPaginas)
+            {
+                <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Utilizadores"
+                   asp-route-pagina="@(Model.Pagina + 1)" asp-route-filtro="@Model.Filtro" asp-route-pesquisa="@Model.Pesquisa">Seguinte &rarr;</a>
+            }
+        </div>
+    }
+}

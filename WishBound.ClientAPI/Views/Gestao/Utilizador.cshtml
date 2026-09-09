@@ -1,0 +1,421 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model ContaDetalheViewModel
+@{
+    ViewData["Title"] = "Conta " + Model.Conta.NomeUtilizador;
+    Layout = "_LayoutGestao";
+    var conta = Model.Conta;
+    int percentagemEspaco = Model.Capacidade <= 0 ? 0 : (int)Math.Min(100, Math.Round(100.0 * Model.Ocupado / Model.Capacidade));
+    string recompensaDiaria = "dia " + Model.DiaRecompensaDiaria + " de 28" +
+        (Model.UltimoLoginDiario.HasValue ? " · última " + Model.UltimoLoginDiario.Value.ToString("dd/MM/yyyy") : "");
+}
+
+<div class="gestao-topo">
+    <h1>Conta de @conta.NomeUtilizador</h1>
+    <div class="gestao-topo-acoes">
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Acoes" asp-route-utilizadorId="@conta.Id">Histórico de ações</a>
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Utilizadores">&larr; Todas as contas</a>
+    </div>
+</div>
+
+@* ============================================================
+   1. Cabeçalho da conta + estado
+   ============================================================ *@
+<section class="gestao-cartao conta-cabecalho">
+    <img class="conta-foto" src="@(string.IsNullOrEmpty(conta.FotoPerfilUrl) ? "/img/personagens/desconhecido.svg" : conta.FotoPerfilUrl)" alt="Foto de @conta.NomeUtilizador" />
+    <div class="conta-dados">
+        <h2>
+            @conta.NomeUtilizador <span class="texto-suave">#@conta.Id</span>
+            @if (conta.IsAdmin) { <span class="etiqueta-estado admin">Admin</span> }
+            @if (!conta.IsAtivo) { <span class="etiqueta-estado inativo">Desativada</span> }
+            @if (!conta.EmailValidado) { <span class="etiqueta-estado aviso">Email por validar</span> }
+            @if (conta.ContaGoogle) { <span class="etiqueta-estado google">Google</span> }
+            @if (Model.EhAPropriaConta) { <span class="etiqueta-estado ok">A tua conta</span> }
+        </h2>
+        <dl class="conta-lista">
+            <dt>Email</dt><dd>@conta.Email</dd>
+            <dt>Criada em</dt><dd>@conta.DataCriacao.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</dd>
+            <dt>Último login</dt><dd>@(conta.UltimoLogin.HasValue ? conta.UltimoLogin.Value.ToLocalTime().ToString("dd/MM/yyyy HH:mm") : "nunca")</dd>
+            <dt>Password local</dt><dd>@(conta.TemPasswordLocal ? "sim" : "não (entra só com Google)")</dd>
+            <dt>Recompensa diária</dt><dd>@recompensaDiaria</dd>
+            <dt>Interações hoje</dt><dd>@Model.InteracoesRestantes</dd>
+            <dt>Perfil</dt><dd>título: @(Model.TituloAtual ?? "—") · moldura: @(Model.MolduraAtual ?? "—")</dd>
+        </dl>
+    </div>
+</section>
+
+<div class="gestao-duas-colunas">
+    @* ----- Estado ----- *@
+    <section class="gestao-cartao">
+        <h3>Estado da conta</h3>
+        <form method="post" asp-controller="Gestao" asp-action="AlterarEstado" asp-route-id="@conta.Id" class="formulario-acoes-estado">
+            @Html.AntiForgeryToken()
+            <div class="campo">
+                <label for="motivo-estado">Motivo (opcional, fica no registo)</label>
+                <input id="motivo-estado" name="motivo" maxlength="255" placeholder="ex.: pedido do utilizador" />
+            </div>
+            <div class="botoes-estado">
+                @if (conta.IsAtivo)
+                {
+                    <button type="submit" name="acao" value="desativar" class="botao botao-pequeno botao-perigo"
+                            disabled="@Model.EhAPropriaConta"
+                            data-confirmar="Desativar a conta @(conta.NomeUtilizador)? Deixa de conseguir iniciar sessão.">Desativar conta</button>
+                }
+                else
+                {
+                    <button type="submit" name="acao" value="ativar" class="botao botao-pequeno botao-destaque">Ativar conta</button>
+                }
+
+                @if (conta.IsAdmin)
+                {
+                    <button type="submit" name="acao" value="despromover" class="botao botao-pequeno botao-perigo"
+                            disabled="@Model.EhAPropriaConta"
+                            data-confirmar="Retirar os privilégios de administrador a @(conta.NomeUtilizador)?">Retirar admin</button>
+                }
+                else
+                {
+                    <button type="submit" name="acao" value="promover" class="botao botao-pequeno"
+                            data-confirmar="Tornar @(conta.NomeUtilizador) administrador? Passa a ter acesso a esta área.">Tornar admin</button>
+                }
+
+                @if (!conta.EmailValidado)
+                {
+                    <button type="submit" name="acao" value="validar-email" class="botao botao-pequeno">Marcar email como validado</button>
+                }
+            </div>
+            @if (Model.EhAPropriaConta)
+            {
+                <p class="texto-suave nota-pequena">Não podes desativar nem despromover a tua própria conta.</p>
+            }
+        </form>
+    </section>
+
+    @* ----- Password ----- *@
+    <section class="gestao-cartao">
+        <h3>@(conta.TemPasswordLocal ? "Repor password" : "Definir password")</h3>
+        <p class="texto-suave nota-pequena">
+            Define uma password nova sem precisar da antiga. Os links de
+            recuperação ainda válidos deixam de funcionar.
+        </p>
+        <form method="post" asp-controller="Gestao" asp-action="ReporPassword" asp-route-id="@conta.Id" class="formulario-compacto" autocomplete="off">
+            @Html.AntiForgeryToken()
+            <div class="campo">
+                <label for="nova-password">Nova password</label>
+                <input id="nova-password" name="NovaPassword" type="password" minlength="8" maxlength="100" required autocomplete="new-password" />
+                <span class="texto-suave nota-pequena">Mínimo 8 caracteres, 1 maiúscula, 1 número e 1 símbolo.</span>
+            </div>
+            <div class="campo">
+                <label for="motivo-password">Motivo (opcional)</label>
+                <input id="motivo-password" name="Motivo" maxlength="255" />
+            </div>
+            <button type="submit" class="botao botao-pequeno botao-destaque"
+                    data-confirmar="Substituir a password de @(conta.NomeUtilizador)?">Guardar password</button>
+        </form>
+    </section>
+</div>
+
+@* ============================================================
+   2. Carteiras e inventário
+   ============================================================ *@
+<div class="gestao-duas-colunas">
+    <section class="gestao-cartao">
+        <h3>Carteiras</h3>
+        <div class="conta-saldos">
+            @foreach (var carteira in Model.Carteiras)
+            {
+                <div class="conta-saldo">
+                    <span class="conta-saldo-valor">@carteira.Saldo.ToString("0.##")</span>
+                    <span class="texto-suave">@carteira.Nome</span>
+                </div>
+            }
+        </div>
+        <form method="post" asp-controller="Gestao" asp-action="AjustarMoeda" asp-route-id="@conta.Id" class="formulario-linha">
+            @Html.AntiForgeryToken()
+            <select name="operacao" aria-label="Operação">
+                <option value="dar">Dar</option>
+                <option value="tirar">Tirar</option>
+            </select>
+            <input type="number" name="quantidade" min="1" step="1" value="100" required aria-label="Quantidade" />
+            <select name="tipoMoedaId" aria-label="Moeda">
+                @foreach (var carteira in Model.Carteiras)
+                {
+                    <option value="@carteira.TipoMoedaId" selected="@(carteira.TipoMoedaId == 2)">@carteira.Nome</option>
+                }
+            </select>
+            <input name="motivo" maxlength="255" placeholder="Motivo (opcional)" aria-label="Motivo" />
+            <button type="submit" class="botao botao-pequeno botao-destaque">Aplicar</button>
+        </form>
+        <p class="texto-suave nota-pequena">
+            Fica registado em Transações como "Admin: motivo". Tirar nunca deixa o saldo negativo.
+        </p>
+    </section>
+
+    <section class="gestao-cartao">
+        <h3>Inventário</h3>
+        <p>
+            <strong>@Model.Ocupado</strong> de <strong>@Model.Capacidade</strong> lugares ocupados
+            <span class="texto-suave">(@Model.CapacidadeBase base + @Model.CapacidadeExtra extra · @Model.Livres livres)</span>
+        </p>
+        <div class="barra-progresso"><div class="barra-progresso-preenchida" style="width:@percentagemEspaco%"></div></div>
+        <form method="post" asp-controller="Gestao" asp-action="DefinirInventario" asp-route-id="@conta.Id" class="formulario-linha">
+            @Html.AntiForgeryToken()
+            <label for="capacidade-extra" class="texto-suave">Capacidade extra</label>
+            <input id="capacidade-extra" type="number" name="capacidadeExtra" min="0" step="10" value="@Model.CapacidadeExtra" required />
+            <input name="motivo" maxlength="255" placeholder="Motivo (opcional)" aria-label="Motivo" />
+            <button type="submit" class="botao botao-pequeno">Guardar</button>
+        </form>
+    </section>
+</div>
+
+@* ============================================================
+   3. Coleção e amizade
+   ============================================================ *@
+<section class="gestao-cartao">
+    <h3>Coleção (@Model.Colecao.Count personagens, @Model.Ocupado cópias)</h3>
+
+    @if (Model.PersonagensDisponiveis.Count > 0)
+    {
+        <form method="post" asp-controller="Gestao" asp-action="AjustarPersonagem" asp-route-id="@conta.Id" class="formulario-linha">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="operacao" value="dar" />
+            <label for="dar-personagem" class="texto-suave">Dar personagem</label>
+            <select id="dar-personagem" name="personagemId" required>
+                @foreach (var p in Model.PersonagensDisponiveis)
+                {
+                    <option value="@p.Id">@p.Nome (@p.RaridadeNome)@(p.IsAtivo ? "" : " — inativa")</option>
+                }
+            </select>
+            <input type="number" name="quantidade" min="1" max="1000" step="1" value="1" required aria-label="Cópias" />
+            <input name="motivo" maxlength="255" placeholder="Motivo (opcional)" aria-label="Motivo" />
+            <button type="submit" class="botao botao-pequeno botao-destaque">Dar</button>
+        </form>
+    }
+    else
+    {
+        <p class="texto-suave nota-pequena">Esta conta já tem todas as personagens.</p>
+    }
+
+    @if (Model.Colecao.Count == 0)
+    {
+        <div class="caixa-vazia"><p>A coleção está vazia.</p></div>
+    }
+    else
+    {
+        <table class="tabela tabela-colecao">
+            <thead>
+                <tr>
+                    <th>Personagem</th>
+                    <th>Raridade</th>
+                    <th>Cópias</th>
+                    <th>Amizade</th>
+                    <th>Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Colecao)
+                {
+                    <tr>
+                        <td>
+                            <div class="conta-celula">
+                                <img class="tabela-miniatura" src="@(string.IsNullOrEmpty(item.ImagemUrl) ? "/img/personagens/desconhecido.svg" : item.ImagemUrl)" alt="" />
+                                <div>
+                                    <strong>@item.Nome</strong>@(item.IsFavorito ? " ★" : "")
+                                    <div class="texto-suave nota-pequena">desde @item.DataObtencao.ToLocalTime().ToString("dd/MM/yyyy")</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td><span class="etiqueta-raridade" style="background:@(item.RaridadeCor ?? "#9aa5b1")">@item.RaridadeNome</span></td>
+                        <td>@("x" + item.Quantidade)</td>
+                        <td class="celula-amizade">
+                            <div>@item.NivelAmizadeNome <span class="texto-suave">(nível @item.NivelOrdem/@item.NivelMaximoOrdem · @item.PontosAmizade/@item.PontosNivelMaximo pts)</span></div>
+                            <div class="barra-progresso pequena"><div class="barra-progresso-preenchida" style="width:@item.PercentagemAmizade%"></div></div>
+                            <form method="post" asp-controller="Gestao" asp-action="DefinirAmizade" asp-route-id="@conta.Id" class="formulario-linha compacta">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                                <input type="number" name="pontos" min="0" max="100000" step="1" value="@item.PontosAmizade" aria-label="Pontos" />
+                                <input name="motivo" maxlength="255" placeholder="Motivo" aria-label="Motivo" />
+                                <button type="submit" class="botao botao-pequeno">Definir pontos</button>
+                            </form>
+                        </td>
+                        <td class="tabela-acoes">
+                            <form method="post" asp-controller="Gestao" asp-action="AjustarPersonagem" asp-route-id="@conta.Id" class="formulario-linha compacta">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                                <input type="hidden" name="operacao" value="dar" />
+                                <input type="hidden" name="quantidade" value="1" />
+                                <button type="submit" class="botao botao-pequeno" title="Dar mais uma cópia">+1</button>
+                            </form>
+                            <form method="post" asp-controller="Gestao" asp-action="AjustarPersonagem" asp-route-id="@conta.Id" class="formulario-linha compacta">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                                <input type="hidden" name="operacao" value="tirar" />
+                                <input type="hidden" name="quantidade" value="1" />
+                                @if (item.Quantidade == 1)
+                                {
+                                    <button type="submit" class="botao botao-pequeno botao-perigo" title="Tirar a última cópia"
+                                            data-confirmar="É a última cópia de @(item.Nome): sai da coleção e a amizade vai a zero. Continuar?">&minus;1</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="botao botao-pequeno botao-perigo" title="Tirar uma cópia">&minus;1</button>
+                                }
+                            </form>
+                            <form method="post" asp-controller="Gestao" asp-action="AjustarPersonagem" asp-route-id="@conta.Id" class="formulario-linha compacta">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                                <input type="hidden" name="operacao" value="tirar" />
+                                <input type="hidden" name="quantidade" value="@item.Quantidade" />
+                                <button type="submit" class="botao botao-pequeno botao-perigo" title="Retirar todas as cópias"
+                                        data-confirmar="Retirar @(item.Nome) por completo da coleção de @(conta.NomeUtilizador)?">Retirar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="texto-suave nota-pequena">
+            Os pontos são limitados ao máximo da raridade; se o nível subir, as
+            recompensas desses níveis são desbloqueadas como numa interação.
+            Tirar a última cópia apaga a amizade com a personagem (as recompensas já ganhas ficam).
+        </p>
+    }
+</section>
+
+@* ============================================================
+   4. Recompensas de amizade
+   ============================================================ *@
+<section class="gestao-cartao">
+    <h3>Recompensas de amizade</h3>
+    <p class="texto-suave nota-pequena">
+        Conceder ou revogar diretamente. Revogar uma recompensa equipada tira-a também do perfil.
+    </p>
+
+    @foreach (var grupo in new[] { ("Títulos", Model.Titulos), ("Emblemas", Model.Emblemas), ("Molduras", Model.Molduras) })
+    {
+        var (titulo, lista) = grupo;
+        <h4 class="gestao-subtitulo">@titulo <span class="texto-suave">(@lista.Count(r => r.Obtida) de @lista.Count())</span></h4>
+        @if (!lista.Any())
+        {
+            <p class="texto-suave nota-pequena">Não existem @titulo.ToLower() na base de dados.</p>
+        }
+        else
+        {
+        <table class="tabela tabela-recompensas">
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Personagem</th>
+                    <th>Nível</th>
+                    <th>Estado</th>
+                    <th>Ação</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var r in lista)
+                {
+                    <tr class="@(r.Obtida ? "" : "linha-inativa")">
+                        <td>
+                            @if (!string.IsNullOrEmpty(r.CorHex))
+                            {
+                                <span class="ponto-cor" style="background:@r.CorHex"></span>
+                            }
+                            @r.Nome
+                        </td>
+                        <td>@(r.PersonagemNome ?? "—")</td>
+                        <td>@(r.NivelNome ?? "—")</td>
+                        <td>
+                            @if (r.Equipada) { <span class="etiqueta-estado ok">No perfil</span> }
+                            else if (r.Obtida) { <span class="etiqueta-estado">Obtida @(r.DataObtencao?.ToLocalTime().ToString("dd/MM/yyyy"))</span> }
+                            else { <span class="texto-suave">—</span> }
+                        </td>
+                        <td class="tabela-acoes">
+                            <form method="post" asp-controller="Gestao" asp-action="AjustarRecompensa" asp-route-id="@conta.Id" class="formulario-linha compacta">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="tipo" value="@r.Tipo" />
+                                <input type="hidden" name="recompensaId" value="@r.Id" />
+                                <input type="hidden" name="conceder" value="@(r.Obtida ? "false" : "true")" />
+                                <input name="motivo" maxlength="255" placeholder="Motivo" aria-label="Motivo" />
+                                @if (r.Obtida)
+                                {
+                                    <button type="submit" class="botao botao-pequeno botao-perigo">Revogar</button>
+                                }
+                                else
+                                {
+                                    <button type="submit" class="botao botao-pequeno">Conceder</button>
+                                }
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        }
+    }
+</section>
+
+@* ============================================================
+   5. Histórico
+   ============================================================ *@
+<div class="gestao-duas-colunas">
+    <section class="gestao-cartao">
+        <h3>Últimas transações</h3>
+        @if (Model.UltimasTransacoes.Count == 0)
+        {
+            <p class="texto-suave nota-pequena">Sem movimentos.</p>
+        }
+        else
+        {
+            <table class="tabela tabela-compacta">
+                <thead><tr><th>Data</th><th>Origem</th><th>Montante</th></tr></thead>
+                <tbody>
+                    @foreach (var t in Model.UltimasTransacoes)
+                    {
+                        <tr>
+                            <td>@t.Data.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                            <td>@t.Origem</td>
+                            <td class="@(t.Ganho ? "montante-ganho" : "montante-gasto")">@(t.Ganho ? "+" : "-")@t.Montante.ToString("0.##") @t.MoedaNome</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+
+    <section class="gestao-cartao">
+        <h3>Últimas ações de administração</h3>
+        @if (Model.UltimasAcoes.Count == 0)
+        {
+            <p class="texto-suave nota-pequena">Ainda ninguém mexeu nesta conta.</p>
+        }
+        else
+        {
+            <table class="tabela tabela-compacta">
+                <thead><tr><th>Data</th><th>Admin</th><th>Ação</th></tr></thead>
+                <tbody>
+                    @foreach (var a in Model.UltimasAcoes)
+                    {
+                        <tr>
+                            <td>@a.Data.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                            <td>@a.AdminNome</td>
+                            <td title="@a.Detalhes">@a.Acao</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+            <p class="nota-pequena"><a class="ligacao" asp-controller="Gestao" asp-action="Acoes" asp-route-utilizadorId="@conta.Id">Ver tudo &rarr;</a></p>
+        }
+    </section>
+</div>
+
+@section Scripts {
+    <script>
+        // Confirmação antes das ações destrutivas (o texto vem do atributo
+        // data-confirmar, já codificado pelo Razor — nomes com aspas não partem nada).
+        document.querySelectorAll('button[data-confirmar]').forEach(function (botao) {
+            botao.addEventListener('click', function (evento) {
+                if (!window.confirm(botao.getAttribute('data-confirmar'))) {
+                    evento.preventDefault();
+                }
+            });
+        });
+    </script>
+}

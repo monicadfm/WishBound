@@ -118,3 +118,369 @@
     font-weight: 600;
     font-size: 0.95rem;
 }
+
+/* ============================================================
+   Administração de contas (Utilizadores / Utilizador / Acoes)
+   ============================================================ */
+
+.gestao-conteudo {
+    max-width: 1180px;
+}
+
+.gestao-topo-acoes {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+/* ---------- Contadores ---------- */
+
+.gestao-estatisticas {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 12px;
+    margin: 18px 0;
+}
+
+.gestao-estatistica {
+    background: var(--fundo-cartao);
+    border: 1px solid var(--borda);
+    border-radius: 12px;
+    padding: 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.gestao-estatistica-valor {
+    font-family: 'Cinzel', serif;
+    font-size: 1.5rem;
+    color: var(--dourado);
+}
+
+.gestao-estatistica-nome {
+    font-size: 0.8rem;
+    color: var(--texto-suave);
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+}
+
+/* ---------- Pesquisa, filtros e paginação ---------- */
+
+.gestao-filtros {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.gestao-filtros input[type="search"] {
+    flex: 1;
+    min-width: 220px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    color: var(--texto);
+}
+
+.gestao-chips {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 12px;
+}
+
+.gestao-chip {
+    padding: 5px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--borda);
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+}
+
+.gestao-chip.ativo,
+.gestao-chip:hover {
+    background: var(--roxo);
+    border-color: var(--roxo);
+    color: #fff;
+}
+
+.gestao-paginacao {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 16px;
+    margin-top: 18px;
+}
+
+/* ---------- Etiquetas de estado ---------- */
+
+.etiqueta-estado {
+    display: inline-block;
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--texto-suave);
+    margin-right: 4px;
+    vertical-align: middle;
+}
+
+.etiqueta-estado.admin { background: rgba(243, 192, 79, 0.2); color: var(--dourado); }
+.etiqueta-estado.ok { background: rgba(79, 194, 122, 0.18); color: #8fe0ad; }
+.etiqueta-estado.inativo { background: rgba(224, 122, 114, 0.2); color: #f0a49d; }
+.etiqueta-estado.aviso { background: rgba(255, 176, 71, 0.18); color: #ffcf8a; }
+.etiqueta-estado.google { background: rgba(66, 133, 244, 0.2); color: #9dbdff; }
+
+.linha-inativa td {
+    opacity: 0.6;
+}
+
+/* ---------- Cartões e colunas ---------- */
+
+.gestao-cartao {
+    background: var(--fundo-cartao);
+    border: 1px solid var(--borda);
+    border-radius: 14px;
+    padding: 18px 20px;
+    margin-top: 18px;
+}
+
+.gestao-cartao h3 {
+    color: var(--dourado);
+    font-size: 1.05rem;
+    margin-bottom: 10px;
+}
+
+.gestao-subtitulo {
+    margin: 18px 0 4px;
+    font-size: 0.95rem;
+    color: var(--texto);
+}
+
+.gestao-cartao .tabela {
+    margin-top: 10px;
+    background: var(--fundo-suave);
+}
+
+.gestao-duas-colunas {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+}
+
+.gestao-duas-colunas .gestao-cartao {
+    margin-top: 18px;
+}
+
+@media (max-width: 900px) {
+    .gestao-duas-colunas {
+        grid-template-columns: 1fr;
+    }
+}
+
+.nota-pequena {
+    font-size: 0.82rem;
+    margin-top: 8px;
+}
+
+/* ---------- Cabeçalho da conta ---------- */
+
+.conta-cabecalho {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+}
+
+.conta-foto {
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid var(--borda);
+    background: var(--fundo-suave);
+}
+
+.conta-dados h2 {
+    font-size: 1.3rem;
+    margin-bottom: 8px;
+}
+
+.conta-lista {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 4px 14px;
+    font-size: 0.9rem;
+}
+
+.conta-lista dt {
+    color: var(--texto-suave);
+}
+
+.conta-celula {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.conta-miniatura {
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+/* ---------- Saldos ---------- */
+
+.conta-saldos {
+    display: flex;
+    gap: 22px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+}
+
+.conta-saldo {
+    display: flex;
+    flex-direction: column;
+}
+
+.conta-saldo-valor {
+    font-family: 'Cinzel', serif;
+    font-size: 1.4rem;
+    color: var(--dourado);
+}
+
+.montante-ganho { color: #4fc27a; font-weight: 600; }
+.montante-gasto { color: #e07a72; font-weight: 600; }
+
+/* ---------- Formulários das ações ---------- */
+
+.formulario-linha {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-top: 10px;
+}
+
+.formulario-linha.compacta {
+    display: inline-flex;
+    margin-top: 6px;
+    gap: 6px;
+}
+
+.formulario-linha input,
+.formulario-linha select,
+.formulario-compacto input,
+.formulario-acoes-estado input {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    color: var(--texto);
+    font-size: 0.9rem;
+}
+
+.formulario-linha input[type="number"] {
+    width: 110px;
+}
+
+.formulario-linha.compacta input[type="number"] {
+    width: 90px;
+}
+
+.formulario-linha.compacta input[name="motivo"] {
+    width: 130px;
+}
+
+.formulario-compacto {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.formulario-acoes-estado {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.botoes-estado {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.botao:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
+.tabela-acoes form {
+    display: inline-flex;
+    margin-right: 4px;
+}
+
+.celula-amizade {
+    min-width: 280px;
+}
+
+/* ---------- Barras ---------- */
+
+.barra-progresso {
+    height: 10px;
+    border-radius: 999px;
+    background: var(--fundo-suave);
+    border: 1px solid var(--borda);
+    overflow: hidden;
+    margin: 8px 0;
+}
+
+.barra-progresso.pequena {
+    height: 6px;
+    margin: 4px 0;
+}
+
+.barra-progresso-preenchida {
+    height: 100%;
+    background: linear-gradient(90deg, var(--roxo), var(--dourado));
+}
+
+.ponto-cor {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+/* ---------- Registo de ações ---------- */
+
+.etiqueta-categoria {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--texto-suave);
+}
+
+.categoria-estado { background: rgba(224, 122, 114, 0.2); color: #f0a49d; }
+.categoria-password { background: rgba(255, 176, 71, 0.18); color: #ffcf8a; }
+.categoria-moeda { background: rgba(243, 192, 79, 0.2); color: var(--dourado); }
+.categoria-personagem { background: rgba(139, 92, 246, 0.25); color: #d7c6ff; }
+.categoria-inventario { background: rgba(79, 194, 122, 0.18); color: #8fe0ad; }
+.categoria-amizade { background: rgba(255, 120, 180, 0.2); color: #ffb3d6; }
+.categoria-recompensa { background: rgba(66, 133, 244, 0.2); color: #9dbdff; }
+
+.tabela-compacta th,
+.tabela-compacta td {
+    padding: 8px 10px;
+    font-size: 0.85rem;
+}
