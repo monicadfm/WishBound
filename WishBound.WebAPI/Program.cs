@@ -43,6 +43,10 @@ builder.Services.AddSingleton<IServicoEmail, ServicoEmailSmtp>();
 // (cópias repetidas). Scoped porque usa o DbContext do pedido.
 builder.Services.AddScoped<ServicoAmizade>();
 
+// Mensagens de personagem (Migracao07): escolhe a saudação, a reação e a
+// mensagem diária de cada personagem conforme o nível de amizade.
+builder.Services.AddScoped<ServicoMensagens>();
+
 // Swagger - documentação e teste da API no browser.
 // Como a API passou a exigir uma chave, o Swagger ganha o botão "Authorize"
 // para a colar (senão todos os pedidos de teste dariam 401).

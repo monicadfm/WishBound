@@ -484,3 +484,56 @@
     padding: 8px 10px;
     font-size: 0.85rem;
 }
+
+/* ---------- Mensagens de personagem ---------- */
+
+.gestao-chip .ponto-cor {
+    display: inline-block;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+}
+
+.chip-contagem {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 0 6px;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .12);
+    font-size: 0.75rem;
+}
+
+.formulario-mensagem label {
+    color: var(--texto-suave);
+    font-size: 0.85rem;
+}
+
+.formulario-mensagem textarea {
+    width: 100%;
+    max-width: 720px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    color: var(--texto);
+    font-family: inherit;
+    font-size: 0.92rem;
+    resize: vertical;
+}
+
+.formulario-mensagem input[type="text"] {
+    width: 320px;
+    max-width: 100%;
+}
+
+.tabela-mensagens .celula-mensagem {
+    max-width: 520px;
+    line-height: 1.4;
+}
+
+.tipo-saudacao  { background: rgba(243, 192, 79, .18); color: #f3c04f; }
+.tipo-aleatoria { background: rgba(208, 70, 138, .18); color: #f39ac6; }
+.tipo-diaria    { background: rgba(120, 140, 255, .18); color: #aab4ff; }
+.categoria-mensagem { background: rgba(170, 180, 255, 0.18); color: #c9cfff; }

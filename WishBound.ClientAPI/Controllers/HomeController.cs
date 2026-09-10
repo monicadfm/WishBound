@@ -1,12 +1,20 @@
 using System.Diagnostics;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using WishBound.ClientAPI.Models;
+using WishBound.ClientAPI.Models.Amizade;
 using WishBound.ClientAPI.Services;
 
 namespace WishBound.ClientAPI.Controllers
 {
     /// <summary>
     /// Páginas gerais do site: Início, Sobre e página de erro.
+    ///
+    /// COMPANHEIRA: com sessão iniciada, a página inicial mostra a
+    /// personagem que o utilizador escolheu para o receber, com uma
+    /// saudação do conjunto de mensagens dela (muda com o nível de
+    /// amizade). Só pode haver uma; escolhe-se aqui ou nos detalhes da
+    /// personagem (POST /Colecao/Companheira).
     /// </summary>
     public class HomeController : Controller
     {
@@ -37,6 +45,21 @@ namespace WishBound.ClientAPI.Controllers
                 // Se a API estiver em baixo, a página inicial abre na mesma,
                 // apenas sem a secção de destaques.
                 ViewBag.Erro = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            // Companheira da página inicial (só com sessão iniciada). Se a
+            // API falhar (ex.: Migracao07 por correr), a página abre sem ela.
+            if (User.Identity?.IsAuthenticated == true)
+            {
+                try
+                {
+                    int utilizadorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+                    ViewBag.Companheira = await _api.ObterCompanheiraAsync(utilizadorId);
+                }
+                catch (Exception)
+                {
+                    ViewBag.Companheira = null;
+                }
             }
 
             return View(destaques);

@@ -80,7 +80,19 @@ namespace WishBound.ClientAPI.Controllers
                     // sem amizade
                 }
 
-                return View(new DetalhesColecaoViewModel { Item = item, Amizade = amizade });
+                // Mensagens da personagem (saudação + conjunto desbloqueado).
+                // Também opcional: sem Migracao07 a página abre sem elas.
+                MensagensPersonagem? mensagens = null;
+                try
+                {
+                    mensagens = await _api.ObterMensagensPersonagemAsync(ObterUtilizadorId(), id);
+                }
+                catch (Exception)
+                {
+                    // sem mensagens
+                }
+
+                return View(new DetalhesColecaoViewModel { Item = item, Amizade = amizade, Mensagens = mensagens });
             }
             catch (Exception)
             {
@@ -299,6 +311,33 @@ namespace WishBound.ClientAPI.Controllers
 
             return personagemId > 0
                 ? RedirectToAction(nameof(Detalhes), new { id = personagemId })
+                : RedirectToAction(nameof(Index));
+        }
+
+        // POST: /Colecao/Companheira  (escolhe a personagem que recebe o
+        // utilizador na página inicial; personagemId vazio = nenhuma)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Companheira(int? personagemId, string? voltar = null, int voltarId = 0)
+        {
+            try
+            {
+                var (sucesso, mensagem) = await _api.EscolherCompanheiraAsync(ObterUtilizadorId(), personagemId);
+                TempData[sucesso ? "Sucesso" : "Erro"] = mensagem;
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            if (voltar == "inicio")
+            {
+                return RedirectToAction("Index", "Home");
+            }
+
+            int destino = personagemId ?? voltarId;
+            return destino > 0
+                ? RedirectToAction(nameof(Detalhes), new { id = destino })
                 : RedirectToAction(nameof(Index));
         }
 

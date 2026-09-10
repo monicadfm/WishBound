@@ -1,0 +1,77 @@
+@using WishBound.ClientAPI.Models.Amizade
+@model GestaoMensagensViewModel
+@{
+    Layout = "_LayoutGestao";
+    ViewData["Title"] = "Editar mensagem";
+    var form = Model.Form;
+    var personagem = Model.PersonagemAtual;
+}
+
+<div class="gestao-topo">
+    <div>
+        <h1>Editar mensagem de @form.PersonagemNome</h1>
+        <p class="texto-suave">
+            @if (personagem != null)
+            {
+                <text>@personagem.RaridadeNome — chega ao nível @personagem.NivelMaximoOrdem.</text>
+            }
+            A personagem de uma mensagem não muda; para a passar a outra, apaga-se e cria-se de novo.
+        </p>
+    </div>
+    <div class="gestao-topo-acoes">
+        <a class="botao botao-suave" asp-action="Mensagens" asp-route-personagemId="@form.PersonagemId">&#8592; Voltar às mensagens</a>
+    </div>
+</div>
+
+<div class="gestao-cartao">
+    <form method="post" asp-action="EditarMensagem" asp-route-id="@form.Id" class="formulario-mensagem">
+        <input type="hidden" name="PersonagemId" value="@form.PersonagemId" />
+
+        <div class="formulario-linha">
+            <label>Tipo</label>
+            <select name="Tipo" id="tipo-editar">
+                <option value="Saudacao" selected="@(form.Tipo == "Saudacao")">Saudação</option>
+                <option value="Aleatoria" selected="@(form.Tipo == "Aleatoria")">Reação</option>
+                <option value="Diaria" selected="@(form.Tipo == "Diaria")">Mensagem diária (nível @Model.NivelMinimoDiaria+)</option>
+            </select>
+
+            <label>A partir do nível</label>
+            <select name="NivelOrdem" id="nivel-editar">
+                @foreach (var n in Model.Niveis)
+                {
+                    <option value="@n.Ordem" selected="@(n.Ordem == form.NivelOrdem)">
+                        @n.Ordem — @n.Nome@(personagem != null && n.Ordem > personagem.NivelMaximoOrdem ? " (fora do alcance)" : "")
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="formulario-linha">
+            <textarea name="Conteudo" rows="3" maxlength="500" required>@form.Conteudo</textarea>
+        </div>
+
+        <div class="formulario-linha">
+            <input type="text" name="Motivo" maxlength="200" placeholder="Motivo (opcional, fica no registo de ações)" />
+            <button type="submit" class="botao botao-destaque">Guardar alterações</button>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        var tipo = document.getElementById('tipo-editar');
+        var nivel = document.getElementById('nivel-editar');
+        var minimoDiaria = @Model.NivelMinimoDiaria;
+        function ajustarNiveis() {
+            var diaria = tipo.value === 'Diaria';
+            Array.from(nivel.options).forEach(function (o) {
+                o.disabled = diaria && parseInt(o.value, 10) < minimoDiaria;
+            });
+            if (diaria && parseInt(nivel.value, 10) < minimoDiaria) {
+                nivel.value = String(minimoDiaria);
+            }
+        }
+        tipo.addEventListener('change', ajustarNiveis);
+        ajustarNiveis();
+    </script>
+}

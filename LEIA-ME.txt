@@ -53,6 +53,17 @@ REQUISITOS
                                            Sem isto a área Gestão -> Utilizadores
                                            falha com "Invalid column name
                                            'UtilizadorAlvoId'".
+9. Database\Migracao07.sql              -> mensagens de personagem: coluna
+                                           Utilizadores.PersonagemCompanheiraId
+                                           (a personagem que recebe o utilizador
+                                           na página inicial) + índice e as
+                                           SEMENTES da tabela MensagensPersonagem
+                                           (48 mensagens, tamanho conforme a
+                                           raridade: Comuns 1 linha de boas-vindas,
+                                           Raras 9, Épicas 5, Lendária 8,
+                                           Mítica 10). Sem isto o
+                                           login falha com "Invalid column name
+                                           'PersonagemCompanheiraId'".
 
 A aplicação NÃO cria nem altera a base de dados ("database first").
 
@@ -199,6 +210,19 @@ NOTAS
   (Coleção -> Detalhes), por baixo da descrição; a Coleção mostra as
   interações do dia e o nível em cada cartão; o Perfil mostra o
   título (colorido), os emblemas equipados e a moldura.
+- Mensagens de personagem: cada personagem tem conjuntos de mensagens
+  (tabela MensagensPersonagem) desbloqueados pelo nível de amizade:
+  SAUDAÇÃO (o que diz quando se abre os seus detalhes, ou na página
+  inicial se for a companheira), REAÇÃO (a caixa rosa depois de cada
+  interação) e MENSAGEM DIÁRIA (a notificação que deixa na primeira
+  interação de cada dia — só a partir do nível 4, Confidente). A
+  personagem escolhe ao acaso entre todas as mensagens já
+  desbloqueadas; sem conjunto próprio usa frases genéricas. Nos
+  detalhes vê-se a lista completa com cadeados nas que faltam. Cada
+  utilizador pode escolher UMA companheira (da sua coleção) para o
+  receber na página inicial — na própria página inicial ou no botão
+  dos detalhes. Em Gestão -> Mensagens o administrador cria, edita e
+  apaga as mensagens (fica no registo de ações).
 - Segredos (Google, email, chave da API) ficam sempre no
   appsettings.Local.json de cada projeto, nunca no appsettings.json
   versionado.

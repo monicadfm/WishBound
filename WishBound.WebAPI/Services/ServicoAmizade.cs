@@ -47,10 +47,12 @@ namespace WishBound.WebAPI.Services
         public const int NivelMoldura = 7;
 
         private readonly WishBoundContext _contexto;
+        private readonly ServicoMensagens _mensagens;
 
-        public ServicoAmizade(WishBoundContext contexto)
+        public ServicoAmizade(WishBoundContext contexto, ServicoMensagens mensagens)
         {
             _contexto = contexto;
+            _mensagens = mensagens;
         }
 
         /// <summary>Pontos por cópia repetida obtida, conforme a ordem da raridade (1 = Comum ... 5 = Mítico).</summary>
@@ -297,7 +299,10 @@ namespace WishBound.WebAPI.Services
         /// Notificações personalizadas (nível 4+): na primeira interação de
         /// cada dia, cada personagem que já seja "Confidente" ou melhor
         /// deixa uma mensagem ao utilizador (tabela Notificacoes, tipo
-        /// "Personagem"). Devolve quantas mensagens foram enviadas.
+        /// "MensagemPersonagem"). O texto vem do conjunto "Diaria" da
+        /// personagem (MensagensPersonagem, Migracao07) ao nível atual; se a
+        /// personagem não tiver mensagens diárias, usa-se uma frase genérica.
+        /// Devolve quantas mensagens foram enviadas.
         /// </summary>
         public async Task<int> EnviarMensagensDiariasAsync(int utilizadorId)
         {
@@ -312,21 +317,28 @@ namespace WishBound.WebAPI.Services
             var confidentes = await _contexto.Colecoes.AsNoTracking()
                 .Where(c => c.UtilizadorId == utilizadorId)
                 .Join(_contexto.NiveisAmizade, c => c.NivelAmizadeId, n => n.Id,
-                      (c, n) => new { Nome = c.Personagem!.Nome, n.Ordem })
+                      (c, n) => new { c.PersonagemId, Nome = c.Personagem!.Nome, n.Ordem })
                 .Where(x => x.Ordem >= NivelNotificacoes)
                 .OrderByDescending(x => x.Ordem)
                 .ToListAsync();
 
+            // Uma mensagem "Diaria" por personagem, ao acaso entre as já desbloqueadas
+            var proprias = await _mensagens.EscolherVariasAsync(
+                confidentes.Select(x => (x.PersonagemId, x.Ordem)), MensagemPersonagem.TipoDiaria);
+
             foreach (var x in confidentes)
             {
                 string nome = x.Nome ?? "Uma personagem";
+                string texto = proprias.TryGetValue(x.PersonagemId, out var propria)
+                    ? propria
+                    : MensagemDiaria(nome, x.Ordem);
 
                 _contexto.Notificacoes.Add(new Notificacao
                 {
                     UtilizadorId = utilizadorId,
                     Tipo = Notificacao.TipoPersonagem,
                     Titulo = Truncar(nome, 100),
-                    Mensagem = Truncar(MensagemDiaria(nome, x.Ordem), 255),
+                    Mensagem = Truncar(texto, 255),
                     IsLida = false,
                     DataCriacao = DateTime.UtcNow
                 });
@@ -340,8 +352,8 @@ namespace WishBound.WebAPI.Services
             return confidentes.Count;
         }
 
-        /// <summary>Mensagem do dia de uma personagem, conforme o nível (as mensagens próprias de cada personagem ficam para o sistema de mensagens).</summary>
-        private static string MensagemDiaria(string nome, int ordemNivel)
+        /// <summary>Mensagem do dia GENÉRICA, conforme o nível — só para personagens sem conjunto "Diaria" em MensagensPersonagem.</summary>
+        public static string MensagemDiaria(string nome, int ordemNivel)
         {
             string[] frases = ordemNivel switch
             {

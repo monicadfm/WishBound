@@ -53,6 +53,10 @@ namespace WishBound.WebAPI.Data
         // administradores — tabela do esquema original, agora usada.
         public DbSet<LogAdministrador> LogsAdministrador { get; set; }
 
+        // Mensagens de personagem (Migracao07): conjuntos de saudações,
+        // reações e mensagens diárias, desbloqueados pelo nível de amizade.
+        public DbSet<MensagemPersonagem> MensagensPersonagem { get; set; }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);

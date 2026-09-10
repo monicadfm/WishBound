@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using System.Security.Claims;
 using WishBound.ClientAPI.Models;
+using WishBound.ClientAPI.Models.Amizade;
 using WishBound.ClientAPI.Models.Gestao;
 using WishBound.ClientAPI.Services;
 
@@ -24,6 +25,13 @@ namespace WishBound.ClientAPI.Controllers
     ///   DefinirInventario / DefinirAmizade / AjustarRecompensa -> ações
     ///   (POST) que voltam ao detalhe da conta com a mensagem da API
     ///   Acoes        -> registo de tudo o que os administradores fizeram
+    ///
+    /// MENSAGENS DE PERSONAGEM (api/admin/mensagens) — os conjuntos de
+    /// saudações, reações e mensagens diárias de cada personagem:
+    ///   Mensagens       -> resumo por personagem + lista (SELECT)
+    ///   CriarMensagem   -> INSERT
+    ///   EditarMensagem  -> UPDATE (GET mostra o formulário, POST grava)
+    ///   ApagarMensagem  -> DELETE
     /// Todas as ações enviam o Id do administrador com sessão iniciada
     /// (claim NameIdentifier) e um motivo opcional que fica no registo.
     ///
@@ -399,6 +407,132 @@ namespace WishBound.ClientAPI.Controllers
                 TempData["Erro"] = "Não foi possível obter o registo de ações. Verifique se a WishBound.WebAPI está em execução.";
                 return View(new List<AcaoAdmin>());
             }
+        }
+
+        // ============================================================
+        //  MENSAGENS DE PERSONAGEM
+        // ============================================================
+
+        // GET: /Gestao/Mensagens?personagemId=3   (SELECT)
+        public async Task<IActionResult> Mensagens(int? personagemId)
+        {
+            try
+            {
+                var modelo = await _api.AdminObterMensagensAsync(ObterAdminId(), personagemId);
+
+                // Formulário de criação pré-preenchido com a personagem filtrada
+                if (modelo.PersonagemAtual != null)
+                {
+                    modelo.Form.PersonagemId = modelo.PersonagemAtual.PersonagemId;
+                    modelo.Form.PersonagemNome = modelo.PersonagemAtual.Nome;
+                }
+
+                return View(modelo);
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível obter as mensagens. Verifique se a WishBound.WebAPI está em execução.";
+                return View(new GestaoMensagensViewModel { PersonagemId = personagemId });
+            }
+        }
+
+        // POST: /Gestao/CriarMensagem   (INSERT)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CriarMensagem(MensagemFormViewModel form)
+        {
+            // Validação de entrada no site (a API repete-a)
+            if (string.IsNullOrWhiteSpace(form.Conteudo) || form.Conteudo.Trim().Length < 2)
+            {
+                TempData["Erro"] = "A mensagem não pode estar vazia.";
+                return RedirectToAction(nameof(Mensagens), new { personagemId = form.PersonagemId });
+            }
+
+            return await ExecutarAcaoMensagemAsync(form.PersonagemId,
+                () => _api.AdminCriarMensagemAsync(ObterAdminId(), form));
+        }
+
+        // GET: /Gestao/EditarMensagem/12   (formulário)
+        public async Task<IActionResult> EditarMensagem(int id)
+        {
+            try
+            {
+                var mensagem = await _api.AdminObterMensagemAsync(ObterAdminId(), id);
+
+                if (mensagem == null)
+                {
+                    TempData["Erro"] = "Mensagem não encontrada.";
+                    return RedirectToAction(nameof(Mensagens));
+                }
+
+                var modelo = await _api.AdminObterMensagensAsync(ObterAdminId(), mensagem.PersonagemId);
+                modelo.Form = new MensagemFormViewModel
+                {
+                    Id = mensagem.Id,
+                    PersonagemId = mensagem.PersonagemId,
+                    PersonagemNome = mensagem.PersonagemNome,
+                    Tipo = mensagem.Tipo,
+                    NivelOrdem = mensagem.NivelOrdem,
+                    Conteudo = mensagem.Conteudo
+                };
+
+                return View(modelo);
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível obter a mensagem. Verifique se a WishBound.WebAPI está em execução.";
+                return RedirectToAction(nameof(Mensagens));
+            }
+        }
+
+        // POST: /Gestao/EditarMensagem/12   (UPDATE)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditarMensagem(int id, MensagemFormViewModel form)
+        {
+            form.Id = id;
+
+            if (string.IsNullOrWhiteSpace(form.Conteudo) || form.Conteudo.Trim().Length < 2)
+            {
+                TempData["Erro"] = "A mensagem não pode estar vazia.";
+                return RedirectToAction(nameof(EditarMensagem), new { id });
+            }
+
+            return await ExecutarAcaoMensagemAsync(form.PersonagemId,
+                () => _api.AdminEditarMensagemAsync(ObterAdminId(), form));
+        }
+
+        // POST: /Gestao/ApagarMensagem/12   (DELETE)
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> ApagarMensagem(int id, int personagemId, string? motivo)
+        {
+            return await ExecutarAcaoMensagemAsync(personagemId,
+                () => _api.AdminApagarMensagemAsync(ObterAdminId(), id, motivo));
+        }
+
+        /// <summary>Corre uma ação sobre as mensagens e volta à lista da personagem com a mensagem da API.</summary>
+        private async Task<IActionResult> ExecutarAcaoMensagemAsync(int personagemId, Func<Task<(ResultadoAcaoAdmin? Resultado, string? Erro)>> acao)
+        {
+            try
+            {
+                var (resultado, erro) = await acao();
+
+                if (resultado == null)
+                {
+                    TempData["Erro"] = "A API recusou a operação: " + erro;
+                }
+                else
+                {
+                    TempData["Sucesso"] = resultado.Mensagem;
+                }
+            }
+            catch (Exception)
+            {
+                TempData["Erro"] = "Não foi possível concluir a operação. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            return RedirectToAction(nameof(Mensagens), new { personagemId });
         }
 
         /// <summary>

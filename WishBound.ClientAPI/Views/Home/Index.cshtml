@@ -1,6 +1,8 @@
+@using WishBound.ClientAPI.Models.Amizade
 @model List<Personagem>
 @{
     ViewData["Title"] = "Início";
+    CompanheiraViewModel? companheira = ViewBag.Companheira as CompanheiraViewModel;
 }
 
 @* ESTILO LOCAL: aplica-se apenas à página inicial *@
@@ -30,6 +32,143 @@
             justify-content: center;
             flex-wrap: wrap;
         }
+
+        /* ----- Companheira: cartão no canto superior direito ----- */
+        .hero {
+            position: relative;
+        }
+
+        .companheira {
+            position: absolute;
+            top: 0;
+            /* Encostado ao canto direito da JANELA, não ao texto: sai do
+               contentor centrado com a diferença entre 50% e 50vw */
+            right: calc(50% - 50vw + 32px);
+            width: 250px;
+            padding: 12px 14px 14px;
+            border-radius: 16px;
+            background: rgba(208, 70, 138, .10);
+            border: 1px solid rgba(243, 154, 198, .35);
+            text-align: left;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .companheira-topo {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .companheira-topo h2 {
+            font-size: 1rem;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .companheira-topo .texto-suave {
+            font-size: 0.8rem;
+        }
+
+        .companheira-foto {
+            width: 150px;
+            height: 150px;
+            margin: 2px auto;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid var(--cor-raridade, #9aa5b1);
+            box-shadow: 0 0 18px rgba(243, 154, 198, .35);
+            background: rgba(255, 255, 255, .06);
+            display: block;
+        }
+
+        .companheira-foto img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .companheira-balao {
+            font-size: 0.88rem;
+            font-style: italic;
+            line-height: 1.45;
+            text-align: center;
+            color: #e6e1f5;
+        }
+
+        /* Botão de trocar (ícone) + painel que abre por baixo */
+        .companheira-trocar {
+            position: relative;
+        }
+
+        .companheira-trocar summary {
+            list-style: none;
+            cursor: pointer;
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 15px;
+            border: 1px solid var(--borda);
+            background: rgba(255, 255, 255, .06);
+            color: var(--texto-suave);
+        }
+
+        .companheira-trocar summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .companheira-trocar summary:hover,
+        .companheira-trocar[open] summary {
+            color: var(--dourado);
+            border-color: var(--dourado);
+        }
+
+        .companheira-menu {
+            position: absolute;
+            right: 0;
+            top: 36px;
+            z-index: 5;
+            width: 220px;
+            padding: 10px;
+            border-radius: 12px;
+            background: #1f1733;
+            border: 1px solid var(--borda);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .companheira-menu select {
+            width: 100%;
+            padding: 6px 8px;
+            border-radius: 8px;
+            border: 1px solid var(--borda);
+            background: rgba(20, 14, 36, .9);
+            color: inherit;
+            font-size: 0.85rem;
+        }
+
+        .companheira-menu .botao {
+            width: 100%;
+        }
+
+        .companheira.sem-escolha {
+            text-align: center;
+        }
+
+        @@media (max-width: 1400px) {
+            .companheira {
+                position: static;
+                width: 250px;
+                margin: 24px auto 0;
+            }
+        }
     </style>
 }
 
@@ -46,6 +185,55 @@
         <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Invocar agora</a>
         <a class="botao" asp-controller="Personagens" asp-action="Index">Ver personagens</a>
     </div>
+
+    @* ============================================================
+       COMPANHEIRA — cartão no canto superior direito: nome em cima à
+       esquerda, botão de trocar (⇄) em cima à direita que abre um menu,
+       foto redonda ao centro e a saudação em baixo. Só pode haver uma;
+       escolhe-se aqui ou nos detalhes da personagem.
+       ============================================================ *@
+    @if (companheira != null && (companheira.Escolhida != null || companheira.Candidatas.Count > 0))
+    {
+        var c = companheira.Escolhida;
+        <aside class="companheira @(c == null ? "sem-escolha" : "")" style="--cor-raridade:@(c?.Cor ?? "#9aa5b1")">
+            <div class="companheira-topo">
+                <div>
+                    <h2>@(c?.Nome ?? "Companheira")</h2>
+                    @if (c != null)
+                    {
+                        <span class="texto-suave">@c.RaridadeNome · @c.NivelAmizadeNome</span>
+                    }
+                </div>
+                <details class="companheira-trocar" open="@(c == null)">
+                    <summary title="@(c == null ? "Escolher companheira" : "Trocar de companheira")">&#8646;</summary>
+                    <form class="companheira-menu" method="post" asp-controller="Colecao" asp-action="Companheira">
+                        <input type="hidden" name="voltar" value="inicio" />
+                        <select name="personagemId">
+                            <option value="">— nenhuma —</option>
+                            @foreach (var p in companheira.Candidatas)
+                            {
+                                <option value="@p.PersonagemId" selected="@(c != null && p.PersonagemId == c.PersonagemId)">@p.Nome (@p.NivelAmizadeNome)</option>
+                            }
+                        </select>
+                        <button type="submit" class="botao botao-pequeno botao-destaque">Guardar</button>
+                    </form>
+                </details>
+            </div>
+
+            @if (c != null)
+            {
+                <a class="companheira-foto" asp-controller="Colecao" asp-action="Detalhes" asp-route-id="@c.PersonagemId" title="Ver @c.Nome">
+                    <img src="@c.Imagem" alt="Imagem da personagem @c.Nome" />
+                </a>
+                <p class="companheira-balao">@companheira.Saudacao</p>
+            }
+            else
+            {
+                <span class="companheira-foto"><img src="/img/personagens/desconhecido.svg" alt="" /></span>
+                <p class="companheira-balao texto-suave">Escolhe uma personagem da tua coleção para te receber aqui.</p>
+            }
+        </aside>
+    }
 </section>
 
 @if (ViewBag.Erro != null)

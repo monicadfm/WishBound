@@ -355,6 +355,118 @@ namespace WishBound.ClientAPI.Services
             return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
         }
 
+        // ---------- Mensagens de personagem (api/mensagens) ----------
+
+        /// <summary>SELECT - o conjunto de mensagens de uma personagem da coleção (com a saudação de hoje). null se falhar.</summary>
+        public async Task<MensagensPersonagem?> ObterMensagensPersonagemAsync(int utilizadorId, int personagemId)
+        {
+            var resposta = await _http.GetAsync(
+                "api/mensagens/personagem?utilizadorId=" + utilizadorId + "&personagemId=" + personagemId);
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await resposta.Content.ReadFromJsonAsync<MensagensPersonagem>();
+        }
+
+        /// <summary>SELECT - a companheira da página inicial, a saudação dela e as personagens que podem ser escolhidas.</summary>
+        public async Task<CompanheiraViewModel> ObterCompanheiraAsync(int utilizadorId)
+        {
+            return await _http.GetFromJsonAsync<CompanheiraViewModel>("api/mensagens/companheira?utilizadorId=" + utilizadorId)
+                   ?? new CompanheiraViewModel();
+        }
+
+        /// <summary>UPDATE - escolhe a companheira da página inicial (null = nenhuma).</summary>
+        public async Task<(bool Sucesso, string Mensagem)> EscolherCompanheiraAsync(int utilizadorId, int? personagemId)
+        {
+            var resposta = await _http.PostAsJsonAsync("api/mensagens/companheira", new
+            {
+                UtilizadorId = utilizadorId,
+                PersonagemId = personagemId
+            });
+
+            return (resposta.IsSuccessStatusCode, await resposta.Content.ReadAsStringAsync());
+        }
+
+        // ---------- Gestão das mensagens de personagem (api/admin/mensagens) ----------
+
+        /// <summary>SELECT - resumo por personagem + mensagens (de todas ou só de uma personagem).</summary>
+        public async Task<GestaoMensagensViewModel> AdminObterMensagensAsync(int adminId, int? personagemId)
+        {
+            string url = "api/admin/mensagens?adminId=" + adminId;
+            if (personagemId.HasValue && personagemId.Value > 0)
+            {
+                url += "&personagemId=" + personagemId.Value;
+            }
+
+            var modelo = await _http.GetFromJsonAsync<GestaoMensagensViewModel>(url) ?? new GestaoMensagensViewModel();
+            modelo.PersonagemId = personagemId;
+            return modelo;
+        }
+
+        /// <summary>SELECT - uma mensagem (para editar). null se não existir.</summary>
+        public async Task<MensagemAdmin?> AdminObterMensagemAsync(int adminId, int id)
+        {
+            var resposta = await _http.GetAsync("api/admin/mensagens/" + id + "?adminId=" + adminId);
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await resposta.Content.ReadFromJsonAsync<MensagemAdmin>();
+        }
+
+        /// <summary>INSERT - nova mensagem de uma personagem.</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminCriarMensagemAsync(int adminId, MensagemFormViewModel form)
+        {
+            return EnviarAcaoAdminAsync("api/admin/mensagens", CorpoMensagem(adminId, form));
+        }
+
+        /// <summary>UPDATE - edita o tipo, o nível e o texto de uma mensagem.</summary>
+        public async Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminEditarMensagemAsync(int adminId, MensagemFormViewModel form)
+        {
+            var resposta = await _http.PutAsJsonAsync("api/admin/mensagens/" + form.Id, CorpoMensagem(adminId, form));
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<ResultadoAcaoAdmin>(), null);
+        }
+
+        /// <summary>DELETE - apaga uma mensagem.</summary>
+        public async Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminApagarMensagemAsync(int adminId, int id, string? motivo)
+        {
+            string url = "api/admin/mensagens/" + id + "?adminId=" + adminId;
+            if (!string.IsNullOrWhiteSpace(motivo))
+            {
+                url += "&motivo=" + Uri.EscapeDataString(motivo.Trim());
+            }
+
+            var resposta = await _http.DeleteAsync(url);
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return (null, await resposta.Content.ReadAsStringAsync());
+            }
+
+            return (await resposta.Content.ReadFromJsonAsync<ResultadoAcaoAdmin>(), null);
+        }
+
+        private static object CorpoMensagem(int adminId, MensagemFormViewModel form) => new
+        {
+            AdminId = adminId,
+            form.PersonagemId,
+            form.Tipo,
+            form.NivelOrdem,
+            form.Conteudo,
+            form.Motivo
+        };
+
         // ---------- Administração de contas (api/admin) ----------
         // Todos os pedidos levam o Id do administrador com sessão iniciada;
         // a API confirma que é mesmo uma conta de administrador ativa.

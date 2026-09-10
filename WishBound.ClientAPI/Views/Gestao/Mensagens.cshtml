@@ -1,0 +1,163 @@
+@using WishBound.ClientAPI.Models.Amizade
+@model GestaoMensagensViewModel
+@{
+    Layout = "_LayoutGestao";
+    ViewData["Title"] = "Mensagens de personagem";
+    var atual = Model.PersonagemAtual;
+}
+
+<div class="gestao-topo">
+    <div>
+        <h1>Mensagens de personagem</h1>
+        <p class="texto-suave">
+            O que cada personagem diz aos utilizadores, por nível de amizade: a <strong>saudação</strong>
+            (detalhes da personagem e página inicial), a <strong>reação</strong> a cada interação e a
+            <strong>mensagem diária</strong> (notificação, a partir do nível @Model.NivelMinimoDiaria).
+            A personagem escolhe ao acaso entre todas as mensagens que o utilizador já desbloqueou.
+        </p>
+    </div>
+</div>
+
+@* ----- Uma personagem por chip, com a contagem ----- *@
+<div class="gestao-chips">
+    <a class="gestao-chip @(atual == null ? "ativo" : "")" asp-action="Mensagens">Todas</a>
+    @foreach (var p in Model.Personagens)
+    {
+        <a class="gestao-chip @(atual?.PersonagemId == p.PersonagemId ? "ativo" : "")"
+           asp-action="Mensagens" asp-route-personagemId="@p.PersonagemId"
+           title="@p.RaridadeNome · máximo nível @p.NivelMaximoOrdem · @p.Saudacoes saudações, @p.Aleatorias reações, @p.Diarias diárias">
+            <span class="ponto-cor" style="background:@p.Cor"></span>@p.Nome <span class="chip-contagem">@p.Total</span>
+        </a>
+    }
+</div>
+
+@if (Model.Personagens.Any(p => p.Total == 0))
+{
+    <p class="nota-pequena texto-suave">
+        Sem mensagens próprias: @string.Join(", ", Model.Personagens.Where(p => p.Total == 0).Select(p => p.Nome)).
+        Enquanto não tiverem, usam frases genéricas por nível.
+    </p>
+}
+
+@* ----- Nova mensagem ----- *@
+<div class="gestao-cartao">
+    <h3>Nova mensagem @(atual != null ? "de " + atual.Nome : "")</h3>
+    <form method="post" asp-action="CriarMensagem" class="formulario-mensagem">
+        <div class="formulario-linha">
+            <label>Personagem</label>
+            <select name="PersonagemId" required>
+                @foreach (var p in Model.Personagens)
+                {
+                    <option value="@p.PersonagemId" selected="@(atual?.PersonagemId == p.PersonagemId)">@p.Nome (@p.RaridadeNome, até ao nível @p.NivelMaximoOrdem)</option>
+                }
+            </select>
+
+            <label>Tipo</label>
+            <select name="Tipo" id="tipo-nova">
+                <option value="Saudacao">Saudação</option>
+                <option value="Aleatoria">Reação</option>
+                <option value="Diaria">Mensagem diária (nível @Model.NivelMinimoDiaria+)</option>
+            </select>
+
+            <label>A partir do nível</label>
+            <select name="NivelOrdem" id="nivel-nova">
+                @foreach (var n in Model.Niveis)
+                {
+                    <option value="@n.Ordem">@n.Ordem — @n.Nome</option>
+                }
+            </select>
+        </div>
+        <div class="formulario-linha">
+            <textarea name="Conteudo" rows="2" maxlength="500" required placeholder="O que a personagem diz…"></textarea>
+        </div>
+        <div class="formulario-linha">
+            <input type="text" name="Motivo" maxlength="200" placeholder="Motivo (opcional, fica no registo de ações)" />
+            <button type="submit" class="botao botao-destaque">Criar mensagem</button>
+        </div>
+        <p class="nota-pequena texto-suave">
+            Uma reação ou saudação ao nível 1 é vista por toda a gente; a partir do nível 4 só quem chegou a "Confidente".
+            Mensagens em níveis que a raridade da personagem não alcança nunca serão vistas.
+            As mensagens diárias vão para as notificações (cortadas a 255 caracteres).
+        </p>
+    </form>
+</div>
+
+@* ----- Lista ----- *@
+<div class="gestao-cartao">
+    <h3>@(atual != null ? "Mensagens de " + atual.Nome : "Todas as mensagens") <span class="texto-suave">(@Model.Mensagens.Count)</span></h3>
+
+    @if (Model.Mensagens.Count == 0)
+    {
+        <p class="texto-suave">Ainda não há mensagens@(atual != null ? " para " + atual.Nome : "").</p>
+    }
+    else
+    {
+        <table class="tabela tabela-compacta tabela-mensagens">
+            <thead>
+                <tr>
+                    @if (atual == null)
+                    {
+                        <th>Personagem</th>
+                    }
+                    <th>Tipo</th>
+                    <th>Nível</th>
+                    <th>Mensagem</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model.Mensagens)
+                {
+                    <tr class="@(m.Alcancavel ? "" : "linha-inativa")" title="@(m.Alcancavel ? "" : "A raridade desta personagem não chega a este nível — nunca será vista")">
+                        @if (atual == null)
+                        {
+                            <td><a asp-action="Mensagens" asp-route-personagemId="@m.PersonagemId">@m.PersonagemNome</a></td>
+                        }
+                        <td><span class="etiqueta-categoria tipo-@m.Tipo.ToLower()">@m.TipoNome</span></td>
+                        <td>@m.NivelOrdem <span class="texto-suave">@m.NivelNome</span>@(m.Alcancavel ? "" : " ⚠")</td>
+                        <td class="celula-mensagem">@m.Conteudo</td>
+                        <td class="tabela-acoes">
+                            <a class="botao botao-pequeno botao-suave" asp-action="EditarMensagem" asp-route-id="@m.Id">Editar</a>
+                            <form method="post" asp-action="ApagarMensagem" asp-route-id="@m.Id">
+                                <input type="hidden" name="personagemId" value="@m.PersonagemId" />
+                                <button type="submit" class="botao botao-pequeno botao-perigo"
+                                        data-confirmar="Apagar esta @m.TipoNome.ToLower() de @(m.PersonagemNome)?">Apagar</button>
+                            </form>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</div>
+
+@section Scripts {
+    <script>
+        // Confirmação antes de apagar
+        document.querySelectorAll('button[data-confirmar]').forEach(function (botao) {
+            botao.addEventListener('click', function (evento) {
+                if (!window.confirm(botao.getAttribute('data-confirmar'))) {
+                    evento.preventDefault();
+                }
+            });
+        });
+
+        // Mensagem diária: o nível mínimo é o 4 (a API também o verifica)
+        var tipo = document.getElementById('tipo-nova');
+        var nivel = document.getElementById('nivel-nova');
+        var minimoDiaria = @Model.NivelMinimoDiaria;
+        function ajustarNiveis() {
+            var diaria = tipo.value === 'Diaria';
+            Array.from(nivel.options).forEach(function (o) {
+                o.disabled = diaria && parseInt(o.value, 10) < minimoDiaria;
+            });
+            if (diaria && parseInt(nivel.value, 10) < minimoDiaria) {
+                nivel.value = String(minimoDiaria);
+            }
+        }
+        if (tipo && nivel) {
+            tipo.addEventListener('change', ajustarNiveis);
+            ajustarNiveis();
+        }
+    </script>
+}

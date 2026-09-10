@@ -4,6 +4,7 @@
 @{
     var item = Model.Item;
     var amizade = Model.Amizade;
+    var mensagens = Model.Mensagens;
     ViewData["Title"] = item.Nome;
 }
 
@@ -149,6 +150,143 @@
             align-items: center;
             flex-wrap: wrap;
         }
+
+        /* ----- Mensagens da personagem ----- */
+        .balao-saudacao {
+            position: relative;
+            margin: 14px 0 4px;
+            padding: 12px 16px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, .07);
+            border: 1px solid rgba(243, 154, 198, .45);
+            font-style: italic;
+            line-height: 1.5;
+        }
+
+        .balao-saudacao::before {
+            content: "";
+            position: absolute;
+            left: 22px;
+            top: -8px;
+            width: 14px;
+            height: 14px;
+            transform: rotate(45deg);
+            background: rgba(46, 34, 72, 1);
+            border-left: 1px solid rgba(243, 154, 198, .45);
+            border-top: 1px solid rgba(243, 154, 198, .45);
+        }
+
+        .balao-saudacao .quem {
+            font-style: normal;
+            font-weight: 600;
+            color: var(--dourado);
+            margin-right: 6px;
+        }
+
+        .companheira-acao {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            flex-wrap: wrap;
+            margin: 10px 0 0;
+        }
+
+        .companheira-acao form {
+            display: inline;
+        }
+
+        .mensagens-painel {
+            margin-top: 18px;
+            padding: 16px 18px;
+            border-radius: 12px;
+            background: rgba(255, 255, 255, .04);
+            border: 1px solid var(--borda);
+        }
+
+        .mensagens-painel h2 {
+            font-size: 1.05rem;
+            margin: 0;
+            display: inline;
+        }
+
+        /* Fechado por omissão: só o título; abre ao clicar */
+        .mensagens-painel summary {
+            list-style: none;
+            cursor: pointer;
+        }
+
+        .mensagens-painel summary::-webkit-details-marker {
+            display: none;
+        }
+
+        .mensagens-painel[open] summary {
+            margin-bottom: 4px;
+        }
+
+        .mensagens-painel summary::before {
+            content: "\25B8  ";
+            color: var(--dourado);
+        }
+
+        .mensagens-painel[open] summary::before {
+            content: "\25BE  ";
+        }
+
+        .mensagens-painel summary:hover h2 {
+            color: var(--dourado);
+        }
+
+        .mensagens-tipo {
+            margin-top: 12px;
+        }
+
+        .mensagens-tipo h3 {
+            font-size: 0.95rem;
+            margin-bottom: 2px;
+        }
+
+        .mensagens-lista {
+            list-style: none;
+            margin: 6px 0 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .mensagens-lista li {
+            display: grid;
+            grid-template-columns: auto 1fr;
+            gap: 10px;
+            align-items: baseline;
+            font-size: 0.92rem;
+            padding: 6px 10px;
+            border-radius: 8px;
+            background: rgba(255, 255, 255, .04);
+        }
+
+        .mensagens-lista li.bloqueada {
+            color: var(--texto-suave);
+        }
+
+        .mensagens-lista li.fora {
+            opacity: .45;
+        }
+
+        .mensagens-lista .nivel-etiqueta {
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 7px;
+            border-radius: 999px;
+            border: 1px solid var(--borda);
+            color: var(--texto-suave);
+            white-space: nowrap;
+        }
+
+        .mensagens-lista li.desbloqueada .nivel-etiqueta {
+            border-color: #f39ac6;
+            color: #f39ac6;
+        }
     </style>
 }
 
@@ -165,6 +303,38 @@
             <p class="detalhe-descricao">
                 @(string.IsNullOrEmpty(item.Descricao) ? "Esta personagem ainda não tem descrição." : item.Descricao)
             </p>
+
+            @* ============================================================
+               SAUDAÇÃO — o que a personagem te diz hoje (muda com o nível)
+               ============================================================ *@
+            @if (mensagens != null && !string.IsNullOrEmpty(mensagens.Saudacao))
+            {
+                <div class="balao-saudacao"><span class="quem">@item.Nome:</span>@mensagens.Saudacao</div>
+            }
+            @if (mensagens != null)
+            {
+                <div class="companheira-acao">
+                    @if (mensagens.EhCompanheira)
+                    {
+                        <span class="texto-suave">&#127968; @item.Nome é a tua companheira: recebe-te na página inicial.</span>
+                        <form method="post" asp-controller="Colecao" asp-action="Companheira">
+                            @* sem personagemId = deixar de ter companheira; volta a esta página *@
+                            <input type="hidden" name="voltar" value="detalhes" />
+                            <input type="hidden" name="voltarId" value="@item.PersonagemId" />
+                            <button type="submit" class="botao botao-suave">Deixar de ser companheira</button>
+                        </form>
+                    }
+                    else
+                    {
+                        <form method="post" asp-controller="Colecao" asp-action="Companheira">
+                            <input type="hidden" name="personagemId" value="@item.PersonagemId" />
+                            <button type="submit" class="botao botao-suave" title="Só podes ter uma companheira; substitui a atual">
+                                &#127968; Tornar companheira da página inicial
+                            </button>
+                        </form>
+                    }
+                </div>
+            }
 
             @* ============================================================
                AMIZADE com esta personagem — logo por baixo da descrição
@@ -312,6 +482,41 @@
                             </li>
                         }
                     </ul>
+
+                    @* ----- Mensagens desbloqueadas / por desbloquear ----- *@
+                    @if (mensagens != null && mensagens.Total > 0)
+                    {
+                        <details class="mensagens-painel">
+                            <summary>
+                                <h2>Mensagens de @item.Nome <span class="texto-suave">· @mensagens.Desbloqueadas de @mensagens.Total desbloqueadas</span></h2>
+                            </summary>
+                            <span class="texto-suave">Cada nível de amizade desbloqueia falas novas; a personagem escolhe ao acaso entre todas as que já desbloqueaste.</span>
+
+                            @foreach (var grupo in mensagens.PorTipo)
+                            {
+                                <div class="mensagens-tipo">
+                                    <h3>@Mensagem.NomeTipo(grupo.Key) <span class="texto-suave">— @Mensagem.DescricaoTipo(grupo.Key)</span></h3>
+                                    <ul class="mensagens-lista">
+                                        @foreach (var m in grupo)
+                                        {
+                                            <li class="@(m.Desbloqueada ? "desbloqueada" : "bloqueada")@(m.Alcancavel ? "" : " fora")"
+                                                title="@(m.Alcancavel ? "" : "Uma personagem " + item.RaridadeNome + " não chega a este nível")">
+                                                <span class="nivel-etiqueta">@(m.Desbloqueada ? "✓ " : "🔒 ")Nível @m.NivelOrdem</span>
+                                                @if (m.Desbloqueada)
+                                                {
+                                                    <span>@m.Conteudo</span>
+                                                }
+                                                else
+                                                {
+                                                    <span><em>Desbloqueia ao nível @m.NivelOrdem (@m.NivelNome)@(m.Alcancavel ? "" : " — fora do alcance desta raridade")</em></span>
+                                                }
+                                            </li>
+                                        }
+                                    </ul>
+                                </div>
+                            }
+                        </details>
+                    }
 
                     <form class="interagir" method="post" asp-controller="Colecao" asp-action="Interagir">
                         <input type="hidden" name="personagemId" value="@item.PersonagemId" />

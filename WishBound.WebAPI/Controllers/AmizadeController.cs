@@ -36,11 +36,13 @@ namespace WishBound.WebAPI.Controllers
     {
         private readonly WishBoundContext _contexto;
         private readonly ServicoAmizade _amizade;
+        private readonly ServicoMensagens _mensagens;
 
-        public AmizadeController(WishBoundContext contexto, ServicoAmizade amizade)
+        public AmizadeController(WishBoundContext contexto, ServicoAmizade amizade, ServicoMensagens mensagens)
         {
             _contexto = contexto;
             _amizade = amizade;
+            _mensagens = mensagens;
         }
 
         // ------------------------------------------------------------
@@ -412,7 +414,7 @@ namespace WishBound.WebAPI.Controllers
                 return Ok(new InteracaoResposta
                 {
                     Mensagem = mensagem,
-                    Reacao = Reacao(item.Personagem.Nome, resultado.NivelAtual.Ordem),
+                    Reacao = await ReacaoAsync(item.PersonagemId, item.Personagem.Nome, resultado.NivelAtual.Ordem),
                     PersonagemId = item.PersonagemId,
                     PersonagemNome = item.Personagem.Nome,
                     PontosGanhos = ServicoAmizade.PontosPorInteracao,
@@ -596,10 +598,18 @@ namespace WishBound.WebAPI.Controllers
             nivelId.HasValue && ordemNiveis.TryGetValue(nivelId.Value, out var o) ? o : 0;
 
         /// <summary>
-        /// Saudação simples da personagem conforme o nível. As mensagens
-        /// próprias de cada personagem (tabela MensagensPersonagem) ficam
-        /// para a funcionalidade de mensagens de personagem.
+        /// A "fala" da personagem depois de uma interação: uma mensagem do
+        /// conjunto "Aleatoria" da personagem (MensagensPersonagem,
+        /// Migracao07) ao nível atual; se a personagem não tiver conjunto,
+        /// a frase genérica por nível de <see cref="Reacao"/>.
         /// </summary>
+        private async Task<string> ReacaoAsync(int personagemId, string nome, int ordemNivel)
+        {
+            return await _mensagens.EscolherAsync(personagemId, MensagemPersonagem.TipoAleatoria, ordemNivel)
+                   ?? Reacao(nome, ordemNivel);
+        }
+
+        /// <summary>Reação GENÉRICA por nível — só para personagens sem conjunto "Aleatoria".</summary>
         private static string Reacao(string nome, int ordemNivel) => ordemNivel switch
         {
             1 => nome + " olha para ti com curiosidade… ainda não sabe bem quem és.",

@@ -57,6 +57,11 @@ namespace WishBound.WebAPI.Models
 
         public DateOnly? DiaInteracoes { get; set; }
 
+        // COMPANHEIRA da página inicial: a personagem (uma só, da coleção do
+        // utilizador) que o recebe com uma saudação quando entra no site.
+        // Coluna acrescentada por Database/Migracao07.sql.
+        public int? PersonagemCompanheiraId { get; set; }
+
         // Apenas os administradores acedem à área de gestão
         public bool IsAdmin { get; set; }
 
