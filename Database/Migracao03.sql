@@ -91,12 +91,14 @@ END
 ELSE
     PRINT CONCAT('Banner de evento ja existe (BannerId = ', @BannerId, ').');
 
--- O evento tambem e um banner de invocacao: leva todas as personagens
--- (rate-up fica para a funcionalidade de eventos/banners).
+-- O evento tambem e um banner de invocacao: leva as personagens base
+-- (as exclusivas de evento, Ids 9+ da Migracao08, ficam de fora; o
+-- rate-up esta no banner "Estrela do Crepusculo" da Migracao08).
 INSERT INTO dbo.BannerPersonagens (BannerId, PersonagemId, RateUp, ProbabilidadeExtra)
 SELECT @BannerId, p.PersonagemId, 0, NULL
 FROM dbo.Personagens p
-WHERE NOT EXISTS (SELECT 1 FROM dbo.BannerPersonagens bp
+WHERE p.PersonagemId <= 8
+  AND NOT EXISTS (SELECT 1 FROM dbo.BannerPersonagens bp
                   WHERE bp.BannerId = @BannerId AND bp.PersonagemId = p.PersonagemId);
 
 -- Recompensas diarias do evento: uma linha por dia, em Bilhetes (TipoMoedaId 3).

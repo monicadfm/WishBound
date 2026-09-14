@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WishBound.WebAPI.Data;
 using WishBound.WebAPI.Models;
@@ -31,6 +31,17 @@ namespace WishBound.WebAPI.Controllers
     /// repetida soma uma cópia) e cada cópia ocupa um lugar do inventário —
     /// sem espaço (ou sem Moedas) para todas as invocações pedidas, o pedido é
     /// recusado sem gastar nada.
+    ///
+    /// RATE-UP (só nos banners de EVENTO, Migracao08 — o permanente não muda):
+    /// a raridade sai sempre com as
+    /// probabilidades da tabela Raridades; o rate-up decide QUAL personagem
+    /// dentro dela. Se o banner tiver personagens em destaque numa raridade
+    /// (BannerPersonagens.RateUp), a quota ProbabilidadeExtra (ex.: 0.80) é a
+    /// probabilidade de sair uma das destacadas (ao acaso entre elas) em vez
+    /// de uma das restantes. Na MÍTICA a quota é 0.50 — o "50/50" — e tem
+    /// garantia: quem perde (sai a Mítica do permanente) fica com
+    /// Pity.GarantiaRateUp = true e a próxima Mítica nesse banner é
+    /// obrigatoriamente a do banner.
     /// </summary>
     [Route("api/[controller]")]
     [ApiController]
@@ -50,6 +61,12 @@ namespace WishBound.WebAPI.Controllers
 
         private const int OrdemEpico = 3;
         private const int OrdemLendario = 4;
+
+        /// <summary>Raridade em que o rate-up funciona como 50/50 com garantia (Mítico).</summary>
+        private const int OrdemMitico = 5;
+
+        /// <summary>Quota do rate-up quando a linha do banner não a indica.</summary>
+        private const decimal QuotaRateUpPorOmissao = 0.5m;
 
         /// <summary>Primeiro nível de amizade ("Desconhecido") ao criar a linha da coleção.</summary>
         private const int NivelAmizadeInicialId = 1;
@@ -117,7 +134,12 @@ namespace WishBound.WebAPI.Controllers
                     return BadRequest("É necessário indicar o utilizador (utilizadorId).");
                 }
 
-                var banner = await ObterBannerAsync(bannerId);
+                bool admin = await _contexto.Utilizadores.AsNoTracking()
+                    .Where(u => u.Id == utilizadorId)
+                    .Select(u => u.IsAdmin)
+                    .FirstOrDefaultAsync();
+
+                var banner = await ObterBannerAsync(bannerId, admin);
                 if (banner == null)
                 {
                     return NotFound("Não há nenhum banner disponível.");
@@ -126,6 +148,33 @@ namespace WishBound.WebAPI.Controllers
                 var pity = await _contexto.Pity.FindAsync(utilizadorId, banner.Id);
                 int contadorLendario = pity?.ContadorAtual ?? 0;
                 int contadorEpico = pity?.ContadorEpico ?? 0;
+
+                // Personagens em destaque (rate-up) deste banner, para a página
+                // mostrar quem está em promoção e o estado do 50/50.
+                var idsPermanentes = await ObterIdsBannersPermanentesAsync();
+                var destaques = await _contexto.BannerPersonagens
+                    .Where(bp => bp.BannerId == banner.Id && bp.RateUp)
+                    .Join(_contexto.Personagens.Where(p => p.IsAtivo),
+                          bp => bp.PersonagemId, p => p.Id, (bp, p) => new { bp, p })
+                    .OrderByDescending(x => x.p.Raridade!.Ordem).ThenBy(x => x.p.Nome)
+                    .Select(x => new PersonagemDestaque
+                    {
+                        Id = x.p.Id,
+                        Nome = x.p.Nome,
+                        Descricao = x.p.Descricao,
+                        ImagemUrl = x.p.ImagemUrl,
+                        RaridadeNome = x.p.Raridade!.Nome,
+                        Cor = x.p.Raridade.Cor,
+                        RaridadeOrdem = x.p.Raridade.Ordem,
+                        RateUp = true,
+                        Quota = x.bp.ProbabilidadeExtra ?? QuotaRateUpPorOmissao
+                    })
+                    .ToListAsync();
+
+                foreach (var destaque in destaques)
+                {
+                    destaque.Exclusiva = !idsPermanentes.Contains(destaque.Id);
+                }
 
                 var dono = await _contexto.Utilizadores.AsNoTracking()
                     .Where(u => u.Id == utilizadorId)
@@ -147,7 +196,13 @@ namespace WishBound.WebAPI.Controllers
                     FaltamParaEpico = Math.Max(0, LimiteEpico - contadorEpico),
                     LimiteLendario = LimiteLendario,
                     LimiteEpico = LimiteEpico,
-                    InicioSoftPity = InicioSoftPity
+                    InicioSoftPity = InicioSoftPity,
+                    Permanente = banner.TipoBanner == Banner.TipoStandard,
+                    DataInicio = banner.DataInicio,
+                    DataFim = banner.DataFim,
+                    SegundosRestantes = SegundosRestantes(banner),
+                    GarantiaRateUp = pity?.GarantiaRateUp ?? false,
+                    Destaques = destaques
                 });
             }
             catch (Exception ex)
@@ -179,7 +234,9 @@ namespace WishBound.WebAPI.Controllers
                     return BadRequest("Utilizador inválido para invocar.");
                 }
 
-                var banner = await ObterBannerAsync(pedido.BannerId);
+                // ADMIN: pode invocar em banners de evento já terminados
+                // (continua a ter acesso às personagens exclusivas).
+                var banner = await ObterBannerAsync(pedido.BannerId, utilizador.IsAdmin);
                 if (banner == null)
                 {
                     return BadRequest("O banner escolhido não existe ou já não está a decorrer.");
@@ -282,16 +339,21 @@ namespace WishBound.WebAPI.Controllers
                     });
                 }
 
-                // Personagens ativas deste banner, agrupadas por raridade
-                var idsDoBanner = await _contexto.BannerPersonagens
+                // Personagens ativas deste banner (com a marca de rate-up de
+                // cada uma), agrupadas por raridade
+                var ligacoes = await _contexto.BannerPersonagens.AsNoTracking()
                     .Where(bp => bp.BannerId == banner.Id)
-                    .Select(bp => bp.PersonagemId)
-                    .ToListAsync();
+                    .ToDictionaryAsync(bp => bp.PersonagemId);
+
+                var idsDoBanner = ligacoes.Keys.ToList();
 
                 var personagens = await _contexto.Personagens
                     .Include(p => p.Raridade)
                     .Where(p => p.IsAtivo && idsDoBanner.Contains(p.Id))
                     .ToListAsync();
+
+                // Exclusivas = não existem em nenhum banner permanente
+                var idsPermanentes = await ObterIdsBannersPermanentesAsync();
 
                 if (personagens.Count == 0)
                 {
@@ -339,6 +401,7 @@ namespace WishBound.WebAPI.Controllers
                 int contadorLendario = pity.ContadorAtual;
                 int contadorEpico = pity.ContadorEpico;
                 int? ultimaGarantida = pity.UltimaRaridadeGarantida;
+                bool garantiaRateUp = pity.GarantiaRateUp;
 
                 // Quantidades que já tem na coleção (para saber o que é novo)
                 var colecaoAtual = await _contexto.Colecoes
@@ -356,7 +419,16 @@ namespace WishBound.WebAPI.Controllers
                     var (raridade, porGarantia) = SortearRaridade(
                         raridades, contadorLendario, contadorEpico, ordemAlta, ordemGarantida);
                     var candidatas = porRaridade[raridade.Id];
-                    var personagem = candidatas[Random.Shared.Next(candidatas.Count)];
+
+                    // O rate-up e o 50/50 só existem nos banners TEMPORÁRIOS
+                    // (Evento). O banner permanente sorteia ao acaso dentro da
+                    // raridade, como sempre — mesmo que alguém marcasse RateUp
+                    // nas suas linhas, aqui é ignorado.
+                    (Personagem Personagem, bool RateUp, bool PerdeuCinquenta, bool GarantiaUsada) escolha =
+                        banner.TipoBanner == Banner.TipoEvento
+                            ? SortearPersonagem(candidatas, ligacoes, raridade.Ordem, ref garantiaRateUp)
+                            : (candidatas[Random.Shared.Next(candidatas.Count)], false, false, false);
+                    var personagem = escolha.Personagem;
 
                     // Contadores: a raridade alta reinicia os dois
                     if (raridade.Ordem >= ordemAlta)
@@ -385,7 +457,11 @@ namespace WishBound.WebAPI.Controllers
                         Novo = tinha == 0 && jaSorteadas == 0,
                         Quantidade = tinha + jaSorteadas + 1,
                         PityAtivado = porGarantia,
-                        RaridadeOrdem = raridade.Ordem
+                        RaridadeOrdem = raridade.Ordem,
+                        RateUp = escolha.RateUp,
+                        Exclusiva = !idsPermanentes.Contains(personagem.Id),
+                        PerdeuCinquenta = escolha.PerdeuCinquenta,
+                        GarantiaRateUpUsada = escolha.GarantiaUsada
                     });
                 }
 
@@ -475,6 +551,7 @@ namespace WishBound.WebAPI.Controllers
                 pity.ContadorAtual = contadorLendario;
                 pity.ContadorEpico = contadorEpico;
                 pity.UltimaRaridadeGarantida = ultimaGarantida;
+                pity.GarantiaRateUp = garantiaRateUp;
 
                 await _contexto.SaveChangesAsync();
                 await transacao.CommitAsync();
@@ -494,7 +571,8 @@ namespace WishBound.WebAPI.Controllers
                     SaldoMoedas = await ObterSaldoAsync(utilizador.Id),
                     SaldoBilhetes = await ObterSaldoAsync(utilizador.Id, BilhetesId),
                     CustoTotal = custoTotal,
-                    BilhetesUsados = bilhetesUsados
+                    BilhetesUsados = bilhetesUsados,
+                    GarantiaRateUp = garantiaRateUp
                 });
             }
             catch (Exception ex)
@@ -552,6 +630,56 @@ namespace WishBound.WebAPI.Controllers
         }
 
         /// <summary>
+        /// Escolhe QUAL personagem sai dentro da raridade já sorteada,
+        /// aplicando o rate-up do banner:
+        ///  - sem personagens em destaque nessa raridade (ou só com elas),
+        ///    é ao acaso entre todas;
+        ///  - com destaque, a quota (ProbabilidadeExtra, ex.: 0.80) é a
+        ///    probabilidade de sair uma das destacadas (ao acaso entre elas);
+        ///  - na Mítica a quota é o 50/50 com garantia: com garantiaRateUp
+        ///    ativa sai obrigatoriamente uma destacada e a garantia gasta-se;
+        ///    perder o 50/50 liga a garantia para a próxima Mítica.
+        /// </summary>
+        private static (Personagem Personagem, bool RateUp, bool PerdeuCinquenta, bool GarantiaUsada) SortearPersonagem(
+            List<Personagem> candidatas, Dictionary<int, BannerPersonagem> ligacoes, int ordem, ref bool garantiaRateUp)
+        {
+            var destaque = candidatas.Where(p => ligacoes.TryGetValue(p.Id, out var l) && l.RateUp).ToList();
+            var restantes = candidatas.Where(p => !destaque.Contains(p)).ToList();
+
+            if (destaque.Count == 0 || restantes.Count == 0)
+            {
+                var qualquer = candidatas[Random.Shared.Next(candidatas.Count)];
+                return (qualquer, destaque.Count > 0, false, false);
+            }
+
+            bool mitica = ordem >= OrdemMitico;
+
+            // Garantia do 50/50: a última Mítica não foi a do banner
+            if (mitica && garantiaRateUp)
+            {
+                garantiaRateUp = false;
+                return (destaque[Random.Shared.Next(destaque.Count)], true, false, true);
+            }
+
+            decimal quota = destaque
+                .Select(p => ligacoes[p.Id].ProbabilidadeExtra)
+                .FirstOrDefault(q => q.HasValue) ?? QuotaRateUpPorOmissao;
+
+            if ((decimal)Random.Shared.NextDouble() < quota)
+            {
+                return (destaque[Random.Shared.Next(destaque.Count)], true, false, false);
+            }
+
+            // Saiu uma das restantes; na Mítica isto é "perder o 50/50"
+            if (mitica)
+            {
+                garantiaRateUp = true;
+            }
+
+            return (restantes[Random.Shared.Next(restantes.Count)], false, mitica, false);
+        }
+
+        /// <summary>
         /// Sorteio ponderado: as probabilidades são frações (0.55 = 55%) e
         /// funcionam como pesos — sorteia-se um número entre 0 e a soma dos
         /// pesos e percorrem-se as raridades até o ultrapassar.
@@ -585,17 +713,18 @@ namespace WishBound.WebAPI.Controllers
         // ============================================================
 
         /// <summary>
-        /// Banner pedido (se estiver a decorrer) ou, sem Id, o banner
-        /// permanente ativo. Substitui o antigo Id fixo no código.
+        /// Banner pedido (se estiver a decorrer — para um administrador basta
+        /// estar ativo, mesmo fora das datas) ou, sem Id, o banner permanente
+        /// ativo. Substitui o antigo Id fixo no código.
         /// </summary>
-        private async Task<Banner?> ObterBannerAsync(int bannerId)
+        private async Task<Banner?> ObterBannerAsync(int bannerId, bool admin = false)
         {
             var agora = DateTime.UtcNow;
 
             if (bannerId > 0)
             {
                 return await _contexto.Banners.FirstOrDefaultAsync(
-                    b => b.Id == bannerId && b.IsAtivo && b.DataInicio <= agora && b.DataFim >= agora);
+                    b => b.Id == bannerId && b.IsAtivo && (admin || (b.DataInicio <= agora && b.DataFim >= agora)));
             }
 
             return await _contexto.Banners
@@ -603,6 +732,29 @@ namespace WishBound.WebAPI.Controllers
                 .OrderBy(b => b.TipoBanner == Banner.TipoStandard ? 0 : 1)
                 .ThenBy(b => b.Id)
                 .FirstOrDefaultAsync();
+        }
+
+        /// <summary>Personagens que existem em algum banner permanente (as outras são exclusivas de evento).</summary>
+        private async Task<HashSet<int>> ObterIdsBannersPermanentesAsync()
+        {
+            var ids = await _contexto.BannerPersonagens
+                .Where(bp => _contexto.Banners.Any(b => b.Id == bp.BannerId && b.TipoBanner == Banner.TipoStandard))
+                .Select(bp => bp.PersonagemId)
+                .Distinct()
+                .ToListAsync();
+
+            return ids.ToHashSet();
+        }
+
+        /// <summary>Segundos até o banner acabar (0 no permanente ou já terminado).</summary>
+        private static long SegundosRestantes(Banner banner)
+        {
+            if (banner.TipoBanner == Banner.TipoStandard)
+            {
+                return 0;
+            }
+
+            return (long)Math.Max(0, (banner.DataFim - DateTime.UtcNow).TotalSeconds);
         }
 
         /// <summary>
@@ -639,7 +791,7 @@ namespace WishBound.WebAPI.Controllers
             // para dois pedidos do mesmo utilizador não lerem os contadores ao
             // mesmo tempo e um apagar o trabalho do outro.
             var pity = await _contexto.Pity
-                .FromSql($@"SELECT UtilizadorId, BannerId, ContadorAtual, ContadorEpico, UltimaRaridadeGarantida
+                .FromSql($@"SELECT UtilizadorId, BannerId, ContadorAtual, ContadorEpico, UltimaRaridadeGarantida, GarantiaRateUp
                             FROM PityUtilizador WITH (UPDLOCK, HOLDLOCK)
                             WHERE UtilizadorId = {utilizadorId} AND BannerId = {bannerId}")
                 .FirstOrDefaultAsync();

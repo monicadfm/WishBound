@@ -1,4 +1,4 @@
-@using WishBound.ClientAPI.Models.Economia
+﻿@using WishBound.ClientAPI.Models.Economia
 @model EconomiaViewModel
 @{
     ViewData["Title"] = "Carteira";
@@ -281,6 +281,8 @@
                             {
                                 <text>Faltam @evento.DiasRestantes @(evento.DiasRestantes == 1 ? "dia" : "dias") &middot; até @evento.DataFim.ToLocalTime().ToString("dd/MM/yyyy HH:mm")</text>
                             }
+                            &middot; <span class="contagem" data-fim="@DateTime.SpecifyKind(evento.DataFim, DateTimeKind.Utc).ToString("o")">a contar</span>
+                            &middot; <a class="ligacao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@evento.BannerId">ver o banner</a>
                         </span>
                     </div>
                     <form method="post" asp-controller="Economia" asp-action="ResgatarEvento">

@@ -1,0 +1,265 @@
+﻿@model EventosViewModel
+@{
+    ViewData["Title"] = "Eventos";
+    var d = Model.Detalhe;
+    bool comSessao = User.Identity?.IsAuthenticated == true;
+}
+
+@* ESTILO LOCAL: lista de eventos + detalhe do banner escolhido *@
+@section Estilos {
+    <style>
+        .eventos-lista {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin: 20px 0 30px;
+        }
+
+        .evento-banner .texto-suave {
+            font-size: 0.9rem;
+        }
+
+        .detalhe-banner {
+            border-top: 1px solid var(--borda);
+            padding-top: 24px;
+        }
+
+        .detalhe-banner-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .regras {
+            margin: 14px 0;
+            padding: 12px 16px;
+            border-radius: 12px;
+            background: var(--fundo-cartao);
+            border: 1px solid var(--borda);
+            font-size: 0.92rem;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .legenda {
+            font-size: 0.8rem;
+            margin-top: 10px;
+        }
+    </style>
+}
+
+<section class="seccao">
+    <h1 class="titulo-seccao">Eventos e banners</h1>
+    <p class="texto-suave">
+        Os banners de evento são temporários e trazem personagens <span class="marca-exclusiva">EXCLUSIVAS</span>
+        que não existem no banner permanente e personagens em <span class="marca-rateup">RATE-UP</span>,
+        com mais probabilidade de sair dentro da sua raridade. As garantias contam-se por banner.
+    </p>
+
+    @* ----- Banners a decorrer ----- *@
+    <div class="eventos-lista">
+        @if (Model.Banners.Count == 0)
+        {
+            <p class="caixa-vazia">Não há banners a decorrer neste momento.</p>
+        }
+        @foreach (var banner in Model.Banners)
+        {
+            <div class="evento-banner @(d != null && d.Id == banner.Id ? "ativo" : "")">
+                <div>
+                    <h3>@banner.Nome @if (banner.Terminado) { <span class="marca-cinquenta" title="Só os administradores continuam a ver e a invocar aqui">TERMINADO · SÓ ADMIN</span> }</h3>
+                    <p class="texto-suave">
+                        @banner.TotalPersonagens personagens
+                        @if (banner.TotalExclusivas > 0)
+                        {
+                            <text>&middot; @banner.TotalExclusivas @(banner.TotalExclusivas == 1 ? "exclusiva" : "exclusivas")</text>
+                        }
+                        @if (banner.Destaques.Count > 0)
+                        {
+                            <text>&middot; em destaque: @string.Join(", ", banner.Destaques.Select(x => x.Nome))</text>
+                        }
+                        @if (banner.TemRecompensas)
+                        {
+                            <text>&middot; com recompensas diárias</text>
+                        }
+                    </p>
+                </div>
+                <div class="evento-banner-acoes">
+                    @if (banner.Permanente)
+                    {
+                        <span class="contagem contagem-fim">permanente</span>
+                    }
+                    else
+                    {
+                        <span class="contagem" data-fim="@banner.FimIso" title="Termina a @banner.DataFim.ToLocalTime().ToString("dd/MM/yyyy HH:mm")">@banner.TempoRestanteTexto</span>
+                    }
+                    <a class="botao botao-pequeno @(d != null && d.Id == banner.Id ? "botao-suave" : "")"
+                       asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@banner.Id">Ver detalhes</a>
+                </div>
+            </div>
+        }
+    </div>
+
+    @* ----- Detalhe do banner escolhido ----- *@
+    @if (d != null)
+    {
+        <div class="detalhe-banner">
+            <div class="detalhe-banner-topo">
+                <div>
+                    <h2>@d.Nome</h2>
+                    @if (!string.IsNullOrWhiteSpace(d.Descricao))
+                    {
+                        <p class="texto-suave" style="max-width:720px">@d.Descricao</p>
+                    }
+                    @if (!d.Permanente)
+                    {
+                        <p class="texto-suave" style="margin-top:6px">
+                            De @d.DataInicio.ToLocalTime().ToString("dd/MM/yyyy HH:mm") a @d.DataFim.ToLocalTime().ToString("dd/MM/yyyy HH:mm")
+                            &middot; termina em <span class="contagem" data-fim="@d.FimIso">@d.TempoRestanteTexto</span>
+                        </p>
+                    }
+                </div>
+                <div>
+                    <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@d.Id">&#10024; Invocar neste banner</a>
+                </div>
+            </div>
+
+            @* Personagens em destaque *@
+            @if (d.Destaques.Count > 0)
+            {
+                <div class="destaques">
+                    @foreach (var p in d.Destaques)
+                    {
+                        <div class="destaque" style="--cor-raridade:@p.CorOuOmissao">
+                            <img src="@p.Imagem" alt="Imagem da personagem @p.Nome" />
+                            <strong>@p.Nome</strong>
+                            <span class="etiqueta-raridade" style="background:@p.CorOuOmissao">@p.RaridadeNome</span>
+                            <span class="texto-suave">
+                                <span class="marca-rateup">RATE-UP @p.QuotaTexto</span>
+                                @if (p.Exclusiva)
+                                {
+                                    <span class="marca-exclusiva">EXCLUSIVA</span>
+                                }
+                            </span>
+                            @if (comSessao && p.Copias > 0)
+                            {
+                                <span class="texto-suave">&#10003; tens x@(p.Copias)</span>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (d.RegrasRateUp.Count > 0)
+            {
+                <div class="regras">
+                    <strong>Como funciona o rate-up neste banner</strong>
+                    @foreach (var regra in d.RegrasRateUp)
+                    {
+                        <span>&#9679; @regra</span>
+                    }
+                    <span class="texto-suave">As probabilidades por raridade são as da tabela da página de Invocação; o rate-up só decide qual personagem sai dentro da raridade.</span>
+                </div>
+            }
+
+            @* Participação do utilizador *@
+            @if (comSessao)
+            {
+                <h3 style="margin-top:22px">A tua participação</h3>
+                <div class="participacao">
+                    <div><strong>@d.InvocacoesFeitas</strong><span>invocações feitas neste banner</span></div>
+                    <div><strong>@d.PersonagensObtidas / @d.Personagens.Count</strong><span>personagens do banner na tua coleção</span></div>
+                    @if (d.Destaques.Count > 0)
+                    {
+                        <div><strong>@d.DestaquesObtidos / @d.Destaques.Count</strong><span>personagens em destaque obtidas</span></div>
+                    }
+                    <div><strong>@d.ContadorLendario / 90</strong><span>invocações desde a última Lendária/Mítica</span></div>
+                    <div><strong>@d.ContadorEpico / 10</strong><span>invocações desde a última Épica</span></div>
+                    @if (d.MiticasDestaque.Count > 0)
+                    {
+                        <div>
+                            <strong>@(d.GarantiaRateUp ? "garantida" : "50/50")</strong>
+                            <span>
+                                @if (d.GarantiaRateUp)
+                                {
+                                    <text>perdeste o último 50/50 — a próxima Mítica é @string.Join(" ou ", d.MiticasDestaque.Select(m => m.Nome))</text>
+                                }
+                                else
+                                {
+                                    <text>próxima Mítica: metade das vezes @string.Join(" ou ", d.MiticasDestaque.Select(m => m.Nome))</text>
+                                }
+                            </span>
+                        </div>
+                    }
+                </div>
+
+                @if (d.TemRecompensas)
+                {
+                    <div class="regras" style="margin-top:14px">
+                        <strong>&#127873; Recompensas diárias do evento</strong>
+                        <span>
+                            Resgataste <strong>@d.DiasResgatados / @d.DiasRecompensa</strong> dias
+                            &middot; total do evento: @d.TotalRecompensas.ToString("0") @d.MoedaRecompensa
+                            &middot; <a class="ligacao" asp-controller="Economia" asp-action="Index">resgatar na Carteira</a>
+                        </span>
+                    </div>
+                }
+            }
+            else
+            {
+                <p class="texto-suave" style="margin-top:18px">
+                    <a class="ligacao" asp-controller="Conta" asp-action="Login">Inicia sessão</a> para veres a tua participação neste banner.
+                </p>
+            }
+
+            @* Pool completa *@
+            <h3 style="margin-top:26px">Todas as personagens deste banner</h3>
+            @foreach (var grupo in d.PorRaridade)
+            {
+                var primeira = grupo.First();
+                <div class="pool-raridade">
+                    <h3>
+                        <span class="etiqueta-raridade" style="background:@primeira.CorOuOmissao">@primeira.RaridadeNome</span>
+                        <span class="texto-suave">@grupo.Count() @(grupo.Count() == 1 ? "personagem" : "personagens")</span>
+                    </h3>
+                    <div class="pool-grelha">
+                        @foreach (var p in grupo)
+                        {
+                            <a class="pool-item @(comSessao && p.Copias > 0 ? "tenho" : "")" style="--cor-raridade:@p.CorOuOmissao"
+                               asp-controller="Personagens" asp-action="Details" asp-route-id="@p.Id" title="@p.Descricao">
+                                <img src="@p.Imagem" alt="Imagem da personagem @p.Nome" />
+                                <span>
+                                    <span class="pool-nome">@p.Nome</span>
+                                    <span class="texto-suave">
+                                        @if (p.RateUp)
+                                        {
+                                            <span class="marca-rateup">RATE-UP</span>
+                                        }
+                                        @if (p.Exclusiva)
+                                        {
+                                            <span class="marca-exclusiva">EXCLUSIVA</span>
+                                        }
+                                        @if (comSessao)
+                                        {
+                                            @(p.Copias > 0 ? "x" + p.Copias : "ainda não tens")
+                                        }
+                                    </span>
+                                </span>
+                            </a>
+                        }
+                    </div>
+                </div>
+            }
+            <p class="texto-suave legenda">
+                <span class="marca-rateup">RATE-UP</span> mais provável dentro da raridade &middot;
+                <span class="marca-exclusiva">EXCLUSIVA</span> só neste banner, enquanto durar
+                @if (comSessao)
+                {
+                    <text>&middot; contorno verde = já a tens</text>
+                }
+            </p>
+        </div>
+    }
+</section>

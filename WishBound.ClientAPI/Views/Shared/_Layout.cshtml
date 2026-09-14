@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt">
 <head>
     <meta charset="utf-8" />
@@ -33,6 +33,7 @@
             <a asp-controller="Home" asp-action="Index">Início</a>
             <a asp-controller="Personagens" asp-action="Index">Personagens</a>
             <a asp-controller="Invocacao" asp-action="Index">Invocação</a>
+            <a asp-controller="Eventos" asp-action="Index">Eventos</a>
             @if (User.Identity?.IsAuthenticated == true)
             {
                 @* A coleção e a carteira são pessoais: só fazem sentido com sessão iniciada *@
@@ -116,6 +117,48 @@
         <img src="~/img/logo-icon.svg" alt="Ícone WishBound" class="rodape-icone" />
         <p>WishBound &copy; 2026 &middot; Projeto Final UFCD 11027 &middot; Plataforma de Coleção Digital de Personagens</p>
     </footer>
+
+    @* CONTAGEM DECRESCENTE dos banners de evento: qualquer elemento com
+       data-fim="<data ISO em UTC>" passa a mostrar "3d 04:12:07" e a
+       atualizar-se a cada segundo (usado na Invocação, nos Eventos, na
+       página inicial e na Carteira). Sem JavaScript fica o texto que o
+       servidor escreveu. *@
+    <script>
+        (function () {
+            var elementos = document.querySelectorAll('[data-fim]');
+            if (elementos.length === 0) { return; }
+
+            function dois(n) { return (n < 10 ? '0' : '') + n; }
+
+            function atualizar() {
+                var agora = Date.now();
+                elementos.forEach(function (el) {
+                    var fim = Date.parse(el.getAttribute('data-fim'));
+                    if (isNaN(fim)) { return; }
+                    var resta = Math.floor((fim - agora) / 1000);
+
+                    if (resta <= 0) {
+                        el.textContent = 'terminado';
+                        el.classList.add('contagem-fim');
+                        el.classList.remove('contagem-perto');
+                        return;
+                    }
+
+                    var d = Math.floor(resta / 86400);
+                    var h = Math.floor((resta % 86400) / 3600);
+                    var m = Math.floor((resta % 3600) / 60);
+                    var s = resta % 60;
+                    el.textContent = (d > 0 ? d + 'd ' : '') + dois(h) + ':' + dois(m) + ':' + dois(s);
+
+                    // Último dia: muda de cor
+                    if (resta < 86400) { el.classList.add('contagem-perto'); }
+                });
+            }
+
+            atualizar();
+            setInterval(atualizar, 1000);
+        })();
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

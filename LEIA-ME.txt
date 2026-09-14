@@ -1,4 +1,4 @@
-============================================================
+﻿============================================================
  WishBound - Plataforma de Coleção Digital de Personagens
  Projeto Final UFCD 5425 (evolução da versão mini UFCD 11027)
 ============================================================
@@ -64,6 +64,24 @@ REQUISITOS
                                            Mítica 10). Sem isto o
                                            login falha com "Invalid column name
                                            'PersonagemCompanheiraId'".
+10. Database\Migracao08.sql             -> eventos e banners: 3 personagens
+                                           novas EXCLUSIVAS de evento (Ondina e
+                                           Ezra, Lendárias; Vesper, Mítica — não
+                                           entram no Banner Permanente), banner
+                                           de evento "Estrela do Crepúsculo"
+                                           (30 dias a contar da execução) com
+                                           RATE-UP (BannerPersonagens.RateUp +
+                                           ProbabilidadeExtra: 0.80 nas
+                                           Lendárias, 0.50 na Mítica), coluna
+                                           PityUtilizador.GarantiaRateUp (o
+                                           50/50 da Mítica), 7 recompensas
+                                           diárias do evento e as sementes de
+                                           amizade/mensagens das 3 personagens.
+                                           Sem isto as invocações falham com
+                                           "Invalid column name 'GarantiaRateUp'".
+                                           Para PROLONGAR ou repetir o evento:
+                                           UPDATE Banners SET DataFim = DATEADD(DAY, 30, SYSUTCDATETIME())
+                                           WHERE Nome = N'Estrela do Crepúsculo';
 
 A aplicação NÃO cria nem altera a base de dados ("database first").
 
@@ -174,8 +192,8 @@ NOTAS
   (por omissão Server=.\SQLEXPRESS;Database=WishBound);
 - Endereço da API usado pelo site: WishBound.ClientAPI\appsettings.json
   (WishBoundApi:BaseUrl);
-- Invocação: a página deixa escolher o banner (por agora só o
-  Permanente) e invocar 1 ou 10 de cada vez. Cada invocação custa 10
+- Invocação: a página deixa escolher o banner (o Permanente e os de
+  evento a decorrer) e invocar 1 ou 10 de cada vez. Cada invocação custa 10
   Moedas (a x10 custa 100); cada conta nova começa com 500 Moedas e
   ganham-se mais a libertar cópias repetidas na Coleção. Garantias contadas por
   utilizador e por banner: uma Épica a cada 10 invocações sem nenhuma
@@ -223,6 +241,24 @@ NOTAS
   receber na página inicial — na própria página inicial ou no botão
   dos detalhes. Em Gestão -> Mensagens o administrador cria, edita e
   apaga as mensagens (fica no registo de ações).
+- Eventos e banners: os banners de evento (tabela Banners, tipo
+  "Evento") são temporários — a página inicial, a Invocação, a Carteira
+  e a nova página EVENTOS mostram uma contagem decrescente até DataFim.
+  As personagens EXCLUSIVAS só existem no banner do evento (não estão
+  ligadas ao Banner Permanente em BannerPersonagens) e deixam de se
+  poder invocar quando ele acaba. RATE-UP: as probabilidades por
+  raridade nunca mudam; dentro da raridade, as personagens com
+  BannerPersonagens.RateUp = 1 saem com a quota ProbabilidadeExtra
+  (0.80 = de cada Lendária que sai, 80% das vezes é Ondina ou Ezra, ao
+  acaso, e 20% Seraphina). Na Mítica a quota é 0.50 — o "50/50": metade
+  das vezes Vesper, metade Celeste; quem perde fica com
+  PityUtilizador.GarantiaRateUp = 1 e a próxima Mítica nesse banner é
+  obrigatoriamente Vesper (a flag volta a 0). A página de Eventos
+  mostra a pool completa de cada banner (marcas RATE-UP/EXCLUSIVA, o
+  que o utilizador já tem), as regras, a participação (invocações
+  feitas, garantias, estado do 50/50) e o progresso das recompensas
+  diárias, que se resgatam na Carteira. Tudo é dados: um novo evento é
+  um INSERT em Banners + BannerPersonagens (+ RecompensasEvento).
 - Segredos (Google, email, chave da API) ficam sempre no
   appsettings.Local.json de cada projeto, nunca no appsettings.json
   versionado.

@@ -1,8 +1,9 @@
-@using WishBound.ClientAPI.Models.Amizade
+﻿@using WishBound.ClientAPI.Models.Amizade
 @model List<Personagem>
 @{
     ViewData["Title"] = "Início";
     CompanheiraViewModel? companheira = ViewBag.Companheira as CompanheiraViewModel;
+    List<Banner> eventos = ViewBag.Eventos as List<Banner> ?? new List<Banner>();
 }
 
 @* ESTILO LOCAL: aplica-se apenas à página inicial *@
@@ -239,6 +240,52 @@
 @if (ViewBag.Erro != null)
 {
     <div class="alerta alerta-erro">@ViewBag.Erro</div>
+}
+
+@* ----- Eventos a decorrer: banner temporário com contagem decrescente ----- *@
+@if (eventos.Count > 0)
+{
+    <section class="seccao">
+        <h2 class="titulo-seccao">Evento a decorrer</h2>
+        @foreach (var evento in eventos)
+        {
+            <div class="evento-banner" style="margin-top:16px">
+                <div>
+                    <h3>@evento.Nome</h3>
+                    @if (!string.IsNullOrWhiteSpace(evento.Descricao))
+                    {
+                        <p class="texto-suave">@evento.Descricao</p>
+                    }
+                    @if (evento.Destaques.Count > 0)
+                    {
+                        <div class="destaques" style="justify-content:flex-start;margin-bottom:0">
+                            @foreach (var p in evento.Destaques)
+                            {
+                                <div class="destaque" style="--cor-raridade:@p.CorOuOmissao">
+                                    <img src="@p.Imagem" alt="Imagem da personagem @p.Nome" />
+                                    <strong>@p.Nome</strong>
+                                    <span class="etiqueta-raridade" style="background:@p.CorOuOmissao">@p.RaridadeNome</span>
+                                    <span class="texto-suave">
+                                        <span class="marca-rateup">RATE-UP</span>
+                                        @if (p.Exclusiva)
+                                        {
+                                            <span class="marca-exclusiva">EXCLUSIVA</span>
+                                        }
+                                    </span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="evento-banner-acoes">
+                    <span class="texto-suave">termina em</span>
+                    <span class="contagem" data-fim="@evento.FimIso">@evento.TempoRestanteTexto</span>
+                    <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@evento.Id">&#10024; Invocar</a>
+                    <a class="ligacao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@evento.Id">ver o evento</a>
+                </div>
+            </div>
+        }
+    </section>
 }
 
 @if (Model.Count > 0)

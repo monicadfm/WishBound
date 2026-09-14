@@ -1,9 +1,10 @@
-@model InvocacaoViewModel
+﻿@model InvocacaoViewModel
 @{
     ViewData["Title"] = "Invocação";
 }
 
-@* ESTILO LOCAL: animação e grelha de resultados usadas só nesta página *@
+@* ESTILO LOCAL: painéis dos banners (montra), miniaturas de troca,
+   garantias, animação e grelha de resultados — só nesta página *@
 @section Estilos {
     <style>
         .invocacao-zona {
@@ -11,34 +12,258 @@
             padding: 30px 20px 10px;
         }
 
-        .escolha-banner {
+        /* ----- Painel de um banner (a "montra"): um por banner, só o
+           escolhido está visível; as miniaturas em baixo trocam-nos ----- */
+        .painel-banner {
+            --cor-banner: #b04ac7;
+            max-width: 860px;
+            margin: 0 auto 18px;
+            padding: 18px 22px 22px;
+            border: 3px solid var(--cor-banner);
+            border-radius: 18px;
+            background:
+                radial-gradient(ellipse at 50% 0%, color-mix(in srgb, var(--cor-banner) 22%, transparent), transparent 60%),
+                var(--fundo-suave);
+            box-shadow: 0 0 40px color-mix(in srgb, var(--cor-banner) 25%, transparent);
+            animation: aparecer 0.45s ease-out;
+        }
+
+        .painel-banner.permanente {
+            --cor-banner: #8b1a2b;
+        }
+
+        .painel-topo {
             display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .painel-topo h2 {
+            font-size: 1.35rem;
+            margin: 0;
+        }
+
+        .painel-tipo {
+            display: inline-block;
+            padding: 2px 10px;
+            border-radius: 999px;
+            border: 1px solid var(--cor-banner);
+            color: var(--texto);
+            font-size: 0.75rem;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* Montra: Mítica grande ao centro, Lendárias mais pequenas e mais
+           baixas dos lados (como no esboço) */
+        .montra {
+            display: grid;
+            grid-template-columns: 1fr auto 1fr;
+            align-items: end;
             gap: 10px;
+            margin: 18px auto 10px;
+            min-height: 300px;
+        }
+
+        .montra-personagem {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+        }
+
+        .montra-personagem .foto {
+            width: 140px;
+            height: 140px;
+            border-radius: 50%;
+            border: 4px solid var(--cor-raridade, #9aa5b1);
+            background: radial-gradient(circle at 50% 30%, var(--cor-raridade, #9aa5b1) 0%, var(--fundo) 78%);
+            box-shadow: 0 0 26px color-mix(in srgb, var(--cor-raridade, #9aa5b1) 55%, transparent);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            transition: transform 0.2s;
+        }
+
+        .montra-personagem:hover .foto {
+            transform: scale(1.05);
+        }
+
+        .montra-personagem .foto img {
+            width: 82%;
+            height: 82%;
+        }
+
+        .montra-centro {
+            align-self: start;
+        }
+
+        .montra-centro .foto {
+            width: 250px;
+            height: 250px;
+            border-width: 5px;
+        }
+
+        .montra-personagem strong {
+            font-family: 'Cinzel', 'Georgia', serif;
+            font-size: 1.05rem;
+        }
+
+        .montra-centro strong {
+            font-size: 1.3rem;
+        }
+
+        .montra-lado.esquerda {
+            justify-self: end;
+            margin-right: 6px;
+        }
+
+        .montra-lado.direita {
+            justify-self: start;
+            margin-left: 6px;
+        }
+
+        .montra-vazio {
+            grid-column: 1 / -1;
+            color: var(--texto-suave);
+            padding: 40px 0;
+        }
+
+        .painel-descricao {
+            max-width: 640px;
+            margin: 6px auto 14px;
+            font-size: 0.92rem;
+        }
+
+        /* ----- Setas laterais para trocar de banner ----- */
+        .carrossel {
+            position: relative;
+            max-width: 860px;
+            margin: 0 auto;
+        }
+
+        .seta-banner {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            border: 2px solid var(--borda);
+            background: var(--fundo-cartao);
+            color: var(--dourado);
+            font-size: 1.6rem;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 18px rgba(0, 0, 0, .45);
+            transition: transform 0.15s, border-color 0.15s;
+            z-index: 2;
+        }
+
+        .seta-banner:hover {
+            border-color: var(--dourado);
+            transform: translateY(-50%) scale(1.08);
+        }
+
+        .seta-banner.esquerda {
+            left: -26px;
+        }
+
+        .seta-banner.direita {
+            right: -26px;
+        }
+
+        @@media (max-width: 960px) {
+            .seta-banner.esquerda {
+                left: 6px;
+            }
+
+            .seta-banner.direita {
+                right: 6px;
+            }
+        }
+
+        /* ----- Miniaturas para trocar de banner ----- */
+        .miniaturas {
+            display: flex;
+            gap: 14px;
             justify-content: center;
             flex-wrap: wrap;
-            margin: 0 auto 22px;
+            margin: 0 auto 26px;
         }
 
-        .banner-opcao {
-            border: 1px solid rgba(255, 255, 255, .16);
-            border-radius: 10px;
-            padding: 10px 16px;
-            text-align: left;
-            min-width: 190px;
-        }
-
-        .banner-opcao.ativo {
-            border-color: #6d5bd0;
-            box-shadow: 0 0 0 1px #6d5bd0 inset;
-        }
-
-        .banner-opcao strong {
+        .miniaturas-rotulo {
             display: block;
+            font-size: 0.8rem;
+            margin-bottom: 8px;
         }
 
+        .mini-banner {
+            --cor-banner: #b04ac7;
+            width: 190px;
+            padding: 10px 12px;
+            border: 3px solid var(--cor-banner);
+            border-radius: 12px;
+            background: var(--fundo-cartao);
+            color: var(--texto);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-align: left;
+            opacity: 0.72;
+            transition: transform 0.15s, opacity 0.15s, box-shadow 0.15s;
+            font: inherit;
+        }
+
+        .mini-banner.permanente {
+            --cor-banner: #8b1a2b;
+        }
+
+        .mini-banner:hover {
+            opacity: 1;
+            transform: translateY(-2px);
+        }
+
+        .mini-banner.ativo {
+            opacity: 1;
+            box-shadow: 0 0 0 2px var(--cor-banner), 0 0 18px color-mix(in srgb, var(--cor-banner) 55%, transparent);
+        }
+
+        .mini-banner img {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            border: 2px solid var(--cor-raridade, #9aa5b1);
+            background: radial-gradient(circle at 50% 30%, var(--cor-raridade, #9aa5b1) 0%, var(--fundo) 78%);
+            flex-shrink: 0;
+        }
+
+        .mini-banner strong {
+            display: block;
+            font-size: 0.9rem;
+            line-height: 1.2;
+        }
+
+        .mini-banner .contagem {
+            font-size: 0.75rem;
+            padding: 1px 8px;
+            margin-top: 3px;
+        }
+
+        /* ----- Garantias ----- */
         .garantias {
             max-width: 420px;
-            margin: 0 auto 24px;
+            margin: 0 auto 18px;
             text-align: left;
         }
 
@@ -67,6 +292,7 @@
             flex-wrap: wrap;
         }
 
+        /* ----- Resultado ----- */
         .resultado-cartao {
             margin: 30px auto 0;
             max-width: 340px;
@@ -120,94 +346,256 @@
             margin: 40px auto 0;
             max-width: 480px;
         }
+
+        @@media (max-width: 640px) {
+            .montra {
+                grid-template-columns: 1fr;
+                justify-items: center;
+                min-height: 0;
+            }
+
+            .montra-centro .foto {
+                width: 200px;
+                height: 200px;
+            }
+
+            .montra-lado.esquerda, .montra-lado.direita {
+                justify-self: center;
+                margin: 0;
+            }
+        }
     </style>
 }
 
 <section class="invocacao-zona">
     <h1 class="titulo-seccao">Invocação</h1>
 
-    @* ----- Escolha do banner (já não há banner fixo no código) ----- *@
-    @if (Model.Banners.Count > 0)
+    @if (Model.Banners.Count == 0)
     {
-        <div class="escolha-banner">
-            @foreach (var banner in Model.Banners)
-            {
-                <a class="banner-opcao @(banner.Id == Model.BannerId ? "ativo" : "")"
-                   asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@banner.Id">
-                    <strong>@banner.Nome</strong>
-                    <span class="texto-suave">
-                        @banner.TotalPersonagens personagens
-                        @if (!banner.Permanente)
-                        {
-                            <text>&middot; até @banner.DataFim.ToString("dd/MM/yyyy")</text>
-                        }
-                    </span>
-                </a>
-            }
-        </div>
+        <p class="caixa-vazia">Não há banners a decorrer neste momento.</p>
     }
 
-    <p class="texto-suave">
-        Pede um desejo e invoca personagens aleatórias.
-        Cada invocação custa @(Model.Estado?.CustoInvocacao.ToString("0") ?? "10") Moedas — ou um
-        bilhete de invocação, gasto primeiro —, fica registada no teu histórico e a
-        personagem entra na tua coleção.
-    </p>
-
-    @if (Model.Estado != null)
+    @* ============================================================
+       UM PAINEL POR BANNER (todos na mesma página). Só o escolhido está
+       visível; as miniaturas em baixo trocam-nos no browser, sem
+       recarregar. Cada painel tem a sua montra, as suas garantias (o
+       pity conta-se por banner) e os seus botões.
+       ============================================================ *@
+    <div class="carrossel">
+    @if (Model.Banners.Count > 1)
     {
-        <p class="texto-suave">
-            Tens <strong>@Model.Estado.SaldoMoedas.ToString("0") Moedas</strong>
-            e <strong>@Model.Estado.SaldoBilhetes.ToString("0") @(Model.Estado.SaldoBilhetes == 1 ? "bilhete" : "bilhetes")</strong>.
-            @if (Model.Estado.RecompensaDiariaDisponivel)
-            {
-                <a class="ligacao" asp-controller="Economia" asp-action="Index">&#127873; Tens a recompensa diária por receber</a>
-            }
-            else if (!Model.Estado.PodeInvocar)
-            {
-                <text>Liberta cópias repetidas na Coleção para ganhar mais.</text>
-            }
-        </p>
+        <button type="button" class="seta-banner esquerda" data-direcao="-1" title="Banner anterior" aria-label="Banner anterior">&#10094;</button>
+        <button type="button" class="seta-banner direita" data-direcao="1" title="Banner seguinte" aria-label="Banner seguinte">&#10095;</button>
     }
 
-    @* ----- Contadores de garantia (pity) neste banner ----- *@
-    @if (Model.Estado != null)
+    @foreach (var banner in Model.Banners)
     {
-        <div class="garantias">
-            <span class="texto-suave">
-                Garantia de Lendária/Mítica:
-                <strong>@Model.Estado.ContadorLendario / @Model.Estado.LimiteLendario</strong>
-                (faltam @Model.Estado.FaltamParaLendario)
-            </span>
-            <div class="garantia-barra @(Model.Estado.EmSoftPity ? "garantia-perto" : "")">
-                <div class="garantia-usada" style="width:@(Model.Estado.PercentagemLendario)%"></div>
+        var estado = Model.EstadoDe(banner.Id);
+        var centro = banner.Centro;
+        var lados = banner.Lados;
+        bool ativo = banner.Id == Model.BannerId;
+
+        <div class="painel-banner @(banner.Permanente ? "permanente" : "")" data-banner="@banner.Id" hidden="@(!ativo)">
+            <div class="painel-topo">
+                <h2>
+                    @banner.Nome
+                    <span class="painel-tipo">@(banner.Permanente ? "STANDARD" : "EVENTO")</span>
+                    @if (banner.Terminado)
+                    {
+                        <span class="painel-tipo" title="Evento terminado: só os administradores continuam a ver e a invocar aqui">TERMINADO · SÓ ADMIN</span>
+                    }
+                </h2>
+                @if (banner.Permanente)
+                {
+                    <span class="contagem contagem-fim">permanente</span>
+                }
+                else
+                {
+                    <span class="contagem" data-fim="@banner.FimIso" title="Termina a @banner.DataFim.ToLocalTime().ToString("dd/MM/yyyy HH:mm")">@banner.TempoRestanteTexto</span>
+                }
             </div>
 
-            @if (Model.Estado.EmSoftPity)
+            @* ----- Montra: a mais rara ao centro, as outras dos lados ----- *@
+            <div class="montra">
+                @if (centro == null)
+                {
+                    <p class="montra-vazio">Este banner ainda não tem personagens.</p>
+                }
+                else
+                {
+                    var esquerda = lados.Count > 0 ? lados[0] : null;
+                    var direita = lados.Count > 1 ? lados[1] : null;
+
+                    <div class="montra-lado esquerda">
+                        @if (esquerda != null)
+                        {
+                            <a class="montra-personagem" style="--cor-raridade:@esquerda.CorOuOmissao" asp-controller="Personagens" asp-action="Details" asp-route-id="@esquerda.Id">
+                                <span class="foto"><img src="@esquerda.Imagem" alt="Imagem da personagem @esquerda.Nome" /></span>
+                                <strong>@esquerda.Nome</strong>
+                                <span class="etiqueta-raridade" style="background:@esquerda.CorOuOmissao">@esquerda.RaridadeNome</span>
+                                <span>
+                                    @if (esquerda.RateUp)
+                                    {
+                                        <span class="marca-rateup">RATE-UP @esquerda.QuotaTexto</span>
+                                    }
+                                    @if (esquerda.Exclusiva)
+                                    {
+                                        <span class="marca-exclusiva">EXCLUSIVA</span>
+                                    }
+                                </span>
+                            </a>
+                        }
+                    </div>
+
+                    <a class="montra-personagem montra-centro" style="--cor-raridade:@centro.CorOuOmissao" asp-controller="Personagens" asp-action="Details" asp-route-id="@centro.Id">
+                        <span class="foto"><img src="@centro.Imagem" alt="Imagem da personagem @centro.Nome" /></span>
+                        <strong>@centro.Nome</strong>
+                        <span class="etiqueta-raridade" style="background:@centro.CorOuOmissao">@centro.RaridadeNome</span>
+                        <span>
+                            @if (centro.RateUp)
+                            {
+                                <span class="marca-rateup">RATE-UP @centro.QuotaTexto</span>
+                            }
+                            @if (centro.Exclusiva)
+                            {
+                                <span class="marca-exclusiva">EXCLUSIVA</span>
+                            }
+                        </span>
+                    </a>
+
+                    <div class="montra-lado direita">
+                        @if (direita != null)
+                        {
+                            <a class="montra-personagem" style="--cor-raridade:@direita.CorOuOmissao" asp-controller="Personagens" asp-action="Details" asp-route-id="@direita.Id">
+                                <span class="foto"><img src="@direita.Imagem" alt="Imagem da personagem @direita.Nome" /></span>
+                                <strong>@direita.Nome</strong>
+                                <span class="etiqueta-raridade" style="background:@direita.CorOuOmissao">@direita.RaridadeNome</span>
+                                <span>
+                                    @if (direita.RateUp)
+                                    {
+                                        <span class="marca-rateup">RATE-UP @direita.QuotaTexto</span>
+                                    }
+                                    @if (direita.Exclusiva)
+                                    {
+                                        <span class="marca-exclusiva">EXCLUSIVA</span>
+                                    }
+                                </span>
+                            </a>
+                        }
+                    </div>
+                }
+            </div>
+
+            <p class="texto-suave painel-descricao">
+                @if (!string.IsNullOrWhiteSpace(banner.Descricao))
+                {
+                    @banner.Descricao
+                }
+                else
+                {
+                    <text>@banner.TotalPersonagens personagens. Cada invocação custa @(estado?.CustoInvocacao.ToString("0") ?? "10") Moedas ou um bilhete.</text>
+                }
+                <a class="ligacao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@banner.Id">ver todas as personagens</a>
+            </p>
+
+            @if (estado != null)
             {
+                @* ----- 50/50 da Mítica (só nos banners com Mítica em destaque) ----- *@
+                if (estado.MiticasDestaque.Count > 0)
+                {
+                    var miticas = string.Join(" ou ", estado.MiticasDestaque.Select(m => m.Nome));
+                    <div class="cinquenta @(estado.GarantiaRateUp ? "garantida" : "")">
+                        @if (estado.GarantiaRateUp)
+                        {
+                            <strong>&#11088; Garantia ativa:</strong> <text>perdeste o último 50/50 — a próxima Mítica neste banner é <strong>@miticas</strong>.</text>
+                        }
+                        else
+                        {
+                            <strong>50/50:</strong> <text>quando sair uma Mítica, metade das vezes é <strong>@miticas</strong>; se sair a do banner permanente, a seguinte é garantida.</text>
+                        }
+                    </div>
+                }
+
                 <p class="texto-suave">
-                    Estás na zona em que a probabilidade sobe a cada invocação
-                    (a partir da @(Model.Estado.InicioSoftPity).ª).
+                    Tens <strong>@estado.SaldoMoedas.ToString("0") Moedas</strong>
+                    e <strong>@estado.SaldoBilhetes.ToString("0") @(estado.SaldoBilhetes == 1 ? "bilhete" : "bilhetes")</strong>.
+                    @if (estado.RecompensaDiariaDisponivel)
+                    {
+                        <a class="ligacao" asp-controller="Economia" asp-action="Index">&#127873; Tens a recompensa diária por receber</a>
+                    }
+                    else if (!estado.PodeInvocar)
+                    {
+                        <text>Liberta cópias repetidas na Coleção para ganhar mais.</text>
+                    }
                 </p>
+
+                @* ----- Contadores de garantia (pity) NESTE banner ----- *@
+                <div class="garantias">
+                    <span class="texto-suave">
+                        Garantia de Lendária/Mítica:
+                        <strong>@estado.ContadorLendario / @estado.LimiteLendario</strong>
+                        (faltam @estado.FaltamParaLendario)
+                    </span>
+                    <div class="garantia-barra @(estado.EmSoftPity ? "garantia-perto" : "")">
+                        <div class="garantia-usada" style="width:@(estado.PercentagemLendario)%"></div>
+                    </div>
+
+                    @if (estado.EmSoftPity)
+                    {
+                        <p class="texto-suave">
+                            Estás na zona em que a probabilidade sobe a cada invocação
+                            (a partir da @(estado.InicioSoftPity).ª).
+                        </p>
+                    }
+
+                    <span class="texto-suave">
+                        Garantia de Épica: <strong>@estado.ContadorEpico / @estado.LimiteEpico</strong>
+                        (faltam @estado.FaltamParaEpico)
+                    </span>
+                </div>
             }
 
-            <span class="texto-suave">
-                Garantia de Épica: <strong>@Model.Estado.ContadorEpico / @Model.Estado.LimiteEpico</strong>
-                (faltam @Model.Estado.FaltamParaEpico)
-            </span>
+            @* ----- Botões: 1 ou 10 de cada vez, neste banner ----- *@
+            <form class="botoes-invocar" method="post" asp-controller="Invocacao" asp-action="Invocar">
+                <input type="hidden" name="bannerId" value="@banner.Id" />
+                <button type="submit" name="quantidade" value="1" class="botao botao-destaque botao-grande">
+                    &#10024; Invocar (@(estado?.PrecoTexto(1) ?? "10 Moedas"))
+                </button>
+                <button type="submit" name="quantidade" value="10" class="botao botao-suave botao-grande">
+                    &#10024; Invocar x10 (@(estado?.PrecoTexto(10) ?? "100 Moedas"))
+                </button>
+            </form>
         </div>
     }
+    </div>
 
-    @* ----- Botões: 1 ou 10 de cada vez ----- *@
-    <form class="botoes-invocar" method="post" asp-controller="Invocacao" asp-action="Invocar">
-        <input type="hidden" name="bannerId" value="@Model.BannerId" />
-        <button type="submit" name="quantidade" value="1" class="botao botao-destaque botao-grande">
-            &#10024; Invocar (@(Model.Estado?.PrecoTexto(1) ?? "10 Moedas"))
-        </button>
-        <button type="submit" name="quantidade" value="10" class="botao botao-suave botao-grande">
-            &#10024; Invocar x10 (@(Model.Estado?.PrecoTexto(10) ?? "100 Moedas"))
-        </button>
-    </form>
+    @* ----- Miniaturas: clicar troca o painel visível ----- *@
+    @if (Model.Banners.Count > 1)
+    {
+        <div class="miniaturas" role="tablist" aria-label="Escolher banner">
+            @foreach (var banner in Model.Banners)
+            {
+                var centro = banner.Centro;
+                <button type="button" role="tab"
+                        class="mini-banner @(banner.Permanente ? "permanente" : "") @(banner.Id == Model.BannerId ? "ativo" : "")"
+                        data-alvo="@banner.Id" aria-selected="@(banner.Id == Model.BannerId ? "true" : "false")"
+                        style="--cor-raridade:@(centro?.CorOuOmissao ?? "#9aa5b1")">
+                    <img src="@(centro?.Imagem ?? "/img/personagens/desconhecido.svg")" alt="" />
+                    <span>
+                        <strong>@banner.Nome</strong>
+                        @if (banner.Permanente)
+                        {
+                            <span class="contagem contagem-fim">standard</span>
+                        }
+                        else
+                        {
+                            <span class="contagem" data-fim="@banner.FimIso">@banner.TempoRestanteTexto</span>
+                        }
+                    </span>
+                </button>
+            }
+        </div>
+    }
 
     @* ----- Resultado ----- *@
     @if (Model.Resultado != null && Model.Resultado.Personagens.Count == 1)
@@ -230,6 +618,22 @@
                     @if (obtida.PityAtivado)
                     {
                         <span class="marca-pity">GARANTIA</span>
+                    }
+                    @if (obtida.RateUp)
+                    {
+                        <span class="marca-rateup">RATE-UP</span>
+                    }
+                    @if (obtida.Exclusiva)
+                    {
+                        <span class="marca-exclusiva">EXCLUSIVA</span>
+                    }
+                    @if (obtida.GarantiaRateUpUsada)
+                    {
+                        <span class="marca-cinquenta">GARANTIA DO 50/50</span>
+                    }
+                    else if (obtida.PerdeuCinquenta)
+                    {
+                        <span class="marca-cinquenta">50/50 PERDIDO</span>
                     }
                     @if (!obtida.Novo)
                     {
@@ -276,6 +680,22 @@
                             {
                                 <span class="marca-pity">GARANTIA</span>
                             }
+                            @if (obtida.RateUp)
+                            {
+                                <span class="marca-rateup">RATE-UP</span>
+                            }
+                            @if (obtida.Exclusiva)
+                            {
+                                <span class="marca-exclusiva">EXCLUSIVA</span>
+                            }
+                            @if (obtida.GarantiaRateUpUsada)
+                            {
+                                <span class="marca-cinquenta">GARANTIA 50/50</span>
+                            }
+                            else if (obtida.PerdeuCinquenta)
+                            {
+                                <span class="marca-cinquenta">50/50 PERDIDO</span>
+                            }
                             @if (!obtida.Novo)
                             {
                                 <text>x@(obtida.Quantidade)</text>
@@ -289,6 +709,15 @@
                 </div>
             }
         </div>
+    }
+
+    @* ----- 50/50: aviso depois de perder ----- *@
+    @if (Model.Resultado != null && Model.Resultado.Personagens.Any(p => p.PerdeuCinquenta))
+    {
+        <p class="texto-suave" style="margin-top:14px">
+            Saiu uma Mítica do banner permanente — perdeste o 50/50. Não faz mal:
+            <strong>a próxima Mítica neste banner é garantida a do evento.</strong>
+        </p>
     }
 
     @* ----- Amizade: subidas de nível provocadas por esta invocação ----- *@
@@ -330,6 +759,66 @@
             por isso uma invocação x10 traz sempre pelo menos uma Épica — e uma
             Lendária ou Mítica à 90.ª. Até à 80.ª as probabilidades são as da
             tabela; a partir da 81.ª sobem a cada invocação até à garantia.
+            Nos banners de evento, as probabilidades por raridade são as mesmas:
+            o <span class="marca-rateup">RATE-UP</span> só decide qual personagem
+            sai dentro da raridade (Lendárias: 80% as do banner; Mítica: 50/50
+            com garantia depois de perder).
         </p>
     }
 </section>
+
+@section Scripts {
+    @* Troca de banner sem recarregar: mostra o painel do banner clicado,
+       marca a miniatura como ativa e atualiza o URL (para um refresh ou
+       uma invocação voltarem ao mesmo banner). *@
+    <script>
+        (function () {
+            var miniaturas = Array.prototype.slice.call(document.querySelectorAll('.mini-banner'));
+            var paineis = document.querySelectorAll('.painel-banner');
+
+            function mostrar(alvo) {
+                paineis.forEach(function (painel) {
+                    painel.hidden = painel.getAttribute('data-banner') !== alvo;
+                });
+
+                miniaturas.forEach(function (m) {
+                    var ativo = m.getAttribute('data-alvo') === alvo;
+                    m.classList.toggle('ativo', ativo);
+                    m.setAttribute('aria-selected', ativo ? 'true' : 'false');
+                });
+
+                if (window.history && history.replaceState) {
+                    var url = new URL(window.location.href);
+                    url.searchParams.set('bannerId', alvo);
+                    history.replaceState(null, '', url.toString());
+                }
+            }
+
+            miniaturas.forEach(function (mini) {
+                mini.addEventListener('click', function () {
+                    mostrar(mini.getAttribute('data-alvo'));
+                });
+            });
+
+            // Setas laterais (e teclas ← →): anterior / seguinte, em círculo
+            function saltar(direcao) {
+                if (miniaturas.length < 2) { return; }
+                var atual = miniaturas.findIndex(function (m) { return m.classList.contains('ativo'); });
+                var proximo = (atual + direcao + miniaturas.length) % miniaturas.length;
+                mostrar(miniaturas[proximo].getAttribute('data-alvo'));
+            }
+
+            document.querySelectorAll('.seta-banner').forEach(function (seta) {
+                seta.addEventListener('click', function () {
+                    saltar(parseInt(seta.getAttribute('data-direcao'), 10));
+                });
+            });
+
+            document.addEventListener('keydown', function (e) {
+                if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') { return; }
+                if (e.key === 'ArrowLeft') { saltar(-1); }
+                if (e.key === 'ArrowRight') { saltar(1); }
+            });
+        })();
+    </script>
+}

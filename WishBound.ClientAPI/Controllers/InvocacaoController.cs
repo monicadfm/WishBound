@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WishBound.ClientAPI.Models;
@@ -97,11 +97,11 @@ namespace WishBound.ClientAPI.Controllers
 
         /// <summary>
         /// Carrega o que a página precisa: banners a decorrer, probabilidades
-        /// e o estado das garantias no banner escolhido.
+        /// e o estado das garantias em cada banner.
         /// </summary>
         private async Task PreencherAsync(InvocacaoViewModel modelo)
         {
-            modelo.Banners = await _api.ObterBannersAsync();
+            modelo.Banners = await _api.ObterBannersAsync(ObterUtilizadorId());
             modelo.Raridades = await _api.ObterRaridadesAsync();
 
             // Sem escolha (ou com uma escolha que já não existe), fica o primeiro
@@ -110,9 +110,15 @@ namespace WishBound.ClientAPI.Controllers
                 modelo.BannerId = modelo.Banners[0].Id;
             }
 
-            if (modelo.BannerId > 0)
+            // Garantias em todos os banners: a página tem um painel por banner
+            // e troca entre eles no browser, sem voltar ao servidor.
+            foreach (var banner in modelo.Banners)
             {
-                modelo.Estado = await _api.ObterEstadoPityAsync(ObterUtilizadorId(), modelo.BannerId);
+                var estado = await _api.ObterEstadoPityAsync(ObterUtilizadorId(), banner.Id);
+                if (estado != null)
+                {
+                    modelo.Estados[banner.Id] = estado;
+                }
             }
         }
 

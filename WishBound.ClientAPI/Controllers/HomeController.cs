@@ -1,4 +1,4 @@
-using System.Diagnostics;
+﻿using System.Diagnostics;
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using WishBound.ClientAPI.Models;
@@ -38,6 +38,12 @@ namespace WishBound.ClientAPI.Controllers
                 destaques = personagens
                     .OrderByDescending(p => p.RaridadeId)
                     .Take(3)
+                    .ToList();
+
+                // Eventos a decorrer (banners temporários), com contagem
+                // decrescente e personagens em destaque
+                ViewBag.Eventos = (await _api.ObterBannersAsync())
+                    .Where(b => !b.Permanente && !b.Terminado)
                     .ToList();
             }
             catch (Exception)

@@ -1,4 +1,4 @@
-using System.Net;
+﻿using System.Net;
 using System.Net.Http.Json;
 using WishBound.ClientAPI.Models;
 using WishBound.ClientAPI.Models.Amizade;
@@ -99,11 +99,28 @@ namespace WishBound.ClientAPI.Services
 
         // ---------- Invocações (gacha) ----------
 
-        /// <summary>SELECT - banners a decorrer (o permanente e os de evento).</summary>
-        public async Task<List<Banner>> ObterBannersAsync()
+        /// <summary>
+        /// SELECT - banners a decorrer (o permanente e os de evento). Com o
+        /// utilizadorId de um administrador a API devolve também os eventos
+        /// já terminados (o admin mantém o acesso às exclusivas).
+        /// </summary>
+        public async Task<List<Banner>> ObterBannersAsync(int utilizadorId = 0)
         {
-            return await _http.GetFromJsonAsync<List<Banner>>("api/banners")
+            return await _http.GetFromJsonAsync<List<Banner>>("api/banners?utilizadorId=" + utilizadorId)
                    ?? new List<Banner>();
+        }
+
+        /// <summary>SELECT - detalhe de um banner (pool, rate-up, exclusivas) e a participação do utilizador nele.</summary>
+        public async Task<BannerDetalhe?> ObterBannerAsync(int bannerId, int utilizadorId)
+        {
+            var resposta = await _http.GetAsync("api/banners/" + bannerId + "?utilizadorId=" + utilizadorId);
+
+            if (!resposta.IsSuccessStatusCode)
+            {
+                return null;
+            }
+
+            return await resposta.Content.ReadFromJsonAsync<BannerDetalhe>();
         }
 
         /// <summary>SELECT - contadores de garantia (pity) do utilizador num banner.</summary>

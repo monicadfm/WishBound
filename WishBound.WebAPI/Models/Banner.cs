@@ -1,4 +1,4 @@
-using System.ComponentModel.DataAnnotations;
+﻿using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace WishBound.WebAPI.Models
@@ -46,7 +46,15 @@ namespace WishBound.WebAPI.Models
     /// <summary>
     /// Personagens que fazem parte de um banner (tabela [BannerPersonagens],
     /// chave composta banner + personagem, declarada no WishBoundContext).
-    /// RateUp/ProbabilidadeExtra ficam para a funcionalidade de eventos.
+    ///
+    /// RATE-UP (Migracao08): RateUp = 1 marca as personagens em destaque no
+    /// banner e ProbabilidadeExtra é a QUOTA delas DENTRO da sua raridade —
+    /// 0.80 quer dizer que, de cada Lendária que sai, 80% das vezes é uma
+    /// das Lendárias em destaque (ao acaso entre elas) e 20% uma das
+    /// restantes. As probabilidades por raridade (tabela Raridades) não
+    /// mudam. Na Mítica a quota é 0.50 (o "50/50") com garantia: quem
+    /// perde tem a próxima Mítica garantida como a do banner
+    /// (Pity.GarantiaRateUp).
     /// </summary>
     [Table("BannerPersonagens")]
     public class BannerPersonagem
@@ -57,6 +65,7 @@ namespace WishBound.WebAPI.Models
 
         public bool RateUp { get; set; }
 
+        /// <summary>Quota das personagens em destaque dentro da raridade (0.80 = 80%). NULL nas que não são rate-up.</summary>
         [Column(TypeName = "decimal(6,4)")]
         public decimal? ProbabilidadeExtra { get; set; }
     }
@@ -72,6 +81,10 @@ namespace WishBound.WebAPI.Models
     ///                    pelo script Database/Migracao02.sql).
     ///   UltimaRaridadeGarantida - raridade da última invocação que saiu por
     ///                    garantia (para o histórico/estatísticas).
+    ///   GarantiaRateUp - o "50/50" da Mítica (Migracao08): fica true quando
+    ///                    a última Mítica deste banner NÃO foi a do banner
+    ///                    (perdeu o 50/50) — a próxima é garantida a do
+    ///                    banner e a flag volta a false.
     /// </summary>
     [Table("PityUtilizador")]
     public class Pity
@@ -85,5 +98,7 @@ namespace WishBound.WebAPI.Models
         public int ContadorEpico { get; set; }
 
         public int? UltimaRaridadeGarantida { get; set; }
+
+        public bool GarantiaRateUp { get; set; }
     }
 }

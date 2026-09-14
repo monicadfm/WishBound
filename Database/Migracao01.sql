@@ -66,11 +66,14 @@ END
 ELSE
     PRINT 'Banner com Id 1 já existe — nada a fazer.';
 
--- Associa todas as personagens ainda não ligadas ao banner permanente
+-- Associa as personagens base ainda não ligadas ao banner permanente.
+-- (As personagens EXCLUSIVAS de evento — Ids 9+, Migracao08 — não entram
+-- no permanente: só se invocam no banner do evento delas.)
 INSERT INTO dbo.BannerPersonagens (BannerId, PersonagemId, RateUp, ProbabilidadeExtra)
 SELECT 1, p.PersonagemId, 0, NULL
 FROM dbo.Personagens p
-WHERE NOT EXISTS (SELECT 1 FROM dbo.BannerPersonagens bp
+WHERE p.PersonagemId <= 8
+  AND NOT EXISTS (SELECT 1 FROM dbo.BannerPersonagens bp
                   WHERE bp.BannerId = 1 AND bp.PersonagemId = p.PersonagemId);
 
 DECLARE @TotalNoBanner INT = (SELECT COUNT(*) FROM dbo.BannerPersonagens WHERE BannerId = 1);

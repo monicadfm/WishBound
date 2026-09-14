@@ -1,4 +1,4 @@
-namespace WishBound.ClientAPI.Models
+﻿namespace WishBound.ClientAPI.Models
 {
     /// <summary>Uma personagem saída numa invocação (espelho de PersonagemObtida).</summary>
     public class PersonagemObtida
@@ -13,6 +13,12 @@ namespace WishBound.ClientAPI.Models
         public int PontosAmizadeGanhos { get; set; }
         public string? NivelAmizadeNome { get; set; }
         public bool SubiuDeNivel { get; set; }
+
+        // Eventos e banners: rate-up, exclusiva e o 50/50 da Mítica
+        public bool RateUp { get; set; }
+        public bool Exclusiva { get; set; }
+        public bool PerdeuCinquenta { get; set; }
+        public bool GarantiaRateUpUsada { get; set; }
 
         public string Cor => Personagem?.Raridade?.Cor ?? "#9aa5b1";
 
@@ -54,6 +60,9 @@ namespace WishBound.ClientAPI.Models
 
         /// <summary>Bilhetes que sobram.</summary>
         public decimal SaldoBilhetes { get; set; }
+
+        /// <summary>A próxima Mítica neste banner é garantida a do banner.</summary>
+        public bool GarantiaRateUp { get; set; }
 
         /// <summary>"3 bilhetes + 70 Moedas gastas" / "100 Moedas gastas" / "1 bilhete gasto".</summary>
         public string GastoTexto
