@@ -119,6 +119,15 @@ namespace WishBound.ClientAPI.Controllers
                 {
                     modelo.Estados[banner.Id] = estado;
                 }
+
+                // Pool completa do banner: alimenta a janela de probabilidades
+                // (o "i" no canto do painel) com todas as personagens e o %
+                // de cada uma.
+                var detalhe = await _api.ObterBannerAsync(banner.Id, ObterUtilizadorId());
+                if (detalhe != null)
+                {
+                    modelo.Detalhes[banner.Id] = detalhe;
+                }
             }
         }
 

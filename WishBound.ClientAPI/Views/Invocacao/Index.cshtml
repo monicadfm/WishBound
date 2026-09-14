@@ -342,9 +342,188 @@
             }
         }
 
-        .tabela-probabilidades {
-            margin: 40px auto 0;
-            max-width: 480px;
+        /* ----- Botão "i" no canto do painel + janela das probabilidades ----- */
+        .botao-info {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            border: 2px solid var(--cor-banner);
+            background: var(--fundo-cartao);
+            color: var(--dourado);
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            font-weight: 700;
+            font-size: 0.95rem;
+            line-height: 1;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .botao-info:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 12px color-mix(in srgb, var(--cor-banner) 60%, transparent);
+        }
+
+        .painel-topo .topo-direita {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .janela-probabilidades {
+            --cor-banner: #b04ac7;
+            width: min(640px, calc(100vw - 32px));
+            max-height: calc(100vh - 48px);
+            padding: 0;
+            border: 2px solid var(--cor-banner);
+            border-radius: 16px;
+            background: var(--fundo-suave);
+            color: var(--texto);
+            box-shadow: 0 0 50px color-mix(in srgb, var(--cor-banner) 35%, transparent), 0 20px 60px rgba(0, 0, 0, .6);
+            text-align: left;
+        }
+
+        .janela-probabilidades.permanente {
+            --cor-banner: #8b1a2b;
+        }
+
+        .janela-probabilidades::backdrop {
+            background: rgba(6, 3, 14, .78);
+            backdrop-filter: blur(3px);
+        }
+
+        .janela-cabecalho {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            border-bottom: 1px solid var(--borda);
+            background: var(--fundo-suave);
+        }
+
+        .janela-cabecalho h3 {
+            margin: 0;
+            font-size: 1.1rem;
+        }
+
+        .janela-cabecalho .texto-suave {
+            display: block;
+            font-size: 0.8rem;
+            margin-top: 2px;
+        }
+
+        .janela-fechar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            border: 1px solid var(--borda);
+            background: var(--fundo-cartao);
+            color: var(--texto);
+            font-size: 1.1rem;
+            line-height: 1;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        .janela-fechar:hover {
+            border-color: var(--dourado);
+            color: var(--dourado);
+        }
+
+        .janela-corpo {
+            padding: 14px 18px 18px;
+        }
+
+        .janela-corpo .tabela {
+            width: 100%;
+            margin: 0 0 16px;
+        }
+
+        .janela-corpo .tabela td:last-child,
+        .janela-corpo .tabela th:last-child {
+            text-align: right;
+        }
+
+        .janela-subtitulo {
+            font-family: 'Cinzel', 'Georgia', serif;
+            font-size: 0.95rem;
+            color: var(--dourado);
+            margin: 18px 0 8px;
+        }
+
+        .prob-grupo {
+            margin-bottom: 14px;
+            border: 1px solid var(--borda);
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .prob-grupo-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            padding: 8px 12px;
+            background: var(--fundo-cartao);
+            font-size: 0.85rem;
+        }
+
+        .prob-grupo-topo strong {
+            font-size: 0.95rem;
+        }
+
+        .prob-linha {
+            display: grid;
+            grid-template-columns: 34px 1fr auto;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-top: 1px solid var(--borda);
+            color: var(--texto);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .prob-linha:hover {
+            background: rgba(255, 255, 255, .04);
+        }
+
+        .prob-linha img {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid var(--cor-raridade, #9aa5b1);
+            background: radial-gradient(circle at 50% 30%, var(--cor-raridade, #9aa5b1) 0%, var(--fundo) 78%);
+        }
+
+        .prob-linha .marca-rateup, .prob-linha .marca-exclusiva {
+            font-size: 9px;
+            padding: 1px 6px;
+            margin: 0 0 0 6px;
+        }
+
+        .prob-linha .valor {
+            font-variant-numeric: tabular-nums;
+            font-weight: 700;
+        }
+
+        .prob-linha.rateup .valor {
+            color: var(--dourado);
+        }
+
+        .janela-regras {
+            font-size: 0.86rem;
+            line-height: 1.5;
+            margin: 0;
         }
 
         @@media (max-width: 640px) {
@@ -405,14 +584,18 @@
                         <span class="painel-tipo" title="Evento terminado: só os administradores continuam a ver e a invocar aqui">TERMINADO · SÓ ADMIN</span>
                     }
                 </h2>
-                @if (banner.Permanente)
-                {
-                    <span class="contagem contagem-fim">permanente</span>
-                }
-                else
-                {
-                    <span class="contagem" data-fim="@banner.FimIso" title="Termina a @banner.DataFim.ToLocalTime().ToString("dd/MM/yyyy HH:mm")">@banner.TempoRestanteTexto</span>
-                }
+                <span class="topo-direita">
+                    @if (banner.Permanente)
+                    {
+                        <span class="contagem contagem-fim">permanente</span>
+                    }
+                    else
+                    {
+                        <span class="contagem" data-fim="@banner.FimIso" title="Termina a @banner.DataFim.ToLocalTime().ToString("dd/MM/yyyy HH:mm")">@banner.TempoRestanteTexto</span>
+                    }
+                    <button type="button" class="botao-info" data-janela="probabilidades-@banner.Id"
+                            title="Probabilidades e garantias" aria-label="Ver probabilidades e garantias deste banner">i</button>
+                </span>
             </div>
 
             @* ----- Montra: a mais rara ao centro, as outras dos lados ----- *@
@@ -732,38 +915,135 @@
         </div>
     }
 
-    @* ----- Probabilidades e regras das garantias ----- *@
-    @if (Model.Raridades.Count > 0)
+    @* ============================================================
+       JANELA DE PROBABILIDADES (uma por banner, escondida): abre no "i"
+       do canto do painel. Mostra a tabela por raridade, TODAS as
+       personagens do banner com o % de cada uma (como num gacha real) e
+       as regras das garantias.
+       ============================================================ *@
+    @foreach (var banner in Model.Banners)
     {
-        <table class="tabela tabela-probabilidades">
-            <caption>Probabilidades por raridade</caption>
-            <thead>
-                <tr>
-                    <th>Raridade</th>
-                    <th>Probabilidade</th>
-                </tr>
-            </thead>
-            <tbody>
-                @foreach (var raridade in Model.Raridades)
-                {
-                    <tr>
-                        <td><span class="etiqueta-raridade" style="background:@raridade.Cor">@raridade.Nome</span></td>
-                        <td>@raridade.ProbabilidadePercentagem</td>
-                    </tr>
-                }
-            </tbody>
-        </table>
+        var grupos = Model.ProbabilidadesDe(banner.Id);
+        var estado = Model.EstadoDe(banner.Id);
+        int limiteEpico = estado?.LimiteEpico ?? 10;
+        int limiteLendario = estado?.LimiteLendario ?? 90;
+        int inicioSoft = estado?.InicioSoftPity ?? 81;
 
-        <p class="texto-suave" style="max-width:480px;margin:14px auto 0">
-            Garantias: uma Épica (ou melhor) a cada 10 invocações sem nenhuma —
-            por isso uma invocação x10 traz sempre pelo menos uma Épica — e uma
-            Lendária ou Mítica à 90.ª. Até à 80.ª as probabilidades são as da
-            tabela; a partir da 81.ª sobem a cada invocação até à garantia.
-            Nos banners de evento, as probabilidades por raridade são as mesmas:
-            o <span class="marca-rateup">RATE-UP</span> só decide qual personagem
-            sai dentro da raridade (Lendárias: 80% as do banner; Mítica: 50/50
-            com garantia depois de perder).
-        </p>
+        <dialog id="probabilidades-@banner.Id" class="janela-probabilidades @(banner.Permanente ? "permanente" : "")"
+                aria-labelledby="probabilidades-@banner.Id-titulo">
+            <div class="janela-cabecalho">
+                <div>
+                    <h3 id="probabilidades-@banner.Id-titulo">Probabilidades &middot; @banner.Nome</h3>
+                    <span class="texto-suave">
+                        @(banner.Permanente ? "Banner standard" : "Banner de evento") &middot; @banner.TotalPersonagens personagens
+                        @if (banner.TotalExclusivas > 0)
+                        {
+                            <text>&middot; @banner.TotalExclusivas exclusivas</text>
+                        }
+                    </span>
+                </div>
+                <button type="button" class="janela-fechar" data-fechar title="Fechar" aria-label="Fechar">&#10005;</button>
+            </div>
+
+            <div class="janela-corpo">
+                @* ----- Tabela por raridade ----- *@
+                @if (Model.Raridades.Count > 0)
+                {
+                    <table class="tabela">
+                        <caption>Probabilidades por raridade</caption>
+                        <thead>
+                            <tr>
+                                <th>Raridade</th>
+                                <th>Probabilidade</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var raridade in Model.Raridades)
+                            {
+                                <tr>
+                                    <td><span class="etiqueta-raridade" style="background:@raridade.Cor">@raridade.Nome</span></td>
+                                    <td>@raridade.ProbabilidadePercentagem</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                }
+
+                @* ----- Personagens e a probabilidade de cada uma ----- *@
+                <h4 class="janela-subtitulo">Personagens deste banner</h4>
+                @if (grupos.Count == 0)
+                {
+                    <p class="texto-suave">Não foi possível obter a lista de personagens deste banner.</p>
+                }
+                else
+                {
+                    <p class="texto-suave" style="font-size:0.82rem;margin:0 0 10px">
+                        Probabilidade de cada personagem numa invocação (antes das garantias).
+                        @if (!banner.Permanente && grupos.Any(g => g.TemRateUp))
+                        {
+                            <text>Dentro de cada raridade, as <span class="marca-rateup">RATE-UP</span> repartem a quota indicada; as restantes repartem o resto.</text>
+                        }
+                    </p>
+
+                    foreach (var grupo in grupos)
+                    {
+                        <div class="prob-grupo">
+                            <div class="prob-grupo-topo">
+                                <span>
+                                    <span class="etiqueta-raridade" style="background:@grupo.Cor">@grupo.RaridadeNome</span>
+                                    <span class="texto-suave">@grupo.Linhas.Count @(grupo.Linhas.Count == 1 ? "personagem" : "personagens")</span>
+                                    @if (grupo.TemRateUp)
+                                    {
+                                        <span class="texto-suave">&middot; rate-up @(grupo.QuotaTexto)@(grupo.RaridadeOrdem >= 5 ? " (50/50)" : "")</span>
+                                    }
+                                </span>
+                                <strong>@grupo.ProbabilidadeTexto</strong>
+                            </div>
+                            @foreach (var linha in grupo.Linhas)
+                            {
+                                var p = linha.Personagem;
+                                bool emRateUp = grupo.TemRateUp && p.RateUp;
+                                <a class="prob-linha @(emRateUp ? "rateup" : "")" style="--cor-raridade:@p.CorOuOmissao"
+                                   asp-controller="Personagens" asp-action="Details" asp-route-id="@p.Id">
+                                    <img src="@p.Imagem" alt="" />
+                                    <span>
+                                        @p.Nome
+                                        @if (emRateUp)
+                                        {
+                                            <span class="marca-rateup">RATE-UP</span>
+                                        }
+                                        @if (p.Exclusiva)
+                                        {
+                                            <span class="marca-exclusiva">EXCLUSIVA</span>
+                                        }
+                                    </span>
+                                    <span class="valor">@linha.ProbabilidadeTexto</span>
+                                </a>
+                            }
+                        </div>
+                    }
+                }
+
+                @* ----- Regras das garantias ----- *@
+                <h4 class="janela-subtitulo">Garantias</h4>
+                <p class="texto-suave janela-regras">
+                    Uma Épica (ou melhor) a cada @limiteEpico invocações sem nenhuma —
+                    por isso uma invocação x10 traz sempre pelo menos uma Épica — e uma
+                    Lendária ou Mítica à @(limiteLendario).ª. Até à @(inicioSoft - 1).ª as
+                    probabilidades são as da tabela; a partir da @(inicioSoft).ª sobem a
+                    cada invocação até à garantia. As garantias contam-se por banner.
+                    @if (!banner.Permanente)
+                    {
+                        <text>
+                            Neste banner de evento as probabilidades por raridade são as mesmas:
+                            o <span class="marca-rateup">RATE-UP</span> só decide qual personagem
+                            sai dentro da raridade. Na Mítica é um 50/50 — se sair a do banner
+                            standard, a próxima Mítica é garantida a do evento.
+                        </text>
+                    }
+                </p>
+            </div>
+        </dialog>
     }
 </section>
 
@@ -816,8 +1096,30 @@
 
             document.addEventListener('keydown', function (e) {
                 if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.target.tagName === 'TEXTAREA') { return; }
+                if (document.querySelector('dialog[open]')) { return; }
                 if (e.key === 'ArrowLeft') { saltar(-1); }
                 if (e.key === 'ArrowRight') { saltar(1); }
+            });
+
+            // Janela das probabilidades: o "i" do painel abre a do seu banner;
+            // fecha no ✕, com Esc (nativo do <dialog>) ou a clicar fora.
+            document.querySelectorAll('.botao-info').forEach(function (botao) {
+                botao.addEventListener('click', function () {
+                    var janela = document.getElementById(botao.getAttribute('data-janela'));
+                    if (!janela) { return; }
+                    if (typeof janela.showModal === 'function') { janela.showModal(); }
+                    else { janela.setAttribute('open', ''); }
+                });
+            });
+
+            document.querySelectorAll('.janela-probabilidades').forEach(function (janela) {
+                janela.querySelector('[data-fechar]').addEventListener('click', function () {
+                    janela.close();
+                });
+
+                janela.addEventListener('click', function (e) {
+                    if (e.target === janela) { janela.close(); }
+                });
             });
         })();
     </script>
