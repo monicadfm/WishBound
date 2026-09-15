@@ -135,12 +135,6 @@
             padding: 40px 0;
         }
 
-        .painel-descricao {
-            max-width: 640px;
-            margin: 6px auto 14px;
-            font-size: 0.92rem;
-        }
-
         /* ----- Setas laterais para trocar de banner ----- */
         .carrossel {
             position: relative;
@@ -260,29 +254,57 @@
             margin-top: 3px;
         }
 
-        /* ----- Garantias ----- */
+        /* ----- Garantias, estilo contagem: "Épico em 7 invocações" ----- */
         .garantias {
-            max-width: 420px;
-            margin: 0 auto 18px;
-            text-align: left;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            margin: 16px auto 14px;
         }
 
-        .garantia-barra {
-            height: 8px;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, .12);
-            overflow: hidden;
-            margin: 6px 0 12px;
+        .garantia-linha {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.95rem;
         }
 
-        .garantia-usada {
-            height: 100%;
-            border-radius: 6px;
-            background: linear-gradient(90deg, #6d5bd0, #b28cf0);
+        .garantia-linha strong {
+            font-family: 'Cinzel', 'Georgia', serif;
+            font-size: 1rem;
+            letter-spacing: 0.3px;
         }
 
-        .garantia-perto .garantia-usada {
-            background: linear-gradient(90deg, #F1C40F, #E74C3C);
+        .garantia-linha > span:not(.garantia-contador) {
+            color: var(--texto-suave);
+        }
+
+        .garantia-contador {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 12px;
+            border-radius: 999px;
+            background: rgba(243, 192, 79, .12);
+            border: 1px solid rgba(243, 192, 79, .45);
+            color: var(--dourado);
+            font-weight: 700;
+            font-variant-numeric: tabular-nums;
+        }
+
+        .garantia-contador.perto {
+            background: rgba(231, 76, 60, .14);
+            border-color: rgba(231, 76, 60, .55);
+            color: #ff8b7d;
+        }
+
+        .saldos {
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            margin: 0 0 14px;
+            font-size: 0.9rem;
         }
 
         .botoes-invocar {
@@ -669,74 +691,35 @@
                 }
             </div>
 
-            <p class="texto-suave painel-descricao">
-                @if (!string.IsNullOrWhiteSpace(banner.Descricao))
-                {
-                    @banner.Descricao
-                }
-                else
-                {
-                    <text>@banner.TotalPersonagens personagens. Cada invocação custa @(estado?.CustoInvocacao.ToString("0") ?? "10") Moedas ou um bilhete.</text>
-                }
-                <a class="ligacao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@banner.Id">ver todas as personagens</a>
-            </p>
-
             @if (estado != null)
             {
-                @* ----- 50/50 da Mítica (só nos banners com Mítica em destaque) ----- *@
-                if (estado.MiticasDestaque.Count > 0)
-                {
-                    var miticas = string.Join(" ou ", estado.MiticasDestaque.Select(m => m.Nome));
-                    <div class="cinquenta @(estado.GarantiaRateUp ? "garantida" : "")">
-                        @if (estado.GarantiaRateUp)
-                        {
-                            <strong>&#11088; Garantia ativa:</strong> <text>perdeste o último 50/50 — a próxima Mítica neste banner é <strong>@miticas</strong>.</text>
-                        }
-                        else
-                        {
-                            <strong>50/50:</strong> <text>quando sair uma Mítica, metade das vezes é <strong>@miticas</strong>; se sair a do banner permanente, a seguinte é garantida.</text>
-                        }
-                    </div>
-                }
+                var corEpico = Model.Raridades.FirstOrDefault(r => r.Nome.StartsWith("Épic", StringComparison.OrdinalIgnoreCase))?.Cor ?? "#9b59b6";
+                var corLendario = Model.Raridades.FirstOrDefault(r => r.Nome.StartsWith("Lend", StringComparison.OrdinalIgnoreCase))?.Cor ?? "#f1c40f";
 
-                <p class="texto-suave">
-                    Tens <strong>@estado.SaldoMoedas.ToString("0") Moedas</strong>
-                    e <strong>@estado.SaldoBilhetes.ToString("0") @(estado.SaldoBilhetes == 1 ? "bilhete" : "bilhetes")</strong>.
-                    @if (estado.RecompensaDiariaDisponivel)
+                @* ----- Garantias (pity) NESTE banner, estilo contagem ----- *@
+                <div class="garantias">
+                    <div class="garantia-linha">
+                        <strong style="color:@corEpico">Épico</strong>
+                        <span>em</span>
+                        <span class="garantia-contador">@estado.FaltamParaEpico @(estado.FaltamParaEpico == 1 ? "invocação" : "invocações")</span>
+                    </div>
+                    <div class="garantia-linha">
+                        <strong style="color:@corLendario">Lendário</strong>
+                        <span>em</span>
+                        <span class="garantia-contador @(estado.EmSoftPity ? "perto" : "")" title="@(estado.EmSoftPity ? "A probabilidade sobe a cada invocação até à garantia" : "")">@estado.FaltamParaLendario @(estado.FaltamParaLendario == 1 ? "invocação" : "invocações")</span>
+                    </div>
+                </div>
+
+                <p class="texto-suave saldos">
+                    <span>&#128176; @estado.SaldoMoedas.ToString("0") Moedas</span>
+                    <span>&#127915; @estado.SaldoBilhetes.ToString("0") @(estado.SaldoBilhetes == 1 ? "bilhete" : "bilhetes")</span>
+                    @if (!estado.PodeInvocar)
                     {
-                        <a class="ligacao" asp-controller="Economia" asp-action="Index">&#127873; Tens a recompensa diária por receber</a>
-                    }
-                    else if (!estado.PodeInvocar)
-                    {
-                        <text>Liberta cópias repetidas na Coleção para ganhar mais.</text>
+                        <span>Liberta cópias repetidas na Coleção para ganhar mais.</span>
                     }
                 </p>
-
-                @* ----- Contadores de garantia (pity) NESTE banner ----- *@
-                <div class="garantias">
-                    <span class="texto-suave">
-                        Garantia de Lendária/Mítica:
-                        <strong>@estado.ContadorLendario / @estado.LimiteLendario</strong>
-                        (faltam @estado.FaltamParaLendario)
-                    </span>
-                    <div class="garantia-barra @(estado.EmSoftPity ? "garantia-perto" : "")">
-                        <div class="garantia-usada" style="width:@(estado.PercentagemLendario)%"></div>
-                    </div>
-
-                    @if (estado.EmSoftPity)
-                    {
-                        <p class="texto-suave">
-                            Estás na zona em que a probabilidade sobe a cada invocação
-                            (a partir da @(estado.InicioSoftPity).ª).
-                        </p>
-                    }
-
-                    <span class="texto-suave">
-                        Garantia de Épica: <strong>@estado.ContadorEpico / @estado.LimiteEpico</strong>
-                        (faltam @estado.FaltamParaEpico)
-                    </span>
-                </div>
             }
+
 
             @* ----- Botões: 1 ou 10 de cada vez, neste banner ----- *@
             <form class="botoes-invocar" method="post" asp-controller="Invocacao" asp-action="Invocar">
@@ -940,6 +923,7 @@
                         {
                             <text>&middot; @banner.TotalExclusivas exclusivas</text>
                         }
+                        &middot; <a class="ligacao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@banner.Id">ver página do banner</a>
                     </span>
                 </div>
                 <button type="button" class="janela-fechar" data-fechar title="Fechar" aria-label="Fechar">&#10005;</button>
