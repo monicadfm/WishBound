@@ -53,18 +53,30 @@ namespace WishBound.ClientAPI.Controllers
                 ViewBag.Erro = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
             }
 
-            // Companheira da página inicial (só com sessão iniciada). Se a
-            // API falhar (ex.: Migracao07 por correr), a página abre sem ela.
+            // Companheira e check-in diário (só com sessão iniciada). Se a
+            // API falhar (ex.: Migracao07 por correr), a página abre sem eles.
             if (User.Identity?.IsAuthenticated == true)
             {
+                int utilizadorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
+
                 try
                 {
-                    int utilizadorId = int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier) ?? "0");
                     ViewBag.Companheira = await _api.ObterCompanheiraAsync(utilizadorId);
                 }
                 catch (Exception)
                 {
                     ViewBag.Companheira = null;
+                }
+
+                // Cartão "Check-in diário": a semana atual do calendário de 28
+                // dias e o botão de receber, sem ir à Carteira.
+                try
+                {
+                    ViewBag.Diaria = (await _api.ObterEconomiaAsync(utilizadorId)).RecompensaDiaria;
+                }
+                catch (Exception)
+                {
+                    ViewBag.Diaria = null;
                 }
             }
 

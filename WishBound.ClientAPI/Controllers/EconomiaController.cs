@@ -1,4 +1,4 @@
-using System.Security.Claims;
+﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using WishBound.ClientAPI.Models.Economia;
@@ -53,9 +53,11 @@ namespace WishBound.ClientAPI.Controllers
         }
 
         // POST: /Economia/ReceberDiaria  (recompensa de login diário)
+        // "voltar=inicio" devolve à página inicial (cartão de check-in);
+        // sem nada, volta à Carteira.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> ReceberDiaria()
+        public async Task<IActionResult> ReceberDiaria(string? voltar = null)
         {
             try
             {
@@ -75,6 +77,11 @@ namespace WishBound.ClientAPI.Controllers
             catch (Exception)
             {
                 TempData["Erro"] = "Não foi possível receber a recompensa. Verifique se a WishBound.WebAPI está em execução.";
+            }
+
+            if (voltar == "inicio")
+            {
+                return RedirectToAction("Index", "Home");
             }
 
             return RedirectToAction(nameof(Index));

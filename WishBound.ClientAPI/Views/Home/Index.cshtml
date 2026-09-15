@@ -1,87 +1,119 @@
 ﻿@using WishBound.ClientAPI.Models.Amizade
+@using WishBound.ClientAPI.Models.Economia
 @model List<Personagem>
 @{
     ViewData["Title"] = "Início";
     CompanheiraViewModel? companheira = ViewBag.Companheira as CompanheiraViewModel;
     List<Banner> eventos = ViewBag.Eventos as List<Banner> ?? new List<Banner>();
+    RecompensaDiaria? diaria = ViewBag.Diaria as RecompensaDiaria;
+    bool comSessao = User.Identity?.IsAuthenticated == true;
+
+    // Semana do calendário que está a decorrer (a do dia de hoje)
+    var diaDeHoje = diaria?.DiaDeHoje;
+    int semanaAtual = diaDeHoje?.Semana
+        ?? diaria?.Calendario.FirstOrDefault(d => d.Dia == diaria.ProximoDia)?.Semana
+        ?? 1;
+    var semana = diaria?.Calendario.Where(d => d.Semana == semanaAtual).ToList() ?? new List<DiaRecompensa>();
 }
 
 @* ESTILO LOCAL: aplica-se apenas à página inicial *@
 @section Estilos {
     <style>
-        /* Estilo local da página inicial (hero) */
+        /* ============================================================
+           HERO: texto à esquerda, companheira ao centro, check-in à
+           direita. Sem imagem de fundo — o fundo fica o do site.
+           ============================================================ */
         .hero {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr) minmax(0, 1fr);
+            align-items: center;
+            gap: 28px;
+            padding: 48px 0 36px;
+        }
+
+        .hero.sem-sessao {
+            grid-template-columns: minmax(0, 1fr);
             text-align: center;
-            padding: 70px 20px 50px;
+            justify-items: center;
+            padding: 70px 0 50px;
+        }
+
+        .hero-tag {
+            display: block;
+            font-size: 0.72rem;
+            letter-spacing: 5px;
+            text-transform: uppercase;
+            color: var(--texto-suave);
+            margin-bottom: 14px;
         }
 
         .hero-logo {
             width: 340px;
-            max-width: 90%;
+            max-width: 100%;
+            display: block;
+        }
+
+        .hero.sem-sessao .hero-logo {
+            margin: 0 auto;
         }
 
         .hero-frase {
-            font-size: 1.15rem;
+            font-size: 1.08rem;
             color: #c9c4e4;
-            max-width: 560px;
-            margin: 18px auto 30px;
+            max-width: 480px;
+            margin: 18px 0 26px;
+        }
+
+        .hero.sem-sessao .hero-frase {
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .hero-botoes {
             display: flex;
             gap: 14px;
-            justify-content: center;
             flex-wrap: wrap;
         }
 
-        /* ----- Companheira: cartão no canto superior direito ----- */
-        .hero {
+        .hero.sem-sessao .hero-botoes {
+            justify-content: center;
+        }
+
+        .hero-assinatura {
+            display: block;
+            margin-top: 22px;
+            font-family: 'Georgia', serif;
+            font-style: italic;
+            font-size: 1rem;
+            color: #f39ac6;
+        }
+
+        /* ----- Cartão comum aos painéis do hero ----- */
+        .painel {
+            border-radius: 18px;
+            background: var(--fundo-suave);
+            border: 1px solid var(--borda);
+            padding: 18px;
+        }
+
+        /* ----- Companheira (centro do hero) ----- */
+        .companheira {
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
             position: relative;
         }
 
-        .companheira {
-            position: absolute;
-            top: 0;
-            /* Encostado ao canto direito da JANELA, não ao texto: sai do
-               contentor centrado com a diferença entre 50% e 50vw */
-            right: calc(50% - 50vw + 32px);
-            width: 250px;
-            padding: 12px 14px 14px;
-            border-radius: 16px;
-            background: rgba(208, 70, 138, .10);
-            border: 1px solid rgba(243, 154, 198, .35);
-            text-align: left;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .companheira-topo {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 8px;
-        }
-
-        .companheira-topo h2 {
-            font-size: 1rem;
-            margin: 0;
-            line-height: 1.2;
-        }
-
-        .companheira-topo .texto-suave {
-            font-size: 0.8rem;
-        }
-
         .companheira-foto {
-            width: 150px;
-            height: 150px;
-            margin: 2px auto;
+            width: 210px;
+            height: 210px;
             border-radius: 50%;
             overflow: hidden;
-            border: 3px solid var(--cor-raridade, #9aa5b1);
-            box-shadow: 0 0 18px rgba(243, 154, 198, .35);
-            background: rgba(255, 255, 255, .06);
+            border: 4px solid var(--cor-raridade, #9aa5b1);
+            background: radial-gradient(circle at 50% 30%, var(--cor-raridade, #9aa5b1) 0%, var(--fundo) 78%);
+            box-shadow: 0 0 34px color-mix(in srgb, var(--cor-raridade, #9aa5b1) 45%, transparent);
             display: block;
         }
 
@@ -91,17 +123,28 @@
             object-fit: cover;
         }
 
-        .companheira-balao {
-            font-size: 0.88rem;
-            font-style: italic;
-            line-height: 1.45;
-            text-align: center;
-            color: #e6e1f5;
+        .companheira h2 {
+            font-size: 1.25rem;
+            margin: 4px 0 0;
         }
 
-        /* Botão de trocar (ícone) + painel que abre por baixo */
+        .companheira .texto-suave {
+            font-size: 0.8rem;
+        }
+
+        .companheira-balao {
+            font-size: 0.9rem;
+            font-style: italic;
+            line-height: 1.45;
+            color: #e6e1f5;
+            max-width: 300px;
+        }
+
+        /* Botão de trocar (⇄) no canto do cartão + menu que abre por baixo */
         .companheira-trocar {
-            position: relative;
+            position: absolute;
+            top: 0;
+            right: 0;
         }
 
         .companheira-trocar summary {
@@ -143,6 +186,7 @@
             display: flex;
             flex-direction: column;
             gap: 8px;
+            text-align: left;
         }
 
         .companheira-menu select {
@@ -159,52 +203,283 @@
             width: 100%;
         }
 
-        .companheira.sem-escolha {
+        /* ----- Check-in diário (direita do hero) ----- */
+        .checkin {
             text-align: center;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
         }
 
-        @@media (max-width: 1400px) {
-            .companheira {
-                position: static;
-                width: 250px;
-                margin: 24px auto 0;
+        .checkin-icone {
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+
+        .checkin h2 {
+            font-family: 'Cinzel', 'Georgia', serif;
+            font-size: 1.05rem;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+
+        .checkin .texto-suave {
+            font-size: 0.8rem;
+        }
+
+        .checkin-dias {
+            display: grid;
+            grid-template-columns: repeat(7, minmax(0, 1fr));
+            gap: 6px;
+        }
+
+        .checkin-dia {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.68rem;
+            color: var(--texto-suave);
+        }
+
+        .checkin-dia .caixa {
+            width: 100%;
+            aspect-ratio: 1;
+            border-radius: 10px;
+            border: 1px solid var(--borda);
+            background: var(--fundo-cartao);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            font-size: 1.05rem;
+            line-height: 1;
+        }
+
+        .checkin-dia .caixa small {
+            font-size: 0.62rem;
+            color: var(--texto);
+            font-weight: 600;
+        }
+
+        .checkin-dia.fim-semana .caixa {
+            border-color: var(--dourado);
+        }
+
+        .checkin-dia.recebido .caixa {
+            opacity: 0.45;
+        }
+
+        .checkin-dia.hoje .caixa {
+            border-color: #f39ac6;
+            box-shadow: 0 0 14px rgba(243, 154, 198, .45);
+        }
+
+        .checkin-dia.hoje {
+            color: #f39ac6;
+            font-weight: 700;
+        }
+
+        .checkin form .botao {
+            width: 100%;
+        }
+
+        .checkin-progresso {
+            font-size: 0.75rem;
+        }
+
+        /* ----- Evento em destaque: faixa larga ----- */
+        .evento-destaque {
+            display: grid;
+            grid-template-columns: minmax(0, 1.4fr) auto;
+            align-items: center;
+            gap: 20px;
+            margin-top: 24px;
+            padding: 22px 26px;
+            border-radius: 18px;
+            border: 1px solid rgba(243, 154, 198, .35);
+            background: linear-gradient(90deg, var(--fundo-suave), rgba(208, 70, 138, .10));
+        }
+
+        .evento-etiqueta {
+            display: inline-block;
+            padding: 3px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--dourado);
+            color: var(--dourado);
+            font-size: 0.72rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .evento-destaque h2 {
+            font-size: 1.9rem;
+            margin: 0 0 8px;
+        }
+
+        .evento-destaque p {
+            font-size: 0.95rem;
+            max-width: 560px;
+            margin-bottom: 14px;
+        }
+
+        .evento-lado {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 14px;
+        }
+
+        .evento-avatares {
+            display: flex;
+            gap: 10px;
+        }
+
+        .evento-avatares a {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: var(--texto);
+            font-size: 0.78rem;
+        }
+
+        .evento-avatares img {
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            border: 3px solid var(--cor-raridade, #9aa5b1);
+            background: radial-gradient(circle at 50% 30%, var(--cor-raridade, #9aa5b1) 0%, var(--fundo) 78%);
+        }
+
+        /* ----- Personagens em destaque: cartões horizontais ----- */
+        .destaques-topo {
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 12px;
+            margin-top: 34px;
+        }
+
+        .destaques-topo .titulo-seccao {
+            margin: 0;
+            font-size: 1rem;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .destaques-grelha {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 14px;
+        }
+
+        .destaque-cartao {
+            display: grid;
+            grid-template-columns: 96px 1fr auto;
+            align-items: center;
+            gap: 14px;
+            padding: 10px 16px 10px 10px;
+            border-radius: 14px;
+            background: var(--fundo-cartao);
+            border: 1px solid var(--borda);
+            color: var(--texto);
+            text-decoration: none;
+            transition: transform 0.15s, border-color 0.15s;
+        }
+
+        .destaque-cartao:hover {
+            transform: translateY(-3px);
+            border-color: var(--cor-raridade, var(--borda));
+        }
+
+        .destaque-cartao img {
+            width: 96px;
+            height: 96px;
+            border-radius: 10px;
+            background: radial-gradient(circle at 50% 30%, var(--cor-raridade, #9aa5b1) 0%, var(--fundo-suave) 78%);
+            padding: 8px;
+        }
+
+        .destaque-cartao h3 {
+            font-size: 1.05rem;
+            margin: 0 0 6px;
+        }
+
+        .destaque-cartao .seta {
+            color: var(--texto-suave);
+            font-size: 1.3rem;
+        }
+
+        @@media (max-width: 1100px) {
+            .hero {
+                grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+            }
+
+            .hero > .hero-texto {
+                grid-column: 1 / -1;
+                text-align: center;
+            }
+
+            .hero > .hero-texto .hero-logo,
+            .hero > .hero-texto .hero-frase {
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .hero > .hero-texto .hero-botoes {
+                justify-content: center;
+            }
+        }
+
+        @@media (max-width: 720px) {
+            .hero {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .evento-destaque {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .evento-lado {
+                align-items: flex-start;
             }
         }
     </style>
 }
 
-<section class="hero">
-    @* Elemento multimédia: logotipo em destaque *@
-    <img class="hero-logo" src="~/img/logo.svg" alt="WishBound - Plataforma de Coleção Digital de Personagens" />
-
-    <p class="hero-frase">
-        Pede um desejo, invoca personagens e constrói a tua coleção.
-        Quanto mais rara a personagem, mais especial o laço que vos une.
-    </p>
-
-    <div class="hero-botoes">
-        <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Invocar agora</a>
-        <a class="botao" asp-controller="Personagens" asp-action="Index">Ver personagens</a>
+@* ============================================================
+   HERO — esquerda: frase e botões; centro: companheira; direita:
+   check-in diário. Sem sessão fica só o texto, centrado.
+   ============================================================ *@
+<section class="hero @(comSessao ? "" : "sem-sessao")">
+    <div class="hero-texto">
+        <span class="hero-tag">Desejos criam histórias</span>
+        @* Elemento multimédia: logotipo em destaque *@
+        <img class="hero-logo" src="~/img/logo.svg" alt="WishBound - Plataforma de Coleção Digital de Personagens" />
+        <p class="hero-frase">
+            Pede um desejo, invoca personagens e constrói a tua coleção.
+            Quanto mais rara a personagem, mais especial o laço que vos une.
+        </p>
+        <div class="hero-botoes">
+            <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Invocar agora</a>
+            <a class="botao" asp-controller="Personagens" asp-action="Index">Ver personagens</a>
+        </div>
+        <span class="hero-assinatura">Every wish brings a new story &#9825;</span>
     </div>
 
-    @* ============================================================
-       COMPANHEIRA — cartão no canto superior direito: nome em cima à
-       esquerda, botão de trocar (⇄) em cima à direita que abre um menu,
-       foto redonda ao centro e a saudação em baixo. Só pode haver uma;
-       escolhe-se aqui ou nos detalhes da personagem.
-       ============================================================ *@
-    @if (companheira != null && (companheira.Escolhida != null || companheira.Candidatas.Count > 0))
+    @if (comSessao)
     {
-        var c = companheira.Escolhida;
-        <aside class="companheira @(c == null ? "sem-escolha" : "")" style="--cor-raridade:@(c?.Cor ?? "#9aa5b1")">
-            <div class="companheira-topo">
-                <div>
-                    <h2>@(c?.Nome ?? "Companheira")</h2>
-                    @if (c != null)
-                    {
-                        <span class="texto-suave">@c.RaridadeNome · @c.NivelAmizadeNome</span>
-                    }
-                </div>
+        @* ----- COMPANHEIRA: a personagem escolhida recebe o utilizador ----- *@
+        var c = companheira?.Escolhida;
+        <aside class="painel companheira" style="--cor-raridade:@(c?.Cor ?? "#9aa5b1")">
+            @if (companheira != null && (c != null || companheira.Candidatas.Count > 0))
+            {
                 <details class="companheira-trocar" open="@(c == null)">
                     <summary title="@(c == null ? "Escolher companheira" : "Trocar de companheira")">&#8646;</summary>
                     <form class="companheira-menu" method="post" asp-controller="Colecao" asp-action="Companheira">
@@ -219,19 +494,95 @@
                         <button type="submit" class="botao botao-pequeno botao-destaque">Guardar</button>
                     </form>
                 </details>
-            </div>
+            }
 
             @if (c != null)
             {
                 <a class="companheira-foto" asp-controller="Colecao" asp-action="Detalhes" asp-route-id="@c.PersonagemId" title="Ver @c.Nome">
                     <img src="@c.Imagem" alt="Imagem da personagem @c.Nome" />
                 </a>
-                <p class="companheira-balao">@companheira.Saudacao</p>
+                <h2>@c.Nome</h2>
+                <span class="texto-suave">@c.RaridadeNome &middot; @c.NivelAmizadeNome</span>
+                <p class="companheira-balao">@(companheira!.Saudacao)</p>
             }
             else
             {
                 <span class="companheira-foto"><img src="/img/personagens/desconhecido.svg" alt="" /></span>
-                <p class="companheira-balao texto-suave">Escolhe uma personagem da tua coleção para te receber aqui.</p>
+                <h2>Companheira</h2>
+                <p class="companheira-balao texto-suave">
+                    @if (companheira != null && companheira.Candidatas.Count > 0)
+                    {
+                        <text>Escolhe uma personagem da tua coleção para te receber aqui.</text>
+                    }
+                    else
+                    {
+                        <text>Invoca a tua primeira personagem para a teres aqui a receber-te.</text>
+                    }
+                </p>
+            }
+        </aside>
+
+        @* ----- CHECK-IN DIÁRIO: a semana atual do calendário de 28 dias ----- *@
+        <aside class="painel checkin">
+            <span class="checkin-icone">&#127873;</span>
+            <h2>Check-in diário</h2>
+            @if (diaria == null)
+            {
+                <span class="texto-suave">Não foi possível obter a recompensa diária.</span>
+            }
+            else
+            {
+                <span class="texto-suave">Entra todos os dias e recebe recompensas!</span>
+
+                <div class="checkin-dias">
+                    @foreach (var dia in semana)
+                    {
+                        <div class="checkin-dia @(dia.Recebido ? "recebido" : "") @(dia.Hoje ? "hoje" : "") @(dia.FimDeSemana ? "fim-semana" : "")"
+                             title="Dia @dia.Dia — @dia.Texto">
+                            <span class="caixa">
+                                <span>
+                                    @if (dia.Recebido)
+                                    {
+                                        <text>&#10003;</text>
+                                    }
+                                    else if (dia.TipoMoedaId == 3)
+                                    {
+                                        <text>&#127915;</text>
+                                    }
+                                    else
+                                    {
+                                        <text>&#129689;</text>
+                                    }
+                                </span>
+                                <small>@dia.Quantidade.ToString("0")</small>
+                            </span>
+                            <span>Dia @dia.Dia</span>
+                        </div>
+                    }
+                </div>
+
+                <form method="post" asp-controller="Economia" asp-action="ReceberDiaria">
+                    <input type="hidden" name="voltar" value="inicio" />
+                    @if (diaria.RecebidaHoje)
+                    {
+                        <button type="submit" class="botao botao-suave" disabled>&#10003; Recebida hoje</button>
+                    }
+                    else
+                    {
+                        <button type="submit" class="botao botao-destaque">
+                            &#127873; Reclamar recompensa
+                            @if (diaDeHoje != null)
+                            {
+                                <text>(@diaDeHoje.Texto)</text>
+                            }
+                        </button>
+                    }
+                </form>
+
+                <span class="texto-suave checkin-progresso">
+                    Semana @semanaAtual de 4 &middot; @diaria.DiasRecebidos / @diaria.Calendario.Count dias &middot;
+                    <a class="ligacao" asp-controller="Economia" asp-action="Index">ver calendário</a>
+                </span>
             }
         </aside>
     }
@@ -242,68 +593,60 @@
     <div class="alerta alerta-erro">@ViewBag.Erro</div>
 }
 
-@* ----- Eventos a decorrer: banner temporário com contagem decrescente ----- *@
-@if (eventos.Count > 0)
+@* ----- Evento em destaque: faixa larga com contagem e as personagens do banner ----- *@
+@foreach (var evento in eventos)
 {
-    <section class="seccao">
-        <h2 class="titulo-seccao">Evento a decorrer</h2>
-        @foreach (var evento in eventos)
-        {
-            <div class="evento-banner" style="margin-top:16px">
-                <div>
-                    <h3>@evento.Nome</h3>
-                    @if (!string.IsNullOrWhiteSpace(evento.Descricao))
-                    {
-                        <p class="texto-suave">@evento.Descricao</p>
-                    }
-                    @if (evento.Destaques.Count > 0)
-                    {
-                        <div class="destaques" style="justify-content:flex-start;margin-bottom:0">
-                            @foreach (var p in evento.Destaques)
-                            {
-                                <div class="destaque" style="--cor-raridade:@p.CorOuOmissao">
-                                    <img src="@p.Imagem" alt="Imagem da personagem @p.Nome" />
-                                    <strong>@p.Nome</strong>
-                                    <span class="etiqueta-raridade" style="background:@p.CorOuOmissao">@p.RaridadeNome</span>
-                                    <span class="texto-suave">
-                                        <span class="marca-rateup">RATE-UP</span>
-                                        @if (p.Exclusiva)
-                                        {
-                                            <span class="marca-exclusiva">EXCLUSIVA</span>
-                                        }
-                                    </span>
-                                </div>
-                            }
-                        </div>
-                    }
-                </div>
-                <div class="evento-banner-acoes">
-                    <span class="texto-suave">termina em</span>
-                    <span class="contagem" data-fim="@evento.FimIso">@evento.TempoRestanteTexto</span>
-                    <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@evento.Id">&#10024; Invocar</a>
-                    <a class="ligacao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@evento.Id">ver o evento</a>
-                </div>
+    <section class="evento-destaque">
+        <div>
+            <span class="evento-etiqueta">&#11088; Evento em destaque</span>
+            <h2>@evento.Nome</h2>
+            @if (!string.IsNullOrWhiteSpace(evento.Descricao))
+            {
+                <p class="texto-suave">@evento.Descricao</p>
+            }
+            <div class="hero-botoes">
+                <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@evento.Id">&#10024; Invocar</a>
+                <a class="botao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@evento.Id">Ver detalhes &rarr;</a>
             </div>
-        }
+        </div>
+        <div class="evento-lado">
+            <span class="contagem" data-fim="@evento.FimIso">@evento.TempoRestanteTexto</span>
+            @if (evento.Destaques.Count > 0)
+            {
+                <div class="evento-avatares">
+                    @foreach (var p in evento.Destaques)
+                    {
+                        <a style="--cor-raridade:@p.CorOuOmissao" asp-controller="Personagens" asp-action="Details" asp-route-id="@p.Id" title="@p.Nome · @p.RaridadeNome">
+                            <img src="@p.Imagem" alt="Imagem da personagem @p.Nome" />
+                            <span>@p.Nome</span>
+                        </a>
+                    }
+                </div>
+            }
+        </div>
     </section>
 }
 
+@* ----- Personagens em destaque: as mais raras, em cartões horizontais ----- *@
 @if (Model.Count > 0)
 {
-    <section class="seccao">
-        <h2 class="titulo-seccao">Personagens em destaque</h2>
+    <section>
+        <div class="destaques-topo">
+            <h2 class="titulo-seccao">&#10022; Personagens em destaque</h2>
+            <a class="ligacao" asp-controller="Personagens" asp-action="Index">Ver todos &rarr;</a>
+        </div>
 
-        <div class="grelha-cartoes">
+        <div class="destaques-grelha">
             @foreach (var personagem in Model)
             {
-                <a class="cartao" asp-controller="Personagens" asp-action="Details" asp-route-id="@personagem.Id">
-                    <div class="cartao-imagem" style="--cor-raridade:@(personagem.Raridade?.Cor ?? "#9aa5b1")">
-                        <img src="@(string.IsNullOrEmpty(personagem.ImagemUrl) ? "/img/personagens/desconhecido.svg" : personagem.ImagemUrl)" alt="Imagem da personagem @personagem.Nome" />
-                    </div>
-                    <div class="cartao-corpo">
+                var cor = personagem.Raridade?.Cor ?? "#9aa5b1";
+                <a class="destaque-cartao" style="--cor-raridade:@cor" asp-controller="Personagens" asp-action="Details" asp-route-id="@personagem.Id">
+                    <img src="@(string.IsNullOrEmpty(personagem.ImagemUrl) ? "/img/personagens/desconhecido.svg" : personagem.ImagemUrl)" alt="Imagem da personagem @personagem.Nome" />
+                    <div>
                         <h3>@personagem.Nome</h3>
-                        <span class="etiqueta-raridade" style="background:@(personagem.Raridade?.Cor ?? "#9aa5b1")">@(personagem.Raridade?.Nome ?? "Desconhecida")</span>
+                        <span class="etiqueta-raridade" style="background:@cor">@(personagem.Raridade?.Nome ?? "Desconhecida")</span>
                     </div>
+                    <span class="seta">&#8250;</span>
                 </a>
             }
         </div>
