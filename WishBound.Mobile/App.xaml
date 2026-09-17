@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Application xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             x:Class="WishBound.Mobile.App">
+    <Application.Resources>
+        <ResourceDictionary>
+
+            <!-- Mesma paleta do site (variáveis :root do site.css) -->
+            <Color x:Key="Fundo">#14101f</Color>
+            <Color x:Key="FundoSuave">#1e1830</Color>
+            <Color x:Key="FundoCartao">#251d3a</Color>
+            <Color x:Key="Borda">#3a2f57</Color>
+            <Color x:Key="Texto">#efecfa</Color>
+            <Color x:Key="TextoSuave">#a79fc4</Color>
+            <Color x:Key="Dourado">#f3c04f</Color>
+            <Color x:Key="Roxo">#8b5cf6</Color>
+            <Color x:Key="Erro">#ff8b7d</Color>
+
+            <!-- Estilos implícitos: aplicam-se a todos os controlos do tipo -->
+            <Style TargetType="ContentPage" ApplyToDerivedTypes="True">
+                <Setter Property="BackgroundColor" Value="{StaticResource Fundo}" />
+            </Style>
+
+            <Style TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource Texto}" />
+                <Setter Property="FontSize" Value="15" />
+            </Style>
+
+            <Style TargetType="Entry">
+                <Setter Property="TextColor" Value="{StaticResource Texto}" />
+                <Setter Property="PlaceholderColor" Value="{StaticResource TextoSuave}" />
+                <Setter Property="BackgroundColor" Value="{StaticResource FundoSuave}" />
+                <Setter Property="FontSize" Value="15" />
+                <Setter Property="MinimumHeightRequest" Value="46" />
+            </Style>
+
+            <Style TargetType="Button">
+                <Setter Property="BackgroundColor" Value="{StaticResource Roxo}" />
+                <Setter Property="TextColor" Value="White" />
+                <Setter Property="FontAttributes" Value="Bold" />
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="Padding" Value="16,12" />
+                <Setter Property="MinimumHeightRequest" Value="46" />
+            </Style>
+
+            <Style TargetType="ActivityIndicator">
+                <Setter Property="Color" Value="{StaticResource Dourado}" />
+            </Style>
+
+            <!-- Estilos com nome -->
+            <Style x:Key="Titulo" TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource Dourado}" />
+                <Setter Property="FontSize" Value="28" />
+                <Setter Property="FontAttributes" Value="Bold" />
+            </Style>
+
+            <Style x:Key="Subtitulo" TargetType="Label">
+                <Setter Property="TextColor" Value="{StaticResource TextoSuave}" />
+                <Setter Property="FontSize" Value="14" />
+            </Style>
+
+            <Style x:Key="BotaoSecundario" TargetType="Button">
+                <Setter Property="BackgroundColor" Value="Transparent" />
+                <Setter Property="TextColor" Value="{StaticResource TextoSuave}" />
+                <Setter Property="BorderColor" Value="{StaticResource Borda}" />
+                <Setter Property="BorderWidth" Value="1" />
+                <Setter Property="CornerRadius" Value="10" />
+                <Setter Property="Padding" Value="16,10" />
+            </Style>
+
+            <Style x:Key="Cartao" TargetType="Border">
+                <Setter Property="BackgroundColor" Value="{StaticResource FundoCartao}" />
+                <Setter Property="Stroke" Value="{StaticResource Borda}" />
+                <Setter Property="StrokeThickness" Value="1" />
+                <Setter Property="StrokeShape" Value="RoundRectangle 14" />
+                <Setter Property="Padding" Value="18" />
+            </Style>
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

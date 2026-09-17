@@ -267,4 +267,36 @@ ESTRUTURA
 ---------
 - WishBound.WebAPI    -> API REST (CRUD sobre SQL Server via EF Core)
 - WishBound.ClientAPI -> Site MVC que consome a API (HttpClient)
+- WishBound.Mobile    -> App móvel .NET MAUI (Android)
 - Database            -> Scripts SQL (criação, migração, autenticação)
+
+APLICAÇÃO MÓVEL (WishBound.Mobile)
+----------------------------------
+Projeto .NET MAUI (net9.0-android). Precisa da carga de
+trabalho ".NET Multi-platform App UI" no Visual Studio 2022.
+Tal como o site, a app NUNCA toca na base de dados: fala só com a
+WishBound.WebAPI por HttpClient e envia o cabeçalho X-WishBound-Chave
+(constante em Configuracao.cs - tem de ser igual a Seguranca:ChaveApi).
+
+Versão base (17/09/2026): login com a conta do site (nome ou email),
+sessão guardada no SecureStorage, página inicial com a companheira e a
+sua saudação (a MESMA do site - trocar num lado muda no outro) e a barra
+com as quatro abas (Início, Coleção, Recompensa, Notificações - as três
+últimas ainda dizem "Em breve").
+
+Como correr:
+1. Arrancar a WishBound.WebAPI (http://localhost:5240) - por exemplo
+   botão direito no projeto -> Depurar -> Iniciar sem depuração.
+2. Definir WishBound.Mobile como projeto de arranque e, na seta ao lado
+   do botão verde, escolher Android Emulators -> um emulador (ex.:
+   Pixel 5 - API 34). A primeira compilação e o arranque do emulador
+   demoram alguns minutos.
+   - emulador Android: usa http://10.0.2.2:5240 (é o "localhost" do PC
+     visto de dentro do emulador - não é preciso mudar nada na API);
+   - telemóvel a sério na mesma rede Wi-Fi: no ecrã de login abrir
+     "Ligação à API" e escrever http://IP-do-PC:5240. Neste caso a API
+     tem de escutar em todas as interfaces (applicationUrl
+     http://0.0.0.0:5240 no launchSettings.json) e a firewall do Windows
+     tem de deixar passar a porta 5240.
+3. Entrar com uma conta já validada (ex.: Admin / Admin123!). O registo,
+   o login com Google e toda a gestão ficam só no site.

@@ -6,6 +6,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WishBound.WebAPI", "WishBou
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WishBound.ClientAPI", "WishBound.ClientAPI\WishBound.ClientAPI.csproj", "{7C3F9D22-5E4B-4A1C-8D7E-2F3A4B5C6D7E}"
 EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "WishBound.Mobile", "WishBound.Mobile\WishBound.Mobile.csproj", "{C4D8A6F1-2B37-4E59-9A1C-8F0B3D5E7A42}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -20,6 +22,12 @@ Global
 		{7C3F9D22-5E4B-4A1C-8D7E-2F3A4B5C6D7E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7C3F9D22-5E4B-4A1C-8D7E-2F3A4B5C6D7E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7C3F9D22-5E4B-4A1C-8D7E-2F3A4B5C6D7E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4D8A6F1-2B37-4E59-9A1C-8F0B3D5E7A42}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C4D8A6F1-2B37-4E59-9A1C-8F0B3D5E7A42}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C4D8A6F1-2B37-4E59-9A1C-8F0B3D5E7A42}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{C4D8A6F1-2B37-4E59-9A1C-8F0B3D5E7A42}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C4D8A6F1-2B37-4E59-9A1C-8F0B3D5E7A42}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C4D8A6F1-2B37-4E59-9A1C-8F0B3D5E7A42}.Release|Any CPU.Deploy.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

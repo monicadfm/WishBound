@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<Shell xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+       xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+       xmlns:views="clr-namespace:WishBound.Mobile.Views"
+       x:Class="WishBound.Mobile.AppShell"
+       Title="WishBound"
+       FlyoutBehavior="Disabled"
+       Shell.BackgroundColor="{StaticResource FundoSuave}"
+       Shell.ForegroundColor="{StaticResource Dourado}"
+       Shell.TitleColor="{StaticResource Dourado}"
+       Shell.TabBarBackgroundColor="{StaticResource FundoSuave}"
+       Shell.TabBarForegroundColor="{StaticResource Dourado}"
+       Shell.TabBarTitleColor="{StaticResource Dourado}"
+       Shell.TabBarUnselectedColor="{StaticResource TextoSuave}">
+
+    <!-- 1) Login: é a primeira página; não faz parte da barra de abas.
+            Navegação: GoToAsync("//login") -->
+    <ShellContent Route="login"
+                  Shell.NavBarIsVisible="False"
+                  ContentTemplate="{DataTemplate views:LoginPage}" />
+
+    <!-- 2) Aplicação propriamente dita: as quatro abas decididas para o mobile.
+            Navegação: GoToAsync("//inicio") -->
+    <TabBar>
+        <ShellContent Title="Início"
+                      Icon="ic_inicio.png"
+                      Route="inicio"
+                      ContentTemplate="{DataTemplate views:InicioPage}" />
+
+        <ShellContent Title="Coleção"
+                      Icon="ic_colecao.png"
+                      Route="colecao"
+                      ContentTemplate="{DataTemplate views:ColecaoPage}" />
+
+        <ShellContent Title="Recompensa"
+                      Icon="ic_recompensa.png"
+                      Route="recompensa"
+                      ContentTemplate="{DataTemplate views:RecompensaPage}" />
+
+        <ShellContent Title="Notificações"
+                      Icon="ic_notificacoes.png"
+                      Route="notificacoes"
+                      ContentTemplate="{DataTemplate views:NotificacoesPage}" />
+    </TabBar>
+
+</Shell>

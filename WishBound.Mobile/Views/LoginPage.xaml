@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WishBound.Mobile.ViewModels"
+             x:Class="WishBound.Mobile.Views.LoginPage"
+             x:DataType="vm:LoginViewModel"
+             Title="Entrar">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="28,60,28,28" Spacing="14" MaximumWidthRequest="460">
+
+            <Label Text="✦" FontSize="46" TextColor="{StaticResource Dourado}" HorizontalOptions="Center" />
+            <Label Text="WishBound" Style="{StaticResource Titulo}" FontSize="34" HorizontalOptions="Center" />
+            <Label Text="Entra com a tua conta do site" Style="{StaticResource Subtitulo}" HorizontalOptions="Center" Margin="0,0,0,18" />
+
+            <Label Text="Nome de utilizador ou email" Style="{StaticResource Subtitulo}" />
+            <Entry Text="{Binding Identificador}"
+                   Placeholder="ex.: terumin"
+                   Keyboard="Email"
+                   IsSpellCheckEnabled="False"
+                   IsTextPredictionEnabled="False"
+                   ReturnType="Next" />
+
+            <Label Text="Password" Style="{StaticResource Subtitulo}" />
+            <Entry Text="{Binding Password}"
+                   Placeholder="a tua password"
+                   IsPassword="True"
+                   ReturnType="Go"
+                   ReturnCommand="{Binding EntrarCommand}" />
+
+            <Label Text="{Binding Erro}"
+                   IsVisible="{Binding TemErro}"
+                   TextColor="{StaticResource Erro}" />
+
+            <Button Text="Entrar"
+                    Command="{Binding EntrarCommand}"
+                    IsEnabled="{Binding NaoOcupado}"
+                    Margin="0,8,0,0" />
+
+            <ActivityIndicator IsRunning="{Binding Ocupado}" IsVisible="{Binding Ocupado}" />
+
+            <Label Text="Ainda não tens conta? O registo (e o login com Google) fazem-se no site."
+                   Style="{StaticResource Subtitulo}"
+                   HorizontalTextAlignment="Center"
+                   Margin="0,10,0,0" />
+
+            <!-- Painel de desenvolvimento: endereço da WebAPI -->
+            <Button Text="Ligação à API"
+                    Style="{StaticResource BotaoSecundario}"
+                    Command="{Binding AlternarLigacaoCommand}"
+                    Margin="0,24,0,0" />
+
+            <Border Style="{StaticResource Cartao}" IsVisible="{Binding MostrarLigacao}">
+                <VerticalStackLayout Spacing="10">
+                    <Label Text="Endereço da WishBound.WebAPI" Style="{StaticResource Subtitulo}" />
+                    <Entry Text="{Binding UrlApi}" Keyboard="Url" IsSpellCheckEnabled="False" IsTextPredictionEnabled="False" />
+                    <Label Text="Emulador Android: http://10.0.2.2:5240 · Telemóvel na mesma rede: http://IP-do-PC:5240. Fica guardado ao carregar em Entrar."
+                           Style="{StaticResource Subtitulo}" FontSize="12" />
+                    <Button Text="Repor o endereço por omissão"
+                            Style="{StaticResource BotaoSecundario}"
+                            Command="{Binding ReporUrlCommand}" />
+                </VerticalStackLayout>
+            </Border>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

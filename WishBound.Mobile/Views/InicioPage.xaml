@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WishBound.Mobile.ViewModels"
+             xmlns:modelos="clr-namespace:WishBound.Mobile.Models"
+             x:Class="WishBound.Mobile.Views.InicioPage"
+             x:DataType="vm:InicioViewModel"
+             Title="WishBound">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="20,24,20,28" Spacing="16" MaximumWidthRequest="520">
+
+            <!-- Cabeçalho -->
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <VerticalStackLayout Grid.Column="0" Spacing="2">
+                    <Label Text="{Binding BoasVindas}" Style="{StaticResource Titulo}" FontSize="24" />
+                    <Label Text="Conta de administrador · tudo desbloqueado"
+                           IsVisible="{Binding EhAdmin}"
+                           Style="{StaticResource Subtitulo}" />
+                </VerticalStackLayout>
+                <Button Grid.Column="1"
+                        Text="Sair"
+                        Style="{StaticResource BotaoSecundario}"
+                        Command="{Binding SairCommand}"
+                        VerticalOptions="Start" />
+            </Grid>
+
+            <ActivityIndicator IsRunning="{Binding Ocupado}" IsVisible="{Binding Ocupado}" />
+
+            <!-- Companheira escolhida -->
+            <Border Style="{StaticResource Cartao}" IsVisible="{Binding TemCompanheira}">
+                <VerticalStackLayout Spacing="12" HorizontalOptions="Fill">
+
+                    <!-- Círculo com a cor da raridade (a inicial fica no lugar da imagem, por agora) -->
+                    <Border WidthRequest="132" HeightRequest="132"
+                            HorizontalOptions="Center"
+                            BackgroundColor="{StaticResource FundoSuave}"
+                            Stroke="{Binding Companheira.CorPincel}"
+                            StrokeThickness="4"
+                            StrokeShape="RoundRectangle 66">
+                        <Label Text="{Binding Companheira.Inicial}"
+                               TextColor="{Binding Companheira.Cor}"
+                               FontSize="58" FontAttributes="Bold"
+                               HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+
+                    <Label Text="{Binding Companheira.Nome}"
+                           FontSize="22" FontAttributes="Bold"
+                           HorizontalOptions="Center" />
+                    <Label Text="{Binding Companheira.Resumo}"
+                           TextColor="{Binding Companheira.Cor}"
+                           HorizontalOptions="Center" />
+
+                    <!-- Balão com a saudação -->
+                    <Border BackgroundColor="{StaticResource FundoSuave}"
+                            Stroke="{StaticResource Borda}"
+                            StrokeShape="RoundRectangle 12"
+                            Padding="14">
+                        <Label Text="{Binding Saudacao}" FontSize="16" HorizontalTextAlignment="Center" />
+                    </Border>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Ainda sem companheira -->
+            <Border Style="{StaticResource Cartao}" IsVisible="{Binding SemCompanheira}">
+                <VerticalStackLayout Spacing="6">
+                    <Label Text="Ainda não escolheste uma companheira" FontAttributes="Bold" FontSize="17" />
+                    <Label Text="Escolhe uma personagem da tua coleção para te receber aqui e na página inicial do site."
+                           Style="{StaticResource Subtitulo}" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Label Text="{Binding Mensagem}"
+                   IsVisible="{Binding TemMensagem}"
+                   TextColor="{StaticResource Dourado}"
+                   HorizontalTextAlignment="Center" />
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Button Grid.Column="0" Text="Trocar companheira" Command="{Binding AlternarCandidatasCommand}" />
+                <Button Grid.Column="1" Text="Atualizar" Style="{StaticResource BotaoSecundario}" Command="{Binding AtualizarCommand}" />
+            </Grid>
+
+            <!-- Lista para escolher / trocar -->
+            <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarCandidatas}">
+
+                <Label Text="Toca numa personagem da tua coleção:" Style="{StaticResource Subtitulo}" />
+
+                <VerticalStackLayout Spacing="8" BindableLayout.ItemsSource="{Binding Candidatas}">
+                    <BindableLayout.EmptyView>
+                        <Label Text="A tua coleção ainda está vazia. Faz uma invocação no site!" Style="{StaticResource Subtitulo}" />
+                    </BindableLayout.EmptyView>
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="modelos:CandidataCompanheira">
+                            <Border Style="{StaticResource Cartao}" Padding="12">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="AoTocarCandidata" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+                                    <Border Grid.Column="0"
+                                            WidthRequest="44" HeightRequest="44"
+                                            BackgroundColor="{StaticResource FundoSuave}"
+                                            Stroke="{Binding CorPincel}"
+                                            StrokeThickness="2"
+                                            StrokeShape="RoundRectangle 22">
+                                        <Label Text="{Binding Inicial}" TextColor="{Binding Cor}"
+                                               FontAttributes="Bold" FontSize="18"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                    </Border>
+                                    <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
+                                        <Label Text="{Binding Nome}" FontAttributes="Bold" />
+                                        <Label Text="{Binding Resumo}" TextColor="{Binding Cor}" FontSize="13" />
+                                    </VerticalStackLayout>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+                <Button Text="Ficar sem companheira"
+                        Style="{StaticResource BotaoSecundario}"
+                        IsVisible="{Binding TemCompanheira}"
+                        Command="{Binding RemoverCompanheiraCommand}" />
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
