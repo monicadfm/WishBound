@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WishBound.Mobile.ViewModels"
+             xmlns:modelos="clr-namespace:WishBound.Mobile.Models"
+             x:Class="WishBound.Mobile.Views.ColecaoPage"
+             x:DataType="vm:ColecaoViewModel"
+             Title="Coleção">
+
+    <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="16,12,16,0" RowSpacing="10">
+
+        <!-- Resumo do espaço -->
+        <Border Grid.Row="0" Style="{StaticResource Cartao}" Padding="14">
+            <VerticalStackLayout Spacing="6">
+                <Grid ColumnDefinitions="*,Auto">
+                    <Label Grid.Column="0" Text="{Binding ResumoPersonagens}" FontAttributes="Bold" />
+                    <Label Grid.Column="1" Text="{Binding ResumoEspaco}" Style="{StaticResource Subtitulo}" />
+                </Grid>
+                <ProgressBar Progress="{Binding FracaoEspaco}" ProgressColor="{StaticResource Dourado}" />
+                <Label Text="{Binding ResumoInteracoes}" Style="{StaticResource Subtitulo}" FontSize="13" />
+            </VerticalStackLayout>
+        </Border>
+
+        <!-- Ordenação e filtro -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <Picker Grid.Column="0"
+                    Title="Ordenar por"
+                    ItemsSource="{Binding Ordenacoes}"
+                    SelectedIndex="{Binding OrdenacaoIndice}"
+                    TextColor="{StaticResource Texto}"
+                    TitleColor="{StaticResource TextoSuave}" />
+            <Button Grid.Column="1"
+                    Text="{Binding TextoFavoritas}"
+                    Style="{StaticResource BotaoSecundario}"
+                    Command="{Binding AlternarFavoritasCommand}" />
+            <Button Grid.Column="2"
+                    Text="↻"
+                    Style="{StaticResource BotaoSecundario}"
+                    Command="{Binding AtualizarCommand}" />
+        </Grid>
+
+        <VerticalStackLayout Grid.Row="2" Spacing="6">
+            <ActivityIndicator IsRunning="{Binding Ocupado}" IsVisible="{Binding Ocupado}" />
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Erro}" />
+            <Label Text="Ainda não tens personagens aqui. Faz uma invocação no site!"
+                   IsVisible="{Binding Vazia}" Style="{StaticResource Subtitulo}" />
+        </VerticalStackLayout>
+
+        <!-- Grelha das personagens -->
+        <CollectionView Grid.Row="3"
+                        ItemsSource="{Binding Itens}"
+                        SelectionMode="None">
+            <CollectionView.ItemsLayout>
+                <GridItemsLayout Orientation="Vertical" Span="2" HorizontalItemSpacing="10" VerticalItemSpacing="10" />
+            </CollectionView.ItemsLayout>
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="modelos:ItemColecao">
+                    <Border Style="{StaticResource Cartao}" Padding="12" Margin="0,0,0,2">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="AoTocarPersonagem" />
+                        </Border.GestureRecognizers>
+                        <VerticalStackLayout Spacing="6">
+
+                            <Grid ColumnDefinitions="*,Auto">
+                                <!-- Círculo com a inicial, na cor da raridade -->
+                                <Border Grid.Column="0"
+                                        WidthRequest="72" HeightRequest="72"
+                                        HorizontalOptions="Center"
+                                        BackgroundColor="{StaticResource FundoSuave}"
+                                        Stroke="{Binding CorPincel}"
+                                        StrokeThickness="3"
+                                        StrokeShape="RoundRectangle 36">
+                                    <Label Text="{Binding Inicial}" TextColor="{Binding Cor}"
+                                           FontSize="30" FontAttributes="Bold"
+                                           HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+
+                                <!-- Estrela de favorita -->
+                                <Button Grid.Column="1"
+                                        Text="{Binding Estrela}"
+                                        TextColor="{Binding CorEstrela}"
+                                        BackgroundColor="Transparent"
+                                        FontSize="22"
+                                        Padding="4"
+                                        MinimumHeightRequest="36" MinimumWidthRequest="36"
+                                        VerticalOptions="Start"
+                                        Clicked="AoTocarEstrela" />
+                            </Grid>
+
+                            <Label Text="{Binding Nome}" FontAttributes="Bold" FontSize="16" HorizontalOptions="Center" />
+
+                            <HorizontalStackLayout Spacing="6" HorizontalOptions="Center">
+                                <Label Text="{Binding RaridadeNome}" TextColor="{Binding Cor}" FontSize="13" />
+                                <Label Text="{Binding Copias}" IsVisible="{Binding TemRepetidas}"
+                                       TextColor="{StaticResource Dourado}" FontSize="13" FontAttributes="Bold" />
+                            </HorizontalStackLayout>
+
+                            <Label Text="{Binding TextoNivel}" Style="{StaticResource Subtitulo}" FontSize="12" HorizontalOptions="Center" />
+                            <ProgressBar Progress="{Binding Progresso}" ProgressColor="{Binding Cor}" />
+                        </VerticalStackLayout>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

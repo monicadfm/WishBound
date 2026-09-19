@@ -49,6 +49,42 @@ namespace WishBound.Mobile.Services
             return EnviarAsync<string>(HttpMethod.Post, "api/mensagens/companheira", pedido);
         }
 
+        // ----- Coleção -----
+
+        public Task<ResultadoApi<ColecaoResposta>> ObterColecaoAsync(int utilizadorId, string ordenar, bool favoritos)
+        {
+            return EnviarAsync<ColecaoResposta>(HttpMethod.Get,
+                "api/colecao?utilizadorId=" + utilizadorId + "&ordenar=" + ordenar + "&favoritos=" + (favoritos ? "true" : "false"), null);
+        }
+
+        public Task<ResultadoApi<ItemColecao>> ObterItemColecaoAsync(int utilizadorId, int personagemId)
+        {
+            return EnviarAsync<ItemColecao>(HttpMethod.Get,
+                "api/colecao/item?utilizadorId=" + utilizadorId + "&personagemId=" + personagemId, null);
+        }
+
+        public Task<ResultadoApi<string>> MarcarFavoritoAsync(int utilizadorId, int personagemId, bool favorito)
+        {
+            var pedido = new FavoritoPedido { UtilizadorId = utilizadorId, PersonagemId = personagemId, Favorito = favorito };
+            return EnviarAsync<string>(HttpMethod.Post, "api/colecao/favorito", pedido);
+        }
+
+        // ----- Amizade -----
+
+        public Task<ResultadoApi<InteracaoResposta>> InteragirAsync(int utilizadorId, int personagemId)
+        {
+            var pedido = new InteragirPedido { UtilizadorId = utilizadorId, PersonagemId = personagemId };
+            return EnviarAsync<InteracaoResposta>(HttpMethod.Post, "api/amizade/interagir", pedido);
+        }
+
+        // ----- Mensagens de uma personagem -----
+
+        public Task<ResultadoApi<MensagensPersonagemResposta>> ObterMensagensPersonagemAsync(int utilizadorId, int personagemId)
+        {
+            return EnviarAsync<MensagensPersonagemResposta>(HttpMethod.Get,
+                "api/mensagens/personagem?utilizadorId=" + utilizadorId + "&personagemId=" + personagemId, null);
+        }
+
         // ------------------------------------------------------------
         //  Método comum: envia o pedido, lê a resposta e transforma
         //  qualquer problema (rede, 401, 500...) numa mensagem legível.

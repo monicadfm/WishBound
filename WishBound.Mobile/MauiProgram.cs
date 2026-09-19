@@ -28,6 +28,12 @@ namespace WishBound.Mobile
             builder.Services.AddTransient<InicioViewModel>();
             builder.Services.AddTransient<InicioPage>();
 
+            builder.Services.AddTransient<ColecaoViewModel>();
+            builder.Services.AddTransient<ColecaoPage>();
+
+            builder.Services.AddTransient<DetalhesPersonagemViewModel>();
+            builder.Services.AddTransient<DetalhesPersonagemPage>();
+
             return builder.Build();
         }
     }

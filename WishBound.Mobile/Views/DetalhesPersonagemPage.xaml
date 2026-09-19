@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WishBound.Mobile.ViewModels"
+             xmlns:modelos="clr-namespace:WishBound.Mobile.Models"
+             x:Class="WishBound.Mobile.Views.DetalhesPersonagemPage"
+             x:DataType="vm:DetalhesPersonagemViewModel"
+             Title="{Binding Item.Nome}">
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16,12,16,28" Spacing="14" MaximumWidthRequest="520">
+
+            <ActivityIndicator IsRunning="{Binding Ocupado}" IsVisible="{Binding Ocupado}" />
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}"
+                   TextColor="{StaticResource Dourado}" HorizontalTextAlignment="Center" />
+
+            <VerticalStackLayout Spacing="14" IsVisible="{Binding TemItem}">
+
+                <!-- Imagem (SVG do site, num WebView) com moldura na cor da raridade -->
+                <Border HeightRequest="240"
+                        IsVisible="{Binding TemImagem}"
+                        BackgroundColor="{StaticResource FundoSuave}"
+                        Stroke="{Binding Item.CorPincel}"
+                        StrokeThickness="3"
+                        StrokeShape="RoundRectangle 16">
+                    <WebView Source="{Binding Imagem}" HeightRequest="234" BackgroundColor="{StaticResource FundoSuave}" />
+                </Border>
+
+                <!-- Nome, raridade, cópias -->
+                <VerticalStackLayout Spacing="4">
+                    <Label Text="{Binding Item.Nome}" Style="{StaticResource Titulo}" FontSize="26" HorizontalOptions="Center" />
+                    <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                        <Label Text="{Binding Item.RaridadeNome}" TextColor="{Binding Item.Cor}" FontAttributes="Bold" />
+                        <Label Text="{Binding Item.Copias}" TextColor="{StaticResource Dourado}" FontAttributes="Bold" />
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding Item.TextoObtencao}" Style="{StaticResource Subtitulo}" HorizontalOptions="Center" FontSize="13" />
+                </VerticalStackLayout>
+
+                <!-- Saudação -->
+                <Border IsVisible="{Binding TemSaudacao}"
+                        BackgroundColor="{StaticResource FundoCartao}"
+                        Stroke="{StaticResource Borda}"
+                        StrokeShape="RoundRectangle 12"
+                        Padding="14">
+                    <Label Text="{Binding Saudacao}" FontSize="16" HorizontalTextAlignment="Center" />
+                </Border>
+
+                <Label Text="{Binding Item.Descricao}" Style="{StaticResource Subtitulo}" FontSize="15" />
+
+                <!-- Amizade -->
+                <Border Style="{StaticResource Cartao}">
+                    <VerticalStackLayout Spacing="8">
+                        <Label Text="Amizade" TextColor="{StaticResource Dourado}" FontAttributes="Bold" />
+                        <Grid ColumnDefinitions="*,Auto">
+                            <Label Grid.Column="0" Text="{Binding Item.TextoNivel}" FontAttributes="Bold" />
+                            <Label Grid.Column="1" Text="{Binding Item.TextoPontos}" Style="{StaticResource Subtitulo}" FontSize="13" />
+                        </Grid>
+                        <ProgressBar Progress="{Binding Item.Progresso}" ProgressColor="{Binding Item.Cor}" />
+                        <Label Text="{Binding Item.NivelMaximoNome, StringFormat='Nível máximo desta raridade: {0}'}"
+                               Style="{StaticResource Subtitulo}" FontSize="12" />
+
+                        <Border IsVisible="{Binding TemReacao}"
+                                BackgroundColor="#3a1f3d"
+                                Stroke="#e11d74"
+                                StrokeShape="RoundRectangle 10"
+                                Padding="12">
+                            <Label Text="{Binding Reacao}" FontSize="15" />
+                        </Border>
+
+                        <Button Text="♥ Interagir" Command="{Binding InteragirCommand}" IsEnabled="{Binding NaoOcupado}" />
+                    </VerticalStackLayout>
+                </Border>
+
+                <!-- Ações -->
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                    <Button Grid.Column="0" Text="{Binding TextoFavorito}" Style="{StaticResource BotaoSecundario}"
+                            Command="{Binding FavoritoCommand}" IsEnabled="{Binding NaoOcupado}" />
+                    <Button Grid.Column="1" Text="{Binding TextoCompanheira}"
+                            Command="{Binding CompanheiraCommand}" IsEnabled="{Binding NaoOcupado}" />
+                </Grid>
+
+                <!-- Mensagens da personagem -->
+                <Button Text="{Binding ResumoMensagens}" Style="{StaticResource BotaoSecundario}"
+                        Command="{Binding AlternarMensagensCommand}" />
+
+                <VerticalStackLayout Spacing="8" IsVisible="{Binding MostrarMensagens}"
+                                     BindableLayout.ItemsSource="{Binding Mensagens}">
+                    <BindableLayout.EmptyView>
+                        <Label Text="Esta personagem ainda não tem mensagens próprias." Style="{StaticResource Subtitulo}" />
+                    </BindableLayout.EmptyView>
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="modelos:MensagemPersonagem">
+                            <Border Style="{StaticResource Cartao}" Padding="12">
+                                <VerticalStackLayout Spacing="2">
+                                    <Label Text="{Binding Etiqueta}" Style="{StaticResource Subtitulo}" FontSize="11" />
+                                    <Label Text="{Binding Texto}" TextColor="{Binding CorTexto}" />
+                                </VerticalStackLayout>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>

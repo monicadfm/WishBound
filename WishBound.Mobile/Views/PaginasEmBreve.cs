@@ -43,14 +43,6 @@ namespace WishBound.Mobile.Views
         }
     }
 
-    public class ColecaoPage : PaginaEmBreve
-    {
-        public ColecaoPage()
-            : base("Coleção", "As tuas personagens, com raridade, cópias, favoritas e nível de amizade.")
-        {
-        }
-    }
-
     public class RecompensaPage : PaginaEmBreve
     {
         public RecompensaPage()

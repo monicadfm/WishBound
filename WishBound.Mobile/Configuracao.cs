@@ -25,6 +25,29 @@ namespace WishBound.Mobile
                 ? "http://10.0.2.2:5240"
                 : "http://localhost:5240";
 
+        /// <summary>
+        /// Endereço do SITE (WishBound.ClientAPI), de onde vêm as imagens das
+        /// personagens (/img/personagens/luna.svg). Deriva do endereço da API:
+        /// mesmo PC, porta 5100 em vez de 5240.
+        /// </summary>
+        public static string UrlSite => UrlApi.Replace(":5240", ":5100");
+
+        /// <summary>Transforma "/img/personagens/luna.svg" num URL completo do site.</summary>
+        public static string? UrlImagem(string? caminho)
+        {
+            if (string.IsNullOrWhiteSpace(caminho))
+            {
+                return null;
+            }
+
+            if (caminho.StartsWith("http://") || caminho.StartsWith("https://"))
+            {
+                return caminho;
+            }
+
+            return UrlSite + (caminho.StartsWith("/") ? caminho : "/" + caminho);
+        }
+
         /// <summary>Endereço base da API, sem barra final.</summary>
         public static string UrlApi
         {
