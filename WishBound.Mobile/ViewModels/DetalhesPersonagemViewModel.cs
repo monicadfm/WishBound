@@ -23,7 +23,6 @@ namespace WishBound.Mobile.ViewModels
         private string _reacao = string.Empty;
         private string _mensagem = string.Empty;
         private bool _mostrarMensagens;
-        private WebViewSource? _imagem;
 
         public DetalhesPersonagemViewModel(ServicoApi api, ServicoSessao sessao)
         {
@@ -65,21 +64,6 @@ namespace WishBound.Mobile.ViewModels
         public bool TemItem => _item != null;
 
         public string TextoFavorito => _item != null && _item.IsFavorito ? "★ Favorita" : "☆ Marcar favorita";
-
-        /// <summary>Imagem da personagem, vinda do site, mostrada num WebView (a arte é SVG).</summary>
-        public WebViewSource? Imagem
-        {
-            get => _imagem;
-            set
-            {
-                if (Definir(ref _imagem, value))
-                {
-                    Notificar(nameof(TemImagem));
-                }
-            }
-        }
-
-        public bool TemImagem => _imagem != null;
 
         public string Saudacao
         {
@@ -178,7 +162,6 @@ namespace WishBound.Mobile.ViewModels
 
                 Mensagem = string.Empty;
                 Item = resultado.Dados;
-                Imagem = CriarImagem(resultado.Dados.ImagemCompleta);
 
                 // Saudação + conjunto de mensagens (se falhar, a página abre na mesma)
                 var mensagens = await _api.ObterMensagensPersonagemAsync(utilizador.Id, _personagemId);
@@ -315,24 +298,5 @@ namespace WishBound.Mobile.ViewModels
             Mensagem = texto;
         }
 
-        /// <summary>
-        /// A arte das personagens é SVG e o controlo Image do MAUI não carrega
-        /// SVG por URL, por isso a imagem é mostrada numa página HTML mínima
-        /// dentro de um WebView.
-        /// </summary>
-        private static WebViewSource? CriarImagem(string? url)
-        {
-            if (string.IsNullOrEmpty(url))
-            {
-                return null;
-            }
-
-            var html =
-                "<html><head><meta name='viewport' content='width=device-width, initial-scale=1'></head>" +
-                "<body style='margin:0;background:#1e1830;display:flex;align-items:center;justify-content:center;height:100vh;overflow:hidden'>" +
-                "<img src='" + url + "' style='max-width:100%;max-height:100%' alt=''></body></html>";
-
-            return new HtmlWebViewSource { Html = html };
-        }
     }
 }

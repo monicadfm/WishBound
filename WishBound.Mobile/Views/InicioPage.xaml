@@ -38,10 +38,13 @@
                             Stroke="{Binding Companheira.CorPincel}"
                             StrokeThickness="4"
                             StrokeShape="RoundRectangle 66">
-                        <Label Text="{Binding Companheira.Inicial}"
-                               TextColor="{Binding Companheira.Cor}"
-                               FontSize="58" FontAttributes="Bold"
-                               HorizontalOptions="Center" VerticalOptions="Center" />
+                        <Grid>
+                            <Label Text="{Binding Companheira.Inicial}"
+                                   TextColor="{Binding Companheira.Cor}"
+                                   FontSize="58" FontAttributes="Bold"
+                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                            <Image Source="{Binding Companheira.Sprite}" Aspect="AspectFit" />
+                        </Grid>
                     </Border>
 
                     <Label Text="{Binding Companheira.Nome}"
@@ -102,9 +105,12 @@
                                             Stroke="{Binding CorPincel}"
                                             StrokeThickness="2"
                                             StrokeShape="RoundRectangle 22">
-                                        <Label Text="{Binding Inicial}" TextColor="{Binding Cor}"
-                                               FontAttributes="Bold" FontSize="18"
-                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                        <Grid>
+                                            <Label Text="{Binding Inicial}" TextColor="{Binding Cor}"
+                                                   FontAttributes="Bold" FontSize="18"
+                                                   HorizontalOptions="Center" VerticalOptions="Center" />
+                                            <Image Source="{Binding Sprite}" Aspect="AspectFit" />
+                                        </Grid>
                                     </Border>
                                     <VerticalStackLayout Grid.Column="1" VerticalOptions="Center" Spacing="1">
                                         <Label Text="{Binding Nome}" FontAttributes="Bold" />

@@ -32,6 +32,22 @@ namespace WishBound.Mobile
         /// </summary>
         public static string UrlSite => UrlApi.Replace(":5240", ":5100");
 
+        /// <summary>
+        /// Nome do sprite embutido na app para uma personagem:
+        /// "/img/personagens/luna.svg" -> "luna.png" (Resources/Images/personagens).
+        /// Se a personagem não tiver sprite na app, o Image fica vazio e vê-se a inicial.
+        /// </summary>
+        public static string? NomeSprite(string? imagemUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imagemUrl))
+            {
+                return null;
+            }
+
+            var nome = Path.GetFileNameWithoutExtension(imagemUrl).Trim().ToLowerInvariant();
+            return string.IsNullOrEmpty(nome) ? null : nome + ".png";
+        }
+
         /// <summary>Transforma "/img/personagens/luna.svg" num URL completo do site.</summary>
         public static string? UrlImagem(string? caminho)
         {

@@ -61,29 +61,30 @@
                         </Border.GestureRecognizers>
                         <VerticalStackLayout Spacing="6">
 
-                            <Grid ColumnDefinitions="*,Auto">
-                                <!-- Círculo com a inicial, na cor da raridade -->
-                                <Border Grid.Column="0"
-                                        WidthRequest="72" HeightRequest="72"
-                                        HorizontalOptions="Center"
+                            <!-- Sprite centrado; a estrela fica sobreposta no canto -->
+                            <Grid HeightRequest="84">
+                                <Border WidthRequest="84" HeightRequest="84"
+                                        HorizontalOptions="Center" VerticalOptions="Center"
                                         BackgroundColor="{StaticResource FundoSuave}"
                                         Stroke="{Binding CorPincel}"
                                         StrokeThickness="3"
-                                        StrokeShape="RoundRectangle 36">
-                                    <Label Text="{Binding Inicial}" TextColor="{Binding Cor}"
-                                           FontSize="30" FontAttributes="Bold"
-                                           HorizontalOptions="Center" VerticalOptions="Center" />
+                                        StrokeShape="RoundRectangle 42">
+                                    <Grid>
+                                        <Label Text="{Binding Inicial}" TextColor="{Binding Cor}"
+                                               FontSize="30" FontAttributes="Bold"
+                                               HorizontalOptions="Center" VerticalOptions="Center" />
+                                        <Image Source="{Binding Sprite}" Aspect="AspectFit" />
+                                    </Grid>
                                 </Border>
 
-                                <!-- Estrela de favorita -->
-                                <Button Grid.Column="1"
-                                        Text="{Binding Estrela}"
+                                <Button Text="{Binding Estrela}"
                                         TextColor="{Binding CorEstrela}"
                                         BackgroundColor="Transparent"
                                         FontSize="22"
-                                        Padding="4"
+                                        Padding="0"
                                         MinimumHeightRequest="36" MinimumWidthRequest="36"
-                                        VerticalOptions="Start"
+                                        HorizontalOptions="End" VerticalOptions="Start"
+                                        Margin="0,-6,-6,0"
                                         Clicked="AoTocarEstrela" />
                             </Grid>
 

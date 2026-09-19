@@ -29,6 +29,10 @@
     <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#14101f" />
     <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#14101f" BaseSize="128,128" />
     <MauiImage Include="Resources\Images\*" />
+
+    <!-- Sprites das personagens: cópias dos SVG do site (wwwroot/img/personagens),
+         convertidos para PNG na compilação. Usam-se pelo nome do ficheiro: "luna.png". -->
+    <MauiImage Include="Resources\Images\personagens\*.svg" BaseSize="240,240" />
   </ItemGroup>
 
   <ItemGroup>

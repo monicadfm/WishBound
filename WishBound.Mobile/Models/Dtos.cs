@@ -44,6 +44,9 @@ namespace WishBound.Mobile.Models
 
         public Brush CorPincel => new SolidColorBrush(Cor);
 
+        /// <summary>Sprite embutido ("luna.png"); null = sem imagem, mostra-se a inicial.</summary>
+        public string? Sprite => Configuracao.NomeSprite(ImagemUrl);
+
         public string Resumo => RaridadeNome + " · " + NivelAmizadeNome;
     }
 
@@ -154,8 +157,8 @@ namespace WishBound.Mobile.Models
 
         public string TextoObtencao => "Obtida a " + DataObtencao.ToLocalTime().ToString("dd/MM/yyyy");
 
-        /// <summary>URL completo da imagem no site (para o WebView dos detalhes).</summary>
-        public string? ImagemCompleta => Configuracao.UrlImagem(ImagemUrl);
+        /// <summary>Sprite embutido ("luna.png"); null = sem imagem, mostra-se a inicial.</summary>
+        public string? Sprite => Configuracao.NomeSprite(ImagemUrl);
     }
 
     /// <summary>GET api/colecao</summary>
