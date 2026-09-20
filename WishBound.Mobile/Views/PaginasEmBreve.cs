@@ -43,14 +43,6 @@ namespace WishBound.Mobile.Views
         }
     }
 
-    public class RecompensaPage : PaginaEmBreve
-    {
-        public RecompensaPage()
-            : base("Recompensa diária", "O calendário de 28 dias e o botão para receberes a recompensa de hoje.")
-        {
-        }
-    }
-
     public class NotificacoesPage : PaginaEmBreve
     {
         public NotificacoesPage()

@@ -34,6 +34,9 @@ namespace WishBound.Mobile
             builder.Services.AddTransient<DetalhesPersonagemViewModel>();
             builder.Services.AddTransient<DetalhesPersonagemPage>();
 
+            builder.Services.AddTransient<RecompensaViewModel>();
+            builder.Services.AddTransient<RecompensaPage>();
+
             return builder.Build();
         }
     }

@@ -239,3 +239,165 @@ namespace WishBound.Mobile.Models
         public List<MensagemPersonagem> Mensagens { get; set; } = new List<MensagemPersonagem>();
     }
 }
+
+namespace WishBound.Mobile.Models
+{
+    // ============================================================
+    //  ECONOMIA (api/economia) — recompensa diária, eventos e saldos.
+    // ============================================================
+
+    public class CarteiraResposta
+    {
+        public int TipoMoedaId { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public decimal Saldo { get; set; }
+    }
+
+    /// <summary>Um dos 28 dias do calendário (DiaRecompensa da API).</summary>
+    public class DiaRecompensa
+    {
+        public int Dia { get; set; }
+        public int Semana { get; set; }
+        public int TipoMoedaId { get; set; }
+        public string MoedaNome { get; set; } = string.Empty;
+        public decimal Quantidade { get; set; }
+        public bool FimDeSemana { get; set; }
+        public bool Recebido { get; set; }
+        public bool Hoje { get; set; }
+
+        // ----- Apenas para o ecrã -----
+
+        public string Titulo => "Dia " + Dia;
+
+        /// <summary>"20" / "1" — a moeda vai na linha de baixo.</summary>
+        public string Valor => Quantidade.ToString("0");
+
+        public string Moeda => IconeMoeda(MoedaNome);
+
+        /// <summary>Hoje = rosa; último dia da semana = dourado; resto = borda normal.</summary>
+        public Color CorBorda => Hoje
+            ? Color.FromArgb("#e11d74")
+            : FimDeSemana ? Color.FromArgb("#f3c04f") : Color.FromArgb("#3a2f57");
+
+        public Brush PincelBorda => new SolidColorBrush(CorBorda);
+
+        public Color Fundo => Hoje ? Color.FromArgb("#3a1f3d") : Color.FromArgb("#1e1830");
+
+        public double Opacidade => Recebido ? 0.45 : 1;
+
+        public string Sinal => Recebido ? "✓" : string.Empty;
+
+        public static string IconeMoeda(string nome)
+        {
+            return nome.StartsWith("Bilhete", StringComparison.OrdinalIgnoreCase) ? "🎟" : "◈";
+        }
+    }
+
+    public class RecompensaDiariaResposta
+    {
+        public int DiasRecebidos { get; set; }
+        public bool RecebidaHoje { get; set; }
+        public int ProximoDia { get; set; }
+        public List<DiaRecompensa> Calendario { get; set; } = new List<DiaRecompensa>();
+    }
+
+    public class DiaEvento
+    {
+        public int Dia { get; set; }
+        public string Descricao { get; set; } = string.Empty;
+        public int? TipoMoedaId { get; set; }
+        public string MoedaNome { get; set; } = string.Empty;
+        public decimal Quantidade { get; set; }
+        public bool Recebido { get; set; }
+        public bool Hoje { get; set; }
+
+        // Apenas para o ecrã (mesmo aspeto dos dias do calendário)
+        public string Titulo => "Dia " + Dia;
+        public string Valor => Quantidade.ToString("0");
+        public string Moeda => DiaRecompensa.IconeMoeda(MoedaNome);
+        public Color CorBorda => Hoje ? Color.FromArgb("#e11d74") : Color.FromArgb("#3a2f57");
+        public Brush PincelBorda => new SolidColorBrush(CorBorda);
+        public Color Fundo => Hoje ? Color.FromArgb("#3a1f3d") : Color.FromArgb("#1e1830");
+        public double Opacidade => Recebido ? 0.45 : 1;
+        public string Sinal => Recebido ? "✓" : string.Empty;
+    }
+
+    public class EventoResposta
+    {
+        public int BannerId { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public string? Descricao { get; set; }
+        public DateTime DataInicio { get; set; }
+        public DateTime DataFim { get; set; }
+        public int DiasRestantes { get; set; }
+        public int Progresso { get; set; }
+        public bool RecebidoHoje { get; set; }
+        public bool Concluido { get; set; }
+        public decimal TotalRecompensas { get; set; }
+        public List<DiaEvento> Dias { get; set; } = new List<DiaEvento>();
+
+        // ----- Apenas para o ecrã -----
+
+        public string TextoRestante => DiasRestantes <= 0
+            ? "Acaba hoje"
+            : DiasRestantes == 1 ? "Falta 1 dia" : "Faltam " + DiasRestantes + " dias";
+
+        public string TextoProgresso => Progresso + " / " + Dias.Count + " dias recebidos";
+
+        public bool PodeResgatar => !Concluido && !RecebidoHoje;
+
+        public string TextoBotao
+        {
+            get
+            {
+                if (Concluido)
+                {
+                    return "✓ Evento concluído";
+                }
+
+                if (RecebidoHoje)
+                {
+                    return "✓ Recebida hoje";
+                }
+
+                var proximo = Dias.FirstOrDefault(d => !d.Recebido);
+                return proximo == null
+                    ? "Resgatar"
+                    : "Resgatar dia " + proximo.Dia + " (" + proximo.Valor + " " + proximo.MoedaNome + ")";
+            }
+        }
+    }
+
+    /// <summary>GET api/economia</summary>
+    public class EconomiaResposta
+    {
+        public List<CarteiraResposta> Carteiras { get; set; } = new List<CarteiraResposta>();
+        public decimal SaldoMoedas { get; set; }
+        public decimal SaldoBilhetes { get; set; }
+        public decimal CustoInvocacao { get; set; }
+        public RecompensaDiariaResposta RecompensaDiaria { get; set; } = new RecompensaDiariaResposta();
+        public List<EventoResposta> Eventos { get; set; } = new List<EventoResposta>();
+    }
+
+    /// <summary>Resposta de POST api/economia/login-diario e evento/resgatar.</summary>
+    public class RecompensaRecebidaResposta
+    {
+        public string Mensagem { get; set; } = string.Empty;
+        public int TipoMoedaId { get; set; }
+        public string MoedaNome { get; set; } = string.Empty;
+        public decimal Quantidade { get; set; }
+        public decimal NovoSaldo { get; set; }
+        public int Dia { get; set; }
+    }
+
+    public class LoginDiarioPedido
+    {
+        public int UtilizadorId { get; set; }
+    }
+
+    public class ResgatarEventoPedido
+    {
+        public int UtilizadorId { get; set; }
+        public int BannerId { get; set; }
+    }
+}

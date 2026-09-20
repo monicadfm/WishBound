@@ -85,6 +85,25 @@ namespace WishBound.Mobile.Services
                 "api/mensagens/personagem?utilizadorId=" + utilizadorId + "&personagemId=" + personagemId, null);
         }
 
+        // ----- Economia (recompensa diária, eventos, saldos) -----
+
+        public Task<ResultadoApi<EconomiaResposta>> ObterEconomiaAsync(int utilizadorId)
+        {
+            return EnviarAsync<EconomiaResposta>(HttpMethod.Get, "api/economia?utilizadorId=" + utilizadorId, null);
+        }
+
+        public Task<ResultadoApi<RecompensaRecebidaResposta>> ReceberLoginDiarioAsync(int utilizadorId)
+        {
+            var pedido = new LoginDiarioPedido { UtilizadorId = utilizadorId };
+            return EnviarAsync<RecompensaRecebidaResposta>(HttpMethod.Post, "api/economia/login-diario", pedido);
+        }
+
+        public Task<ResultadoApi<RecompensaRecebidaResposta>> ResgatarEventoAsync(int utilizadorId, int bannerId)
+        {
+            var pedido = new ResgatarEventoPedido { UtilizadorId = utilizadorId, BannerId = bannerId };
+            return EnviarAsync<RecompensaRecebidaResposta>(HttpMethod.Post, "api/economia/evento/resgatar", pedido);
+        }
+
         // ------------------------------------------------------------
         //  Método comum: envia o pedido, lê a resposta e transforma
         //  qualquer problema (rede, 401, 500...) numa mensagem legível.

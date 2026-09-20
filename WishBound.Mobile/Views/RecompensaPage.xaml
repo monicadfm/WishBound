@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WishBound.Mobile.ViewModels"
+             xmlns:modelos="clr-namespace:WishBound.Mobile.Models"
+             x:Class="WishBound.Mobile.Views.RecompensaPage"
+             x:DataType="vm:RecompensaViewModel"
+             Title="Recompensa diária">
+
+    <ContentPage.Resources>
+        <!-- Uma caixa de dia (usada no calendário e nos eventos) -->
+        <DataTemplate x:Key="CaixaDia" x:DataType="modelos:DiaRecompensa">
+            <Border FlexLayout.Basis="13.5%"
+                    Margin="0,0,0,6"
+                    Padding="2,8"
+                    BackgroundColor="{Binding Fundo}"
+                    Stroke="{Binding PincelBorda}"
+                    StrokeThickness="2"
+                    StrokeShape="RoundRectangle 10"
+                    Opacity="{Binding Opacidade}">
+                <VerticalStackLayout Spacing="1">
+                    <Label Text="{Binding Titulo}" FontSize="9" Style="{StaticResource Subtitulo}" HorizontalOptions="Center" />
+                    <Label Text="{Binding Moeda}" FontSize="16" HorizontalOptions="Center" TextColor="{StaticResource Dourado}" />
+                    <Label Text="{Binding Valor}" FontSize="13" FontAttributes="Bold" HorizontalOptions="Center" />
+                    <Label Text="{Binding Sinal}" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource Dourado}" />
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+
+        <DataTemplate x:Key="CaixaDiaEvento" x:DataType="modelos:DiaEvento">
+            <Border FlexLayout.Basis="13.5%"
+                    Margin="0,0,0,6"
+                    Padding="2,8"
+                    BackgroundColor="{Binding Fundo}"
+                    Stroke="{Binding PincelBorda}"
+                    StrokeThickness="2"
+                    StrokeShape="RoundRectangle 10"
+                    Opacity="{Binding Opacidade}">
+                <VerticalStackLayout Spacing="1">
+                    <Label Text="{Binding Titulo}" FontSize="9" Style="{StaticResource Subtitulo}" HorizontalOptions="Center" />
+                    <Label Text="{Binding Moeda}" FontSize="16" HorizontalOptions="Center" TextColor="{StaticResource Dourado}" />
+                    <Label Text="{Binding Valor}" FontSize="13" FontAttributes="Bold" HorizontalOptions="Center" />
+                    <Label Text="{Binding Sinal}" FontSize="11" HorizontalOptions="Center" TextColor="{StaticResource Dourado}" />
+                </VerticalStackLayout>
+            </Border>
+        </DataTemplate>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="16,12,16,28" Spacing="14" MaximumWidthRequest="520">
+
+            <!-- Saldos -->
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="10">
+                <Border Grid.Column="0" Style="{StaticResource Cartao}" Padding="14">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="◈ Moedas" Style="{StaticResource Subtitulo}" />
+                        <Label Text="{Binding SaldoMoedas}" FontSize="26" FontAttributes="Bold" TextColor="{StaticResource Dourado}" />
+                    </VerticalStackLayout>
+                </Border>
+                <Border Grid.Column="1" Style="{StaticResource Cartao}" Padding="14">
+                    <VerticalStackLayout Spacing="2">
+                        <Label Text="🎟 Bilhetes" Style="{StaticResource Subtitulo}" />
+                        <Label Text="{Binding SaldoBilhetes}" FontSize="26" FontAttributes="Bold" TextColor="{StaticResource Dourado}" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+
+            <ActivityIndicator IsRunning="{Binding Ocupado}" IsVisible="{Binding Ocupado}" />
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}"
+                   TextColor="{StaticResource Dourado}" HorizontalTextAlignment="Center" />
+
+            <!-- Check-in diário -->
+            <Border Style="{StaticResource Cartao}">
+                <VerticalStackLayout Spacing="10">
+                    <Grid ColumnDefinitions="*,Auto">
+                        <Label Grid.Column="0" Text="Check-in diário" TextColor="{StaticResource Dourado}" FontAttributes="Bold" FontSize="18" />
+                        <Button Grid.Column="1" Text="↻" Style="{StaticResource BotaoSecundario}" Padding="10,4" Command="{Binding AtualizarCommand}" />
+                    </Grid>
+                    <Label Text="{Binding ResumoCalendario}" Style="{StaticResource Subtitulo}" />
+                    <ProgressBar Progress="{Binding FracaoCiclo}" ProgressColor="{StaticResource Dourado}" />
+
+                    <FlexLayout Wrap="Wrap"
+                                JustifyContent="SpaceBetween"
+                                AlignItems="Start"
+                                BindableLayout.ItemsSource="{Binding Calendario}"
+                                BindableLayout.ItemTemplate="{StaticResource CaixaDia}" />
+
+                    <Button Text="{Binding TextoBotao}"
+                            Command="{Binding ReceberCommand}"
+                            IsEnabled="{Binding PodeReceber}" />
+
+                    <Label Text="Semanas 1–3 dão Moedas (o 7.º dia dá o triplo); a semana 4 dá Bilhetes de invocação. Faltar um dia não faz perder o progresso."
+                           Style="{StaticResource Subtitulo}" FontSize="12" />
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Eventos a decorrer -->
+            <Label Text="Eventos a decorrer" Style="{StaticResource Titulo}" FontSize="20" IsVisible="{Binding TemEventos}" />
+            <Label Text="Não há eventos com recompensas a decorrer." Style="{StaticResource Subtitulo}" IsVisible="{Binding SemEventos}" />
+
+            <VerticalStackLayout Spacing="12" BindableLayout.ItemsSource="{Binding Eventos}">
+                <BindableLayout.ItemTemplate>
+                    <DataTemplate x:DataType="modelos:EventoResposta">
+                        <Border Style="{StaticResource Cartao}">
+                            <VerticalStackLayout Spacing="8">
+                                <Label Text="{Binding Nome}" FontAttributes="Bold" FontSize="17" />
+                                <Label Text="{Binding Descricao}" Style="{StaticResource Subtitulo}" FontSize="13" />
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Grid.Column="0" Text="{Binding TextoProgresso}" Style="{StaticResource Subtitulo}" />
+                                    <Label Grid.Column="1" Text="{Binding TextoRestante}" TextColor="{StaticResource Dourado}" FontSize="13" />
+                                </Grid>
+
+                                <FlexLayout Wrap="Wrap"
+                                            JustifyContent="SpaceBetween"
+                                            AlignItems="Start"
+                                            BindableLayout.ItemsSource="{Binding Dias}"
+                                            BindableLayout.ItemTemplate="{StaticResource CaixaDiaEvento}" />
+
+                                <Button Text="{Binding TextoBotao}"
+                                        IsEnabled="{Binding PodeResgatar}"
+                                        Clicked="AoResgatarEvento" />
+                            </VerticalStackLayout>
+                        </Border>
+                    </DataTemplate>
+                </BindableLayout.ItemTemplate>
+            </VerticalStackLayout>
+
+        </VerticalStackLayout>
+    </ScrollView>
+</ContentPage>
