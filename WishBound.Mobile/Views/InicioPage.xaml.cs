@@ -21,6 +21,12 @@ namespace WishBound.Mobile.Views
             await _viewModel.CarregarAsync();
         }
 
+        // Toque no sino: muda para a aba Notificações
+        private async void AoTocarNotificacoes(object? sender, TappedEventArgs e)
+        {
+            await Shell.Current.GoToAsync("//notificacoes");
+        }
+
         // Toque numa linha da lista: o BindingContext da linha é a candidata
         private async void AoTocarCandidata(object? sender, TappedEventArgs e)
         {

@@ -401,3 +401,81 @@ namespace WishBound.Mobile.Models
         public int BannerId { get; set; }
     }
 }
+
+namespace WishBound.Mobile.Models
+{
+    // ============================================================
+    //  NOTIFICAÇÕES (api/notificacoes)
+    // ============================================================
+
+    public class Notificacao
+    {
+        public int Id { get; set; }
+        public string Tipo { get; set; } = string.Empty;
+        public string Titulo { get; set; } = string.Empty;
+        public string Mensagem { get; set; } = string.Empty;
+        public bool IsLida { get; set; }
+        public DateTime DataCriacao { get; set; }
+
+        // ----- Apenas para o ecrã -----
+
+        public string Icone => Tipo switch
+        {
+            "MensagemPersonagem" => "💬",
+            "Evento" => "✦",
+            "Banner" => "✦",
+            "Recompensa" => "🎁",
+            "LoginDiario" => "📅",
+            _ => "🔔"
+        };
+
+        /// <summary>"há 5 min", "há 3 h", "ontem", "12/09"</summary>
+        public string Quando
+        {
+            get
+            {
+                var data = DateTime.SpecifyKind(DataCriacao, DateTimeKind.Utc).ToLocalTime();
+                var passou = DateTime.Now - data;
+
+                if (passou.TotalMinutes < 1)
+                {
+                    return "agora";
+                }
+                if (passou.TotalHours < 1)
+                {
+                    return "há " + (int)passou.TotalMinutes + " min";
+                }
+                if (passou.TotalHours < 24 && data.Date == DateTime.Today)
+                {
+                    return "há " + (int)passou.TotalHours + " h";
+                }
+                if (data.Date == DateTime.Today.AddDays(-1))
+                {
+                    return "ontem";
+                }
+
+                return data.ToString(data.Year == DateTime.Today.Year ? "dd/MM" : "dd/MM/yyyy");
+            }
+        }
+
+        public Color CorBorda => IsLida ? Color.FromArgb("#3a2f57") : Color.FromArgb("#f3c04f");
+        public Brush PincelBorda => new SolidColorBrush(CorBorda);
+        public double Opacidade => IsLida ? 0.6 : 1;
+        public FontAttributes PesoTitulo => IsLida ? FontAttributes.None : FontAttributes.Bold;
+    }
+
+    /// <summary>GET api/notificacoes</summary>
+    public class NotificacoesResposta
+    {
+        public int NaoLidas { get; set; }
+        public int Total { get; set; }
+        public List<Notificacao> Itens { get; set; } = new List<Notificacao>();
+    }
+
+    /// <summary>POST api/notificacoes/lida (NotificacaoId null = todas)</summary>
+    public class MarcarLidaPedido
+    {
+        public int UtilizadorId { get; set; }
+        public int? NotificacaoId { get; set; }
+    }
+}

@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+             xmlns:vm="clr-namespace:WishBound.Mobile.ViewModels"
+             xmlns:modelos="clr-namespace:WishBound.Mobile.Models"
+             x:Class="WishBound.Mobile.Views.NotificacoesPage"
+             x:DataType="vm:NotificacoesViewModel"
+             Title="Notificações">
+
+    <Grid RowDefinitions="Auto,Auto,*" Padding="16,12,16,0" RowSpacing="10">
+
+        <!-- Resumo + ações -->
+        <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto" ColumnSpacing="8">
+            <Label Grid.Column="0" Text="{Binding Resumo}" Style="{StaticResource Subtitulo}" VerticalOptions="Center" />
+            <Button Grid.Column="1" Text="{Binding TextoFiltro}" Style="{StaticResource BotaoSecundario}" Padding="12,6" Command="{Binding AlternarFiltroCommand}" />
+            <Button Grid.Column="2" Text="↻" Style="{StaticResource BotaoSecundario}" Padding="10,6" Command="{Binding AtualizarCommand}" />
+        </Grid>
+
+        <VerticalStackLayout Grid.Row="1" Spacing="8">
+            <Button Text="✓ Marcar todas como lidas"
+                    Style="{StaticResource BotaoSecundario}"
+                    IsVisible="{Binding TemNaoLidas}"
+                    Command="{Binding MarcarTodasCommand}" />
+            <ActivityIndicator IsRunning="{Binding Ocupado}" IsVisible="{Binding Ocupado}" />
+            <Label Text="{Binding Mensagem}" IsVisible="{Binding TemMensagem}" TextColor="{StaticResource Dourado}" HorizontalTextAlignment="Center" />
+            <Label Text="Ainda não tens notificações. As tuas personagens deixam-te mensagens quando interages com elas (a partir do nível 4)."
+                   IsVisible="{Binding Vazia}" Style="{StaticResource Subtitulo}" HorizontalTextAlignment="Center" Margin="0,20,0,0" />
+        </VerticalStackLayout>
+
+        <!-- Lista: por ler = borda dourada e título a negrito -->
+        <CollectionView Grid.Row="2" ItemsSource="{Binding Itens}" SelectionMode="None">
+            <CollectionView.ItemTemplate>
+                <DataTemplate x:DataType="modelos:Notificacao">
+                    <Border Style="{StaticResource Cartao}"
+                            Padding="12"
+                            Margin="0,0,0,8"
+                            Stroke="{Binding PincelBorda}"
+                            Opacity="{Binding Opacidade}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Tapped="AoTocarNotificacao" />
+                        </Border.GestureRecognizers>
+                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="10">
+                            <Label Grid.Column="0" Text="{Binding Icone}" FontSize="22" VerticalOptions="Start" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="2">
+                                <Label Text="{Binding Titulo}" FontAttributes="{Binding PesoTitulo}" />
+                                <Label Text="{Binding Mensagem}" Style="{StaticResource Subtitulo}" FontSize="14" TextColor="{StaticResource Texto}" />
+                            </VerticalStackLayout>
+                            <Label Grid.Column="2" Text="{Binding Quando}" Style="{StaticResource Subtitulo}" FontSize="12" VerticalOptions="Start" />
+                        </Grid>
+                    </Border>
+                </DataTemplate>
+            </CollectionView.ItemTemplate>
+        </CollectionView>
+
+    </Grid>
+</ContentPage>

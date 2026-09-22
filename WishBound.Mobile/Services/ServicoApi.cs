@@ -104,6 +104,27 @@ namespace WishBound.Mobile.Services
             return EnviarAsync<RecompensaRecebidaResposta>(HttpMethod.Post, "api/economia/evento/resgatar", pedido);
         }
 
+        // ----- Notificações -----
+
+        public Task<ResultadoApi<NotificacoesResposta>> ObterNotificacoesAsync(int utilizadorId, bool apenasNaoLidas)
+        {
+            return EnviarAsync<NotificacoesResposta>(HttpMethod.Get,
+                "api/notificacoes?utilizadorId=" + utilizadorId + "&limite=100&apenasNaoLidas=" + (apenasNaoLidas ? "true" : "false"), null);
+        }
+
+        /// <summary>Número de notificações por ler (para o sino da página inicial).</summary>
+        public Task<ResultadoApi<int>> ContarNotificacoesAsync(int utilizadorId)
+        {
+            return EnviarAsync<int>(HttpMethod.Get, "api/notificacoes/contagem?utilizadorId=" + utilizadorId, null);
+        }
+
+        /// <summary>notificacaoId null = marca todas como lidas.</summary>
+        public Task<ResultadoApi<string>> MarcarNotificacaoLidaAsync(int utilizadorId, int? notificacaoId)
+        {
+            var pedido = new MarcarLidaPedido { UtilizadorId = utilizadorId, NotificacaoId = notificacaoId };
+            return EnviarAsync<string>(HttpMethod.Post, "api/notificacoes/lida", pedido);
+        }
+
         // ------------------------------------------------------------
         //  Método comum: envia o pedido, lê a resposta e transforma
         //  qualquer problema (rede, 401, 500...) numa mensagem legível.

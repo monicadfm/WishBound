@@ -22,6 +22,7 @@ namespace WishBound.Mobile.ViewModels
         private string _mensagem = string.Empty;
         private bool _mostrarCandidatas;
         private bool _carregado;
+        private string _textoNotificacoes = string.Empty;
 
         public InicioViewModel(ServicoApi api, ServicoSessao sessao)
         {
@@ -98,6 +99,21 @@ namespace WishBound.Mobile.ViewModels
             set => Definir(ref _mostrarCandidatas, value);
         }
 
+        /// <summary>"🔔 3 notificações por ler" (vazio quando não há).</summary>
+        public string TextoNotificacoes
+        {
+            get => _textoNotificacoes;
+            set
+            {
+                if (Definir(ref _textoNotificacoes, value))
+                {
+                    Notificar(nameof(TemNotificacoes));
+                }
+            }
+        }
+
+        public bool TemNotificacoes => !string.IsNullOrEmpty(_textoNotificacoes);
+
         public async Task CarregarAsync()
         {
             if (Ocupado)
@@ -139,6 +155,13 @@ namespace WishBound.Mobile.ViewModels
                 {
                     Candidatas.Add(candidata);
                 }
+
+                // Sino: quantas notificações há por ler (se falhar, não se mostra nada)
+                var contagem = await _api.ContarNotificacoesAsync(utilizador.Id);
+                var naoLidas = contagem.Sucesso ? contagem.Dados : 0;
+                TextoNotificacoes = naoLidas <= 0
+                    ? string.Empty
+                    : "🔔 " + naoLidas + (naoLidas == 1 ? " notificação por ler" : " notificações por ler");
             }
             finally
             {
@@ -188,6 +211,7 @@ namespace WishBound.Mobile.ViewModels
             Companheira = null;
             Saudacao = string.Empty;
             Mensagem = string.Empty;
+            TextoNotificacoes = string.Empty;
             Candidatas.Clear();
 
             await Shell.Current.GoToAsync("//login");

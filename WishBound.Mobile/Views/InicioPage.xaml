@@ -27,6 +27,18 @@
 
             <ActivityIndicator IsRunning="{Binding Ocupado}" IsVisible="{Binding Ocupado}" />
 
+            <!-- Sino: toca para ir à aba Notificações -->
+            <Border IsVisible="{Binding TemNotificacoes}"
+                    BackgroundColor="{StaticResource FundoCartao}"
+                    Stroke="{StaticResource Dourado}"
+                    StrokeShape="RoundRectangle 10"
+                    Padding="12,8">
+                <Border.GestureRecognizers>
+                    <TapGestureRecognizer Tapped="AoTocarNotificacoes" />
+                </Border.GestureRecognizers>
+                <Label Text="{Binding TextoNotificacoes}" TextColor="{StaticResource Dourado}" FontAttributes="Bold" />
+            </Border>
+
             <!-- Companheira escolhida -->
             <Border Style="{StaticResource Cartao}" IsVisible="{Binding TemCompanheira}">
                 <VerticalStackLayout Spacing="12" HorizontalOptions="Fill">

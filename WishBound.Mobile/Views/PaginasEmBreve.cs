@@ -1,9 +1,9 @@
 namespace WishBound.Mobile.Views
 {
     // ============================================================
-    //  Abas que ainda não foram construídas. Ficam já na barra para
-    //  a estrutura da app estar completa; cada uma vai ser trocada
-    //  por uma página a sério (XAML + view model) nas próximas fases.
+    //  Base das abas "Em breve" usada enquanto a app estava a ser
+    //  construída. Todas as abas já têm página própria, por isso
+    //  este ficheiro já não é usado e pode ser apagado.
     // ============================================================
     public abstract class PaginaEmBreve : ContentPage
     {
@@ -18,36 +18,11 @@ namespace WishBound.Mobile.Views
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label
-                    {
-                        Text = titulo,
-                        FontSize = 26,
-                        FontAttributes = FontAttributes.Bold,
-                        TextColor = Color.FromArgb("#f3c04f"),
-                        HorizontalOptions = LayoutOptions.Center
-                    },
-                    new Label
-                    {
-                        Text = "Em breve",
-                        FontSize = 16,
-                        HorizontalOptions = LayoutOptions.Center
-                    },
-                    new Label
-                    {
-                        Text = descricao,
-                        TextColor = Color.FromArgb("#a79fc4"),
-                        HorizontalTextAlignment = TextAlignment.Center
-                    }
+                    new Label { Text = titulo, FontSize = 26, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#f3c04f"), HorizontalOptions = LayoutOptions.Center },
+                    new Label { Text = "Em breve", FontSize = 16, HorizontalOptions = LayoutOptions.Center },
+                    new Label { Text = descricao, TextColor = Color.FromArgb("#a79fc4"), HorizontalTextAlignment = TextAlignment.Center }
                 }
             };
-        }
-    }
-
-    public class NotificacoesPage : PaginaEmBreve
-    {
-        public NotificacoesPage()
-            : base("Notificações", "As mensagens das tuas personagens e os avisos de eventos.")
-        {
         }
     }
 }
