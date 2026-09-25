@@ -13,7 +13,7 @@ namespace WishBound.ClientAPI.Controllers
     /// Área de gestão (administração).
     ///
     /// PERSONAGENS — o CRUD completo através da WebAPI:
-    ///   Index  -> SELECT
+    ///   Personagens -> SELECT
     ///   Criar  -> INSERT
     ///   Editar -> UPDATE
     ///   Apagar -> DELETE
@@ -43,7 +43,7 @@ namespace WishBound.ClientAPI.Controllers
     /// página "Acesso negado".
     /// </summary>
     [Authorize(Roles = "Admin")]
-    public class GestaoController : Controller
+    public partial class GestaoController : Controller
     {
         private readonly WishBoundApiService _api;
 
@@ -59,8 +59,9 @@ namespace WishBound.ClientAPI.Controllers
             ViewBag.Raridades = new SelectList(raridades, "Id", "Nome", selecionada);
         }
 
-        // GET: /Gestao  (SELECT)
-        public async Task<IActionResult> Index()
+        // GET: /Gestao/Personagens  (SELECT)
+        // (o /Gestao passou a ser o Painel — GestaoController.Plataforma.cs)
+        public async Task<IActionResult> Personagens()
         {
             try
             {
@@ -92,7 +93,7 @@ namespace WishBound.ClientAPI.Controllers
             catch (Exception)
             {
                 TempData["Erro"] = "Não foi possível contactar a API. Verifique se a WishBound.WebAPI está em execução.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
         }
 
@@ -120,12 +121,12 @@ namespace WishBound.ClientAPI.Controllers
                 }
 
                 TempData["Sucesso"] = "Personagem \"" + personagem.Nome + "\" criada com sucesso!";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
             catch (Exception)
             {
                 TempData["Erro"] = "Não foi possível criar a personagem. Verifique se a WishBound.WebAPI está em execução.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
         }
 
@@ -139,7 +140,7 @@ namespace WishBound.ClientAPI.Controllers
                 if (personagem == null)
                 {
                     TempData["Erro"] = "A personagem que tentou editar não existe.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Personagens));
                 }
 
                 await CarregarRaridadesAsync(personagem.RaridadeId);
@@ -148,7 +149,7 @@ namespace WishBound.ClientAPI.Controllers
             catch (Exception)
             {
                 TempData["Erro"] = "Não foi possível obter a personagem. Verifique se a WishBound.WebAPI está em execução.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
         }
 
@@ -162,7 +163,7 @@ namespace WishBound.ClientAPI.Controllers
                 if (id != personagem.Id)
                 {
                     TempData["Erro"] = "Pedido inválido: os identificadores não coincidem.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Personagens));
                 }
 
                 if (!ModelState.IsValid)
@@ -181,12 +182,12 @@ namespace WishBound.ClientAPI.Controllers
                 }
 
                 TempData["Sucesso"] = "Personagem \"" + personagem.Nome + "\" atualizada com sucesso!";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
             catch (Exception)
             {
                 TempData["Erro"] = "Não foi possível atualizar a personagem. Verifique se a WishBound.WebAPI está em execução.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
         }
 
@@ -200,7 +201,7 @@ namespace WishBound.ClientAPI.Controllers
                 if (personagem == null)
                 {
                     TempData["Erro"] = "A personagem que tentou apagar não existe.";
-                    return RedirectToAction(nameof(Index));
+                    return RedirectToAction(nameof(Personagens));
                 }
 
                 return View(personagem);
@@ -208,7 +209,7 @@ namespace WishBound.ClientAPI.Controllers
             catch (Exception)
             {
                 TempData["Erro"] = "Não foi possível obter a personagem. Verifique se a WishBound.WebAPI está em execução.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
         }
 
@@ -230,12 +231,12 @@ namespace WishBound.ClientAPI.Controllers
                     TempData["Sucesso"] = "Personagem apagada com sucesso.";
                 }
 
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
             catch (Exception)
             {
                 TempData["Erro"] = "Não foi possível apagar a personagem. Verifique se a WishBound.WebAPI está em execução.";
-                return RedirectToAction(nameof(Index));
+                return RedirectToAction(nameof(Personagens));
             }
         }
     

@@ -537,3 +537,460 @@
 .tipo-aleatoria { background: rgba(208, 70, 138, .18); color: #f39ac6; }
 .tipo-diaria    { background: rgba(120, 140, 255, .18); color: #aab4ff; }
 .categoria-mensagem { background: rgba(170, 180, 255, 0.18); color: #c9cfff; }
+
+/* ============================================================
+   Gestão da plataforma (Painel, Estatísticas, Raridades,
+   Banners, Moedas, Notificações)
+   ============================================================ */
+
+/* A barra lateral tem mais entradas: desliza se não couber */
+.gestao-lateral {
+    overflow-y: auto;
+}
+
+.gestao-menu a.ativo {
+    background: var(--fundo-cartao);
+    color: var(--dourado);
+}
+
+.gestao-estatistica-ligacao {
+    color: inherit;
+    transition: border-color 0.2s;
+}
+
+.gestao-estatistica-ligacao:hover {
+    border-color: var(--roxo);
+}
+
+.cartao-topo {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.numero,
+.tabela th.numero,
+.tabela td.numero {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.categoria-raridade    { background: rgba(243, 192, 79, 0.14); color: #f7d98b; }
+.categoria-banner      { background: rgba(139, 92, 246, 0.25); color: #d7c6ff; }
+.categoria-notificacao { background: rgba(66, 133, 244, 0.2); color: #9dbdff; }
+.categoria-exportacao  { background: rgba(167, 159, 196, 0.18); color: var(--texto-suave); }
+
+/* ---------- Alertas do painel ---------- */
+
+.lista-alertas {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.alerta-painel {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 12px;
+    border-radius: 10px;
+    background: var(--fundo-suave);
+    border-left: 3px solid var(--texto-suave);
+    font-size: 0.92rem;
+}
+
+.alerta-painel.alerta-aviso { border-left-color: #ffb047; }
+.alerta-painel .alerta-texto { flex: 1; }
+
+/* ---------- Lista de banners (painel) ---------- */
+
+.lista-banners {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.lista-banners li {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+}
+
+.lista-banners-nome {
+    font-weight: 600;
+    color: var(--texto);
+}
+
+.lista-banners-info {
+    flex-basis: 100%;
+    margin-top: 0;
+}
+
+/* ---------- Gráficos (colunas e barras, só HTML/CSS) ---------- */
+
+.grafico-colunas {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 130px;
+    margin-top: 14px;
+    border-bottom: 1px solid var(--borda);
+}
+
+.grafico-colunas.grafico-alto { height: 180px; }
+.grafico-colunas.grafico-denso { gap: 1px; }
+
+.grafico-coluna {
+    position: relative;
+    flex: 1;
+    height: 100%;
+    display: flex;
+    align-items: flex-end;
+    outline: none;
+}
+
+.grafico-coluna-barra {
+    display: block;
+    width: 100%;
+    min-height: 2px;
+    background: var(--roxo);
+    border-radius: 4px 4px 0 0;
+    transition: background 0.15s;
+}
+
+.grafico-denso .grafico-coluna-barra { border-radius: 2px 2px 0 0; }
+
+.grafico-coluna:hover .grafico-coluna-barra,
+.grafico-coluna:focus .grafico-coluna-barra {
+    background: var(--dourado);
+}
+
+/* Dica ao passar o rato (texto em data-dica) */
+[data-dica] { position: relative; }
+
+[data-dica]:hover::after,
+[data-dica]:focus::after {
+    content: attr(data-dica);
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    background: #0d0a16;
+    color: var(--texto);
+    border: 1px solid var(--borda);
+    padding: 5px 9px;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    z-index: 5;
+    pointer-events: none;
+}
+
+.grafico-eixo {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.78rem;
+    color: var(--texto-suave);
+    margin-top: 6px;
+}
+
+.grafico-barras {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    margin-top: 12px;
+}
+
+.grafico-barras li {
+    display: grid;
+    grid-template-columns: minmax(90px, 32%) 1fr auto;
+    align-items: center;
+    gap: 10px;
+    outline: none;
+}
+
+.grafico-barras li[data-dica]:hover::after,
+.grafico-barras li[data-dica]:focus::after {
+    left: auto;
+    right: 0;
+    transform: none;
+}
+
+.grafico-barras-nome {
+    font-size: 0.88rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.grafico-barras-pista {
+    position: relative;
+    display: block;
+    height: 10px;
+    background: var(--fundo-suave);
+    border-radius: 999px;
+    min-width: 60px;
+}
+
+.grafico-barras-valor {
+    display: block;
+    height: 100%;
+    min-width: 3px;
+    background: var(--roxo);
+    border-radius: 999px;
+}
+
+.grafico-barras-marca {
+    position: absolute;
+    top: -3px;
+    width: 2px;
+    height: 16px;
+    background: var(--texto);
+    border-radius: 1px;
+    opacity: 0.85;
+}
+
+.grafico-barras-numero {
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.celula-barra {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    min-width: 180px;
+}
+
+.celula-barra .grafico-barras-pista { flex: 1; }
+
+/* Barra empilhada (Raridades) */
+.barra-empilhada {
+    display: flex;
+    height: 16px;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 12px 0 10px;
+    gap: 2px;
+    background: var(--fundo-suave);
+}
+
+.barra-empilhada span { display: block; height: 100%; min-width: 3px; }
+
+.legenda {
+    list-style: none;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 16px;
+    font-size: 0.85rem;
+}
+
+.legenda li { display: flex; align-items: center; gap: 6px; }
+
+/* ---------- Fichas (Raridades) ---------- */
+
+.grelha-fichas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 0 18px;
+}
+
+.ficha-nova { border-style: dashed; }
+
+.campos-lado-a-lado {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 10px;
+}
+
+.campos-lado-a-lado .campo input,
+.campos-lado-a-lado .campo select {
+    width: 100%;
+    min-width: 0;
+}
+
+.campo-cor input[type="color"] {
+    width: 100%;
+    height: 40px;
+    padding: 2px;
+    border-radius: 8px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    cursor: pointer;
+}
+
+.formulario-apagar { margin-top: 10px; }
+
+.caixa-opcao {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    cursor: pointer;
+}
+
+.formulario-compacto textarea,
+.formulario-compacto select,
+.formulario-linha textarea {
+    padding: 8px 10px;
+    border-radius: 8px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    color: var(--texto);
+    font-size: 0.9rem;
+    font-family: inherit;
+}
+
+.campo-largo { flex: 1; min-width: 180px; }
+
+/* ---------- Pool do banner ---------- */
+
+.pool-grupo {
+    border-top: 1px solid var(--borda);
+    padding: 12px 0;
+}
+
+.pool-grupo-topo {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.pool-quota {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.85rem;
+    color: var(--texto-suave);
+}
+
+.pool-quota input {
+    width: 56px;
+    padding: 6px 8px;
+    border-radius: 8px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    color: var(--texto);
+    text-align: right;
+}
+
+.pool-lista {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 8px;
+}
+
+.pool-lista li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+    opacity: 0.6;
+    transition: opacity 0.15s, border-color 0.15s;
+}
+
+.pool-lista li.pool-dentro {
+    opacity: 1;
+    border-color: var(--roxo);
+}
+
+.pool-personagem {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    cursor: pointer;
+}
+
+.pool-personagem img {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--fundo-cartao);
+}
+
+.pool-destaque {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.8rem;
+    color: var(--dourado);
+    cursor: pointer;
+}
+
+/* ---------- Dias de recompensa ---------- */
+
+.lista-dias {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.lista-dias li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.lista-dias-numero {
+    min-width: 52px;
+    font-weight: 600;
+    color: var(--dourado);
+}
+
+.lista-dias .formulario-linha.compacta { margin-top: 0; flex: 1; }
+.lista-dias .formulario-linha.compacta.formulario-fixo { flex: 0 0 auto; }
+
+.zona-perigo { border-color: rgba(224, 122, 114, 0.45); }
+
+.lista-simples {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.9rem;
+}
+
+/* ---------- Exportar ---------- */
+
+.grelha-exportar {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.exportar-item {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+    border-radius: 12px;
+    border: 1px solid var(--borda);
+    background: var(--fundo-suave);
+}
+
+@media (max-width: 700px) {
+    .campos-lado-a-lado { grid-template-columns: 1fr; }
+    .grafico-barras li { grid-template-columns: 1fr auto; }
+    .grafico-barras-numero { order: 2; }
+    .grafico-barras-pista { grid-column: 1 / -1; order: 3; }
+}

@@ -25,6 +25,12 @@ namespace WishBound.WebAPI.Models
         public const string AcaoAmizade = "Amizade";
         public const string AcaoRecompensa = "Recompensa";
 
+        // Gestão da plataforma (fase de administração & estatísticas)
+        public const string AcaoRaridade = "Raridade";
+        public const string AcaoBanner = "Banner";
+        public const string AcaoNotificacao = "Notificacao";
+        public const string AcaoExportacao = "Exportacao";
+
         [Key]
         [Column("LogId")]
         public int Id { get; set; }

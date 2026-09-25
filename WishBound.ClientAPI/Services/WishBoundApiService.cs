@@ -14,7 +14,7 @@ namespace WishBound.ClientAPI.Services
     /// Os controllers usam este serviço em vez de falarem diretamente com o HttpClient.
     /// Os erros de rede são tratados (try-catch) nos controllers.
     /// </summary>
-    public class WishBoundApiService
+    public partial class WishBoundApiService
     {
         private readonly HttpClient _http;
 

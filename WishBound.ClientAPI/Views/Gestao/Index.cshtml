@@ -1,57 +1,200 @@
-@model List<Personagem>
+@using WishBound.ClientAPI.Models.Gestao
+@model PainelViewModel
 @{
-    ViewData["Title"] = "Painel de personagens";
+    ViewData["Title"] = "Painel";
     Layout = "_LayoutGestao";
+    var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-PT");
+    int maximoDia = Math.Max(1, Model.InvocacoesUltimos14Dias.Count == 0 ? 1 : Model.InvocacoesUltimos14Dias.Max(d => d.Total));
+    int totalDias = Model.InvocacoesUltimos14Dias.Sum(d => d.Total);
 }
 
 <div class="gestao-topo">
-    <h1>Painel de personagens</h1>
-    <a class="botao botao-destaque" asp-controller="Gestao" asp-action="Criar">&#43; Nova personagem</a>
+    <h1>Painel</h1>
+    <div class="gestao-topo-acoes">
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Estatisticas">&#128200; Estatísticas</a>
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Exportar" asp-route-conjunto="estatisticas" asp-route-formato="pdf">&#8681; Relatório PDF</a>
+    </div>
 </div>
 
 <p class="texto-suave">
-    Nesta área pode gerir as personagens da plataforma:
-    criar (INSERT), consultar (SELECT), editar (UPDATE) e apagar (DELETE).
+    O estado da plataforma num relance: contas, invocações, economia, banners
+    a decorrer e o que precisa de atenção.
 </p>
 
-@if (Model.Count == 0)
-{
-    <div class="caixa-vazia">
-        <p>Não existem personagens registadas.</p>
+@* ----- Números principais ----- *@
+<div class="gestao-estatisticas">
+    <a class="gestao-estatistica gestao-estatistica-ligacao" asp-controller="Gestao" asp-action="Utilizadores" asp-route-filtro="ativos">
+        <span class="gestao-estatistica-valor">@Model.ContasAtivas.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">contas ativas de @Model.ContasTotal.ToString("N0", pt)</span>
+    </a>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.NovasContas7Dias.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">contas novas · 7 dias</span>
     </div>
-}
-else
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.ComLogin7Dias.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">com login · 7 dias</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.InvocacoesHoje.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">invocações hoje · @Model.Invocacoes7Dias.ToString("N0", pt) em 7 dias</span>
+    </div>
+    <a class="gestao-estatistica gestao-estatistica-ligacao" asp-controller="Gestao" asp-action="Moedas">
+        <span class="gestao-estatistica-valor">@Model.MoedasEmCirculacao.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">Moedas em circulação · @Model.BilhetesEmCirculacao.ToString("N0", pt) bilhetes</span>
+    </a>
+    <a class="gestao-estatistica gestao-estatistica-ligacao" asp-controller="Gestao" asp-action="Notificacoes">
+        <span class="gestao-estatistica-valor">@Model.NotificacoesNaoLidas.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">notificações por ler</span>
+    </a>
+</div>
+
+@* ----- Alertas ----- *@
+@if (Model.Alertas.Count > 0)
 {
-    <table class="tabela">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Imagem</th>
-                <th>Nome</th>
-                <th>Raridade</th>
-                <th>Criada em</th>
-                <th>Ações</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var personagem in Model)
+    <section class="gestao-cartao">
+        <h3>A precisar de atenção</h3>
+        <ul class="lista-alertas">
+            @foreach (var alerta in Model.Alertas)
             {
-                <tr>
-                    <td>@personagem.Id</td>
-                    <td>
-                        <img class="tabela-miniatura" src="@(string.IsNullOrEmpty(personagem.ImagemUrl) ? "/img/personagens/desconhecido.svg" : personagem.ImagemUrl)" alt="Miniatura de @personagem.Nome" />
-                    </td>
-                    <td>@personagem.Nome</td>
-                    <td>
-                        <span class="etiqueta-raridade" style="background:@(personagem.Raridade?.Cor ?? "#9aa5b1")">@(personagem.Raridade?.Nome ?? "-")</span>
-                    </td>
-                    <td>@personagem.DataCriacao.ToString("dd/MM/yyyy")</td>
-                    <td class="tabela-acoes">
-                        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Editar" asp-route-id="@personagem.Id">Editar</a>
-                        <a class="botao botao-pequeno botao-perigo" asp-controller="Gestao" asp-action="Apagar" asp-route-id="@personagem.Id">Apagar</a>
-                    </td>
-                </tr>
+                <li class="alerta-painel alerta-@alerta.Nivel">
+                    <span class="alerta-icone" aria-hidden="true">@(alerta.Nivel == "aviso" ? "⚠" : "ℹ")</span>
+                    <span class="alerta-texto">@alerta.Texto</span>
+                    @switch (alerta.Destino)
+                    {
+                        case "Banner":
+                            <a class="ligacao" asp-controller="Gestao" asp-action="EditarBanner" asp-route-id="@alerta.DestinoId">Abrir banner</a>
+                            break;
+                        case "Banners":
+                            <a class="ligacao" asp-controller="Gestao" asp-action="Banners">Ver banners</a>
+                            break;
+                        case "Raridades":
+                            <a class="ligacao" asp-controller="Gestao" asp-action="Raridades">Ver raridades</a>
+                            break;
+                        case "Personagens":
+                            <a class="ligacao" asp-controller="Gestao" asp-action="Personagens">Ver personagens</a>
+                            break;
+                        case "Utilizadores":
+                            <a class="ligacao" asp-controller="Gestao" asp-action="Utilizadores" asp-route-filtro="porvalidar">Ver contas</a>
+                            break;
+                    }
+                </li>
             }
-        </tbody>
-    </table>
+        </ul>
+    </section>
 }
+
+<div class="gestao-duas-colunas">
+    @* ----- Banners ativos ----- *@
+    <section class="gestao-cartao">
+        <div class="cartao-topo">
+            <h3>Banners ativos</h3>
+            <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Banners">+ Novo evento</a>
+        </div>
+        @if (Model.Banners.Count == 0)
+        {
+            <p class="texto-suave">Nenhum banner ativo.</p>
+        }
+        else
+        {
+            <ul class="lista-banners">
+                @foreach (var b in Model.Banners)
+                {
+                    <li>
+                        <a class="lista-banners-nome" asp-controller="Gestao" asp-action="EditarBanner" asp-route-id="@b.Id">@b.Nome</a>
+                        <span class="etiqueta-estado @(b.EhEvento ? "admin" : "google")">@b.TipoBanner</span>
+                        <span class="etiqueta-estado @b.ClasseEstado">@b.Estado</span>
+                        <span class="texto-suave nota-pequena lista-banners-info">
+                            @b.Personagens personagens@(b.RateUp > 0 ? " · " + b.RateUp + " em destaque" : "")@(b.EhEvento ? " · " + b.Recompensas + " dias de recompensa" : "")
+                            @if (b.Estado == "A decorrer" && !b.EhPermanente)
+                            {
+                                <span> · termina em <span class="contagem" data-fim="@b.FimIso">…</span></span>
+                            }
+                            else if (b.Estado == "Agendado")
+                            {
+                                <span> · começa a @BannerAdmin.Local(b.DataInicio).ToString("dd/MM HH:mm")</span>
+                            }
+                        </span>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+
+    @* ----- Invocações dos últimos 14 dias ----- *@
+    <section class="gestao-cartao">
+        <div class="cartao-topo">
+            <h3>Invocações · últimos 14 dias</h3>
+            <span class="texto-suave nota-pequena">@totalDias.ToString("N0", pt) no total</span>
+        </div>
+        @if (totalDias == 0)
+        {
+            <p class="texto-suave">Ainda não houve invocações nestes dias.</p>
+        }
+        else
+        {
+            <div class="grafico-colunas" role="img" aria-label="Invocações por dia nos últimos 14 dias">
+                @foreach (var dia in Model.InvocacoesUltimos14Dias)
+                {
+                    double altura = 100.0 * dia.Total / maximoDia;
+                    <div class="grafico-coluna" tabindex="0" data-dica="@dia.Data.ToString("ddd dd/MM", pt): @dia.Total.ToString("N0", pt)">
+                        <span class="grafico-coluna-barra" style="height:@(altura.ToString("0.#", System.Globalization.CultureInfo.InvariantCulture))%"></span>
+                    </div>
+                }
+            </div>
+            <div class="grafico-eixo">
+                <span>@Model.InvocacoesUltimos14Dias.First().Data.ToString("dd/MM")</span>
+                <span>máx. @maximoDia.ToString("N0", pt)/dia</span>
+                <span>hoje</span>
+            </div>
+        }
+    </section>
+</div>
+
+@* ----- Últimas ações ----- *@
+<section class="gestao-cartao">
+    <div class="cartao-topo">
+        <h3>Últimas ações de administração</h3>
+        <a class="ligacao" asp-controller="Gestao" asp-action="Acoes">Ver o registo completo</a>
+    </div>
+    @if (Model.UltimasAcoes.Count == 0)
+    {
+        <p class="texto-suave">Ainda não há ações registadas.</p>
+    }
+    else
+    {
+        <table class="tabela tabela-compacta">
+            <tbody>
+                @foreach (var acao in Model.UltimasAcoes)
+                {
+                    <tr>
+                        <td class="texto-suave">@acao.Data.ToLocalTime().ToString("dd/MM HH:mm")</td>
+                        <td>@acao.AdminNome</td>
+                        <td>
+                            <span class="etiqueta-categoria categoria-@acao.Categoria.ToLowerInvariant()">@acao.Categoria</span>
+                            @acao.Acao.Substring(Math.Min(acao.Acao.Length, acao.Categoria.Length + 1)).Trim()
+                        </td>
+                        <td>
+                            @if (acao.UtilizadorAlvoId.HasValue)
+                            {
+                                <a class="ligacao" asp-controller="Gestao" asp-action="Utilizador" asp-route-id="@acao.UtilizadorAlvoId">@acao.UtilizadorAlvoNome</a>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@* ----- Atalhos ----- *@
+<section class="gestao-cartao">
+    <h3>Atalhos</h3>
+    <div class="botoes-estado">
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Criar">+ Nova personagem</a>
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Banners">+ Novo banner / evento</a>
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Notificacoes">&#128276; Enviar notificação</a>
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Moedas">&#127873; Oferta a todas as contas</a>
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Estatisticas" asp-fragment="exportar">&#8681; Exportar dados</a>
+    </div>
+</section>

@@ -25,21 +25,36 @@
                 <img src="~/img/logo-icon.svg" alt="Ícone WishBound" />
                 <span>WishBound</span>
             </a>
+            @{
+                // Página atual, para realçar a ligação no menu
+                string acaoAtual = ViewContext.RouteData.Values["action"]?.ToString() ?? string.Empty;
+                string Ativo(params string[] acoes) => acoes.Contains(acaoAtual) ? "ativo" : string.Empty;
+            }
             <p class="gestao-titulo-menu">Administração</p>
             <nav class="gestao-menu">
-                <a asp-controller="Gestao" asp-action="Index">&#9783; Painel de personagens</a>
-                <a asp-controller="Gestao" asp-action="Criar">&#43; Nova personagem</a>
-                <a asp-controller="Gestao" asp-action="Mensagens">&#128172; Mensagens</a>
+                <a class="@Ativo("Index")" asp-controller="Gestao" asp-action="Index">&#9783; Painel</a>
+                <a class="@Ativo("Estatisticas")" asp-controller="Gestao" asp-action="Estatisticas">&#128200; Estatísticas</a>
+            </nav>
+            <p class="gestao-titulo-menu">Conteúdo</p>
+            <nav class="gestao-menu">
+                <a class="@Ativo("Personagens", "Criar", "Editar", "Apagar")" asp-controller="Gestao" asp-action="Personagens">&#10022; Personagens</a>
+                <a class="@Ativo("Raridades")" asp-controller="Gestao" asp-action="Raridades">&#9733; Raridades</a>
+                <a class="@Ativo("Banners", "EditarBanner")" asp-controller="Gestao" asp-action="Banners">&#127881; Banners e eventos</a>
+                <a class="@Ativo("Mensagens", "EditarMensagem")" asp-controller="Gestao" asp-action="Mensagens">&#128172; Mensagens</a>
+            </nav>
+            <p class="gestao-titulo-menu">Economia e avisos</p>
+            <nav class="gestao-menu">
+                <a class="@Ativo("Moedas")" asp-controller="Gestao" asp-action="Moedas">&#129689; Moedas</a>
+                <a class="@Ativo("Notificacoes")" asp-controller="Gestao" asp-action="Notificacoes">&#128276; Notificações</a>
             </nav>
             <p class="gestao-titulo-menu">Contas</p>
             <nav class="gestao-menu">
-                <a asp-controller="Gestao" asp-action="Utilizadores">&#128101; Utilizadores</a>
-                <a asp-controller="Gestao" asp-action="Acoes">&#128220; Registo de ações</a>
+                <a class="@Ativo("Utilizadores", "Utilizador")" asp-controller="Gestao" asp-action="Utilizadores">&#128101; Utilizadores</a>
+                <a class="@Ativo("Acoes")" asp-controller="Gestao" asp-action="Acoes">&#128220; Registo de ações</a>
             </nav>
             <p class="gestao-titulo-menu">Site público</p>
             <nav class="gestao-menu">
                 <a asp-controller="Home" asp-action="Index">&#8592; Voltar ao site</a>
-                <a asp-controller="Personagens" asp-action="Index">Ver coleção</a>
             </nav>
 
             @* Sessão do administrador autenticado *@
@@ -65,6 +80,39 @@
             @RenderBody()
         </main>
     </div>
+
+    @* Scripts comuns da gestão:
+       - data-pergunta="..." num botão pede confirmação antes de submeter;
+       - data-fim="<ISO UTC>" mostra uma contagem decrescente (como no site). *@
+    <script>
+        (function () {
+            document.querySelectorAll('[data-pergunta]').forEach(function (el) {
+                el.addEventListener('click', function (evento) {
+                    if (!window.confirm(el.getAttribute('data-pergunta'))) {
+                        evento.preventDefault();
+                    }
+                });
+            });
+
+            var contagens = document.querySelectorAll('[data-fim]');
+            if (contagens.length === 0) { return; }
+            function dois(n) { return (n < 10 ? '0' : '') + n; }
+            function atualizar() {
+                var agora = Date.now();
+                contagens.forEach(function (el) {
+                    var fim = Date.parse(el.getAttribute('data-fim'));
+                    if (isNaN(fim)) { return; }
+                    var resta = Math.floor((fim - agora) / 1000);
+                    if (resta <= 0) { el.textContent = 'terminado'; return; }
+                    var d = Math.floor(resta / 86400), h = Math.floor((resta % 86400) / 3600);
+                    var m = Math.floor((resta % 3600) / 60), s = resta % 60;
+                    el.textContent = (d > 0 ? d + 'd ' : '') + dois(h) + ':' + dois(m) + ':' + dois(s);
+                });
+            }
+            atualizar();
+            setInterval(atualizar, 1000);
+        })();
+    </script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>
