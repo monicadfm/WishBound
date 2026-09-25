@@ -1,0 +1,162 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model RaridadesViewModel
+@{
+    ViewData["Title"] = "Raridades";
+    Layout = "_LayoutGestao";
+    var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-PT");
+    var escaloes = new[] { (1, "1 · Comum"), (2, "2 · Raro"), (3, "3 · Épico"), (4, "4 · Lendário"), (5, "5 · Mítico") };
+}
+
+<div class="gestao-topo">
+    <h1>Raridades</h1>
+</div>
+
+<p class="texto-suave">
+    Cada raridade tem uma <strong>probabilidade</strong> (o peso no sorteio da
+    invocação) e um <strong>escalão</strong> de 1 a 5: é o escalão que decide a
+    garantia do pity (Épica aos 10, Lendária/Mítica aos 90), o 50/50 dos
+    eventos e o nível máximo de amizade (escalão + 2). Alterações ficam no
+    registo de ações.
+</p>
+
+@* ----- Distribuição (barra empilhada com as cores das raridades) ----- *@
+<section class="gestao-cartao">
+    <div class="cartao-topo">
+        <h3>Distribuição atual</h3>
+        <span class="etiqueta-estado @(Model.SomaCerta ? "ok" : "aviso")">
+            Soma: @((Model.SomaProbabilidades * 100m).ToString("0.##", pt))%
+        </span>
+    </div>
+    @if (!Model.SomaCerta)
+    {
+        <p class="texto-suave nota-pequena">
+            As probabilidades não somam 100%. O sorteio continua a funcionar
+            (divide cada peso pela soma — a coluna "efetiva" é o que acontece de
+            facto), mas a tabela de probabilidades mostrada aos jogadores fica
+            diferente da real. Ajuste os valores até a soma dar 100%.
+        </p>
+    }
+    <div class="barra-empilhada" role="img" aria-label="Probabilidade efetiva de cada raridade">
+        @foreach (var r in Model.Itens.Where(r => r.PercentagemEfetiva > 0))
+        {
+            <span style="width:@(r.PercentagemEfetiva.ToString("0.##", System.Globalization.CultureInfo.InvariantCulture))%; background:@(r.Cor ?? "#9aa5b1")"
+                  title="@r.Nome: @r.PercentagemEfetiva.ToString("0.##", pt)%"></span>
+        }
+    </div>
+    <ul class="legenda">
+        @foreach (var r in Model.Itens)
+        {
+            <li><span class="ponto-cor" style="background:@(r.Cor ?? "#9aa5b1")"></span>@r.Nome <strong>@r.PercentagemEfetiva.ToString("0.##", pt)%</strong></li>
+        }
+    </ul>
+</section>
+
+@* ----- Uma ficha por raridade ----- *@
+<div class="grelha-fichas">
+    @foreach (var r in Model.Itens)
+    {
+        <section class="gestao-cartao ficha" style="border-top: 4px solid @(r.Cor ?? "#9aa5b1")">
+            <div class="cartao-topo">
+                <h3>@r.Nome <span class="texto-suave nota-pequena">#@r.Id</span></h3>
+                <span class="texto-suave nota-pequena">@r.Personagens personagens · @r.Invocacoes.ToString("N0", pt) invocações</span>
+            </div>
+
+            <form method="post" asp-controller="Gestao" asp-action="GuardarRaridade" class="formulario-compacto">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="id" value="@r.Id" />
+                <div class="campos-lado-a-lado">
+                    <div class="campo">
+                        <label for="nome-@r.Id">Nome</label>
+                        <input id="nome-@r.Id" name="nome" value="@r.Nome" maxlength="30" required />
+                    </div>
+                    <div class="campo campo-cor">
+                        <label for="cor-@r.Id">Cor</label>
+                        <input id="cor-@r.Id" name="cor" type="color" value="@(r.Cor ?? "#9aa5b1")" />
+                    </div>
+                </div>
+                <div class="campos-lado-a-lado">
+                    <div class="campo">
+                        <label for="prob-@r.Id">Probabilidade (%)</label>
+                        <input id="prob-@r.Id" name="percentagem" inputmode="decimal" value="@r.PercentagemFormulario" required />
+                    </div>
+                    <div class="campo">
+                        <label for="ordem-@r.Id">Escalão</label>
+                        <select id="ordem-@r.Id" name="ordem">
+                            @foreach (var (valor, texto) in escaloes)
+                            {
+                                <option value="@valor" selected="@(valor == r.Ordem)">@texto</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                <p class="texto-suave nota-pequena">
+                    Efetiva: @r.PercentagemEfetiva.ToString("0.##", pt)% · amizade até ao nível @r.NivelAmizadeMaximo
+                </p>
+                <div class="campo">
+                    <label for="motivo-@r.Id">Motivo (opcional)</label>
+                    <input id="motivo-@r.Id" name="motivo" maxlength="255" />
+                </div>
+                <div class="botoes-estado">
+                    <button type="submit" class="botao botao-pequeno botao-destaque">Guardar</button>
+                </div>
+            </form>
+
+            @if (r.PodeApagar)
+            {
+                <form method="post" asp-controller="Gestao" asp-action="ApagarRaridade" asp-route-id="@r.Id" class="formulario-apagar">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="botao botao-pequeno botao-perigo"
+                            data-pergunta="Apagar a raridade @(r.Nome)?">Apagar</button>
+                </form>
+            }
+            else
+            {
+                <p class="texto-suave nota-pequena">Não pode ser apagada: tem personagens ou histórico de invocações.</p>
+            }
+        </section>
+    }
+
+    @* ----- Nova raridade ----- *@
+    <section class="gestao-cartao ficha ficha-nova">
+        <h3>+ Nova raridade</h3>
+        <form method="post" asp-controller="Gestao" asp-action="GuardarRaridade" class="formulario-compacto">
+            @Html.AntiForgeryToken()
+            <div class="campos-lado-a-lado">
+                <div class="campo">
+                    <label for="nome-nova">Nome</label>
+                    <input id="nome-nova" name="nome" maxlength="30" placeholder="ex.: Celestial" required />
+                </div>
+                <div class="campo campo-cor">
+                    <label for="cor-nova">Cor</label>
+                    <input id="cor-nova" name="cor" type="color" value="#4fc2c2" />
+                </div>
+            </div>
+            <div class="campos-lado-a-lado">
+                <div class="campo">
+                    <label for="prob-nova">Probabilidade (%)</label>
+                    <input id="prob-nova" name="percentagem" inputmode="decimal" placeholder="ex.: 1.5" required />
+                </div>
+                <div class="campo">
+                    <label for="ordem-nova">Escalão</label>
+                    <select id="ordem-nova" name="ordem">
+                        @foreach (var (valor, texto) in escaloes)
+                        {
+                            <option value="@valor" selected="@(valor == 4)">@texto</option>
+                        }
+                    </select>
+                </div>
+            </div>
+            <p class="texto-suave nota-pequena">
+                Uma raridade nova segue as regras do escalão escolhido. Lembre-se
+                de baixar outra probabilidade para a soma continuar nos 100%.
+            </p>
+            <div class="campo">
+                <label for="motivo-nova">Motivo (opcional)</label>
+                <input id="motivo-nova" name="motivo" maxlength="255" />
+            </div>
+            <div class="botoes-estado">
+                <button type="submit" class="botao botao-pequeno botao-destaque">Criar raridade</button>
+            </div>
+        </form>
+    </section>
+</div>
