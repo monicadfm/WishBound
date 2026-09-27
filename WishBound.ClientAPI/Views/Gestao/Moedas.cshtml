@@ -1,0 +1,167 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model MoedasViewModel
+@{
+    ViewData["Title"] = "Moedas";
+    Layout = "_LayoutGestao";
+    var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-PT");
+}
+
+<div class="gestao-topo">
+    <h1>Moedas e economia</h1>
+    <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Exportar" asp-route-conjunto="transacoes" asp-route-formato="pdf">Transações (PDF)</a>
+</div>
+
+<p class="texto-suave">
+    A economia vista de cima. Para dar ou tirar moeda a <em>uma</em> conta use a
+    página da conta (Utilizadores). Todos os movimentos ficam em Transações e
+    todas as ações no registo de ações.
+</p>
+
+@* ----- Tipos de moeda ----- *@
+<section class="gestao-cartao">
+    <h3>Tipos de moeda</h3>
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Moeda</th>
+                <th class="numero">Em circulação</th>
+                <th class="numero">Contas com saldo</th>
+                <th class="numero">Ganho · 30 dias</th>
+                <th class="numero">Gasto · 30 dias</th>
+                <th>Nome</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var t in Model.Tipos)
+            {
+                <tr>
+                    <td>
+                        <strong>@t.Nome</strong> <span class="texto-suave nota-pequena">#@t.Id</span>
+                        @if (t.Protegida) { <div><span class="etiqueta-estado ok">usada pelo sistema</span></div> }
+                    </td>
+                    <td class="numero">@t.EmCirculacao.ToString("#,##0.##", pt)</td>
+                    <td class="numero">@t.ContasComSaldo.ToString("N0", pt)</td>
+                    <td class="numero montante-ganho">+@t.Ganho30Dias.ToString("#,##0.##", pt)</td>
+                    <td class="numero montante-gasto">−@t.Gasto30Dias.ToString("#,##0.##", pt)</td>
+                    <td class="tabela-acoes">
+                        <form method="post" asp-controller="Gestao" asp-action="GuardarTipoMoeda" class="formulario-linha compacta">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="id" value="@t.Id" />
+                            <input name="nome" value="@t.Nome" maxlength="30" size="10" aria-label="Nome da moeda" required />
+                            <button type="submit" class="botao botao-pequeno">Renomear</button>
+                        </form>
+                        @if (t.PodeApagar)
+                        {
+                            <form method="post" asp-controller="Gestao" asp-action="ApagarTipoMoeda" asp-route-id="@t.Id" class="formulario-linha compacta">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="botao botao-pequeno botao-perigo" data-pergunta="Apagar a moeda @(t.Nome)?">Apagar</button>
+                            </form>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <h4 class="gestao-subtitulo">Nova moeda</h4>
+    <form method="post" asp-controller="Gestao" asp-action="GuardarTipoMoeda" class="formulario-linha">
+        @Html.AntiForgeryToken()
+        <input name="nome" maxlength="30" placeholder="ex.: Estrelas" aria-label="Nome da nova moeda" required />
+        <input name="motivo" maxlength="255" placeholder="Motivo (opcional)" aria-label="Motivo" />
+        <button type="submit" class="botao botao-pequeno botao-destaque">Criar moeda</button>
+    </form>
+    <p class="texto-suave nota-pequena">
+        Uma moeda nova ganha uma carteira a zero em todas as contas e pode logo
+        ser dada pelos administradores ou usada nas recompensas dos eventos.
+        Gemas, Moedas e Bilhetes não se apagam; as outras só sem movimentos.
+    </p>
+</section>
+
+@* ----- Oferta a todas as contas ----- *@
+<section class="gestao-cartao">
+    <h3>Oferta a todas as contas ativas</h3>
+    <p class="texto-suave nota-pequena">
+        Dá a mesma quantia a cada uma das @Model.ContasAtivas.ToString("N0", pt) contas ativas
+        (compensação por uma falha, celebração, ...). Cada conta vê o movimento
+        nas suas Transações com o motivo.
+    </p>
+    <form method="post" asp-controller="Gestao" asp-action="Oferta" class="formulario-compacto">
+        @Html.AntiForgeryToken()
+        <div class="campos-lado-a-lado">
+            <div class="campo">
+                <label for="oferta-quantidade">Quantidade (por conta)</label>
+                <input id="oferta-quantidade" name="quantidade" inputmode="decimal" value="50" required />
+            </div>
+            <div class="campo">
+                <label for="oferta-moeda">Moeda</label>
+                <select id="oferta-moeda" name="tipoMoedaId">
+                    @foreach (var t in Model.Tipos)
+                    {
+                        <option value="@t.Id" selected="@(t.Nome == "Moedas")">@t.Nome</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <div class="campo">
+            <label for="oferta-motivo">Motivo (obrigatório — aparece a cada conta)</label>
+            <input id="oferta-motivo" name="motivo" maxlength="34" required placeholder="ex.: Compensação manutenção 25/09" />
+        </div>
+        <label class="caixa-opcao">
+            <input type="checkbox" name="notificar" value="true" checked /> Enviar também uma notificação "Recompensa"
+        </label>
+        <div class="botoes-estado">
+            <button type="submit" class="botao botao-pequeno botao-destaque"
+                    data-pergunta="Dar esta quantia a todas as @Model.ContasAtivas contas ativas?">Oferecer</button>
+        </div>
+    </form>
+</section>
+
+@* ----- Origens ----- *@
+<div class="gestao-duas-colunas">
+    <section class="gestao-cartao">
+        <h3>De onde vem · 30 dias</h3>
+        @if (Model.OrigensGanho.Count == 0)
+        {
+            <p class="texto-suave">Sem movimentos.</p>
+        }
+        else
+        {
+            <table class="tabela tabela-compacta">
+                <tbody>
+                    @foreach (var o in Model.OrigensGanho)
+                    {
+                        <tr>
+                            <td>@o.Origem</td>
+                            <td class="texto-suave">@o.Moeda</td>
+                            <td class="numero montante-ganho">+@o.Total.ToString("#,##0.##", pt)</td>
+                            <td class="numero texto-suave">@o.Movimentos×</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+    <section class="gestao-cartao">
+        <h3>Para onde vai · 30 dias</h3>
+        @if (Model.OrigensGasto.Count == 0)
+        {
+            <p class="texto-suave">Sem movimentos.</p>
+        }
+        else
+        {
+            <table class="tabela tabela-compacta">
+                <tbody>
+                    @foreach (var o in Model.OrigensGasto)
+                    {
+                        <tr>
+                            <td>@o.Origem</td>
+                            <td class="texto-suave">@o.Moeda</td>
+                            <td class="numero montante-gasto">−@o.Total.ToString("#,##0.##", pt)</td>
+                            <td class="numero texto-suave">@o.Movimentos×</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        }
+    </section>
+</div>
