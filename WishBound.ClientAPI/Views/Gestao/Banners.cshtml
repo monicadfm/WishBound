@@ -1,0 +1,144 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model BannersViewModel
+@{
+    ViewData["Title"] = "Banners e eventos";
+    Layout = "_LayoutGestao";
+    var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-PT");
+}
+
+<div class="gestao-topo">
+    <h1>Banners e eventos</h1>
+    <a class="botao botao-destaque" href="#novo">+ Novo banner</a>
+</div>
+
+<p class="texto-suave">
+    O banner <strong>permanente</strong> está sempre disponível e sorteia ao
+    acaso dentro de cada raridade. Os banners de <strong>Evento</strong> têm
+    datas, podem ter personagens exclusivas, <strong>rate-up</strong> (quota das
+    destacadas dentro da raridade, com o 50/50 na Mítica) e recompensas diárias.
+    Um banner já usado não se apaga — desativa-se, para o histórico ficar.
+</p>
+
+@if (Model.Itens.Count == 0)
+{
+    <div class="caixa-vazia"><p>Não há banners.</p></div>
+}
+else
+{
+    <table class="tabela">
+        <thead>
+            <tr>
+                <th>Banner</th>
+                <th>Estado</th>
+                <th>Período</th>
+                <th class="numero">Personagens</th>
+                <th class="numero">Invocações</th>
+                <th class="numero">Participantes</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var b in Model.Itens)
+            {
+                <tr class="@(b.IsAtivo ? "" : "linha-inativa")">
+                    <td>
+                        <a class="ligacao" asp-controller="Gestao" asp-action="EditarBanner" asp-route-id="@b.Id"><strong>@b.Nome</strong></a>
+                        <div>
+                            <span class="etiqueta-estado @(b.EhEvento ? "admin" : "google")">@b.TipoBanner</span>
+                            @if (b.EhPermanente) { <span class="etiqueta-estado ok">Permanente</span> }
+                        </div>
+                    </td>
+                    <td>
+                        <span class="etiqueta-estado @b.ClasseEstado">@b.Estado</span>
+                        @if (b.Estado == "A decorrer" && !b.EhPermanente)
+                        {
+                            <div class="texto-suave nota-pequena">termina em <span class="contagem" data-fim="@b.FimIso">…</span></div>
+                        }
+                    </td>
+                    <td class="texto-suave nota-pequena">@b.Periodo</td>
+                    <td class="numero">
+                        @b.Personagens
+                        @if (b.RateUp > 0) { <div class="texto-suave nota-pequena">@b.RateUp em destaque</div> }
+                    </td>
+                    <td class="numero">@b.Invocacoes.ToString("N0", pt)</td>
+                    <td class="numero">
+                        @(b.EhEvento ? b.Participantes.ToString("N0", pt) : "—")
+                        @if (b.EhEvento) { <div class="texto-suave nota-pequena">@b.Recompensas dias</div> }
+                    </td>
+                    <td class="tabela-acoes">
+                        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="EditarBanner" asp-route-id="@b.Id">Gerir</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@* ----- Novo banner ----- *@
+<section class="gestao-cartao" id="novo">
+    <h3>+ Novo banner</h3>
+    <form method="post" asp-controller="Gestao" asp-action="CriarBanner" class="formulario-compacto">
+        @Html.AntiForgeryToken()
+        <div class="campos-lado-a-lado">
+            <div class="campo">
+                <label for="novo-nome">Nome</label>
+                <input id="novo-nome" name="Nome" maxlength="100" required placeholder="ex.: Festival das Marés" />
+            </div>
+            <div class="campo">
+                <label for="novo-tipo">Tipo</label>
+                <select id="novo-tipo" name="TipoBanner">
+                    <option value="Evento" selected>Evento (temporário, com rate-up e recompensas)</option>
+                    <option value="Standard">Standard (sem rate-up)</option>
+                </select>
+            </div>
+        </div>
+        <div class="campo">
+            <label for="novo-descricao">Descrição / regras (aparece na página Eventos)</label>
+            <textarea id="novo-descricao" name="Descricao" rows="3"></textarea>
+        </div>
+        <div class="campos-lado-a-lado">
+            <div class="campo">
+                <label for="novo-inicio">Início</label>
+                <input id="novo-inicio" name="Inicio" type="datetime-local" value="@Model.Form.Inicio" required />
+            </div>
+            <div class="campo">
+                <label for="novo-fim">Fim</label>
+                <input id="novo-fim" name="Fim" type="datetime-local" value="@Model.Form.Fim" required />
+            </div>
+        </div>
+        <div class="campos-lado-a-lado">
+            <div class="campo">
+                <label for="novo-imagem">Imagem (opcional)</label>
+                <input id="novo-imagem" name="ImagemUrl" maxlength="255" placeholder="/img/banners/..." />
+            </div>
+            <div class="campo">
+                <label for="novo-copiar">Personagens iniciais</label>
+                <select id="novo-copiar" name="CopiarPoolDe">
+                    <option value="">Nenhuma (escolho a seguir)</option>
+                    @foreach (var b in Model.Itens)
+                    {
+                        <option value="@b.Id" selected="@(b.Id == Model.Form.CopiarPoolDe)">Copiar de "@b.Nome" (@b.Personagens)</option>
+                    }
+                </select>
+            </div>
+        </div>
+        <label class="caixa-opcao">
+            <input type="checkbox" name="IsAtivo" value="true" checked /> Ativo (aparece na Invocação entre as datas)
+        </label>
+        <label class="caixa-opcao">
+            <input type="checkbox" name="Notificar" value="true" /> Avisar todas as contas com uma notificação
+        </label>
+        <div class="campo">
+            <label for="novo-motivo">Motivo (opcional)</label>
+            <input id="novo-motivo" name="Motivo" maxlength="255" />
+        </div>
+        <div class="botoes-estado">
+            <button type="submit" class="botao botao-destaque">Criar banner</button>
+        </div>
+        <p class="texto-suave nota-pequena">
+            Depois de criado abre a página do banner, onde se escolhem as
+            personagens, o rate-up e as recompensas diárias. Sem personagens fica
+            inativo.
+        </p>
+    </form>
+</section>

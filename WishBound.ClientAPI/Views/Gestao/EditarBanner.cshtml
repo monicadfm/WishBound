@@ -1,0 +1,322 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model BannerDetalheViewModel
+@{
+    var b = Model.Banner;
+    ViewData["Title"] = b.Nome;
+    Layout = "_LayoutGestao";
+    var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-PT");
+    bool tipoBloqueado = b.EhPermanente || b.Invocacoes > 0;
+    int noBanner = Model.Pool.Count(p => p.NoBanner);
+}
+
+<div class="gestao-topo">
+    <h1>@b.Nome</h1>
+    <div class="gestao-topo-acoes">
+        <a class="botao botao-pequeno botao-suave" asp-controller="Eventos" asp-action="Index">Ver página Eventos</a>
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Banners">&larr; Todos os banners</a>
+    </div>
+</div>
+
+<p>
+    <span class="etiqueta-estado @(b.EhEvento ? "admin" : "google")">@b.TipoBanner</span>
+    @if (b.EhPermanente) { <span class="etiqueta-estado ok">Permanente</span> }
+    <span class="etiqueta-estado @b.ClasseEstado">@b.Estado</span>
+    @if (b.Estado == "A decorrer" && !b.EhPermanente)
+    {
+        <span class="texto-suave">· termina em <span class="contagem" data-fim="@b.FimIso">…</span></span>
+    }
+</p>
+
+<div class="gestao-estatisticas">
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@noBanner</span>
+        <span class="gestao-estatistica-nome">personagens na pool</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@b.RateUp</span>
+        <span class="gestao-estatistica-nome">em destaque (rate-up)</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@b.Invocacoes.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">invocações</span>
+    </div>
+    @if (b.EhEvento)
+    {
+        <div class="gestao-estatistica">
+            <span class="gestao-estatistica-valor">@b.Participantes.ToString("N0", pt)</span>
+            <span class="gestao-estatistica-nome">contas com recompensas</span>
+        </div>
+    }
+</div>
+
+@* ============================================================
+   1. Dados do banner
+   ============================================================ *@
+<section class="gestao-cartao">
+    <h3>Dados do banner</h3>
+    <form method="post" asp-controller="Gestao" asp-action="EditarBanner" asp-route-id="@b.Id" class="formulario-compacto">
+        @Html.AntiForgeryToken()
+        <div class="campos-lado-a-lado">
+            <div class="campo">
+                <label for="nome">Nome</label>
+                <input id="nome" name="Nome" value="@b.Nome" maxlength="100" required />
+            </div>
+            <div class="campo">
+                <label for="tipo">Tipo</label>
+                @if (tipoBloqueado)
+                {
+                    <input type="hidden" name="TipoBanner" value="@b.TipoBanner" />
+                    <select id="tipo" disabled><option>@b.TipoBanner</option></select>
+                    <span class="texto-suave nota-pequena">@(b.EhPermanente ? "O permanente é sempre Standard." : "Já tem invocações — o tipo não muda.")</span>
+                }
+                else
+                {
+                    <select id="tipo" name="TipoBanner">
+                        <option value="Evento" selected="@b.EhEvento">Evento</option>
+                        <option value="Standard" selected="@(!b.EhEvento)">Standard</option>
+                    </select>
+                }
+            </div>
+        </div>
+        <div class="campo">
+            <label for="descricao">Descrição / regras</label>
+            <textarea id="descricao" name="Descricao" rows="3">@b.Descricao</textarea>
+        </div>
+        <div class="campos-lado-a-lado">
+            <div class="campo">
+                <label for="inicio">Início</label>
+                <input id="inicio" name="Inicio" type="datetime-local" value="@BannerFormViewModel.ParaCampo(b.DataInicio)" required />
+            </div>
+            <div class="campo">
+                <label for="fim">Fim</label>
+                <input id="fim" name="Fim" type="datetime-local" value="@BannerFormViewModel.ParaCampo(b.DataFim)" required />
+            </div>
+        </div>
+        <div class="campo">
+            <label for="imagem">Imagem (opcional)</label>
+            <input id="imagem" name="ImagemUrl" value="@b.ImagemUrl" maxlength="255" />
+        </div>
+        @if (b.EhPermanente)
+        {
+            <input type="hidden" name="IsAtivo" value="true" />
+            <p class="texto-suave nota-pequena">O banner permanente está sempre ativo.</p>
+        }
+        else
+        {
+            <label class="caixa-opcao">
+                <input type="checkbox" name="IsAtivo" value="true" checked="@b.IsAtivo" /> Ativo (aparece na Invocação entre as datas)
+            </label>
+        }
+        <label class="caixa-opcao">
+            <input type="checkbox" name="Notificar" value="true" /> Avisar todas as contas com uma notificação ao guardar
+        </label>
+        <div class="campo">
+            <label for="motivo-dados">Motivo (opcional)</label>
+            <input id="motivo-dados" name="Motivo" maxlength="255" />
+        </div>
+        <div class="botoes-estado">
+            <button type="submit" class="botao botao-pequeno botao-destaque">Guardar dados</button>
+        </div>
+    </form>
+</section>
+
+@* ============================================================
+   2. Pool + rate-up
+   ============================================================ *@
+<section class="gestao-cartao" id="pool">
+    <h3>Personagens do banner@(b.EhEvento ? " e rate-up" : "")</h3>
+    <p class="texto-suave nota-pequena">
+        Marque as personagens que podem sair neste banner.
+        @if (b.EhEvento)
+        {
+            <span>
+                "Destaque" liga o rate-up: a quota é a parte das personagens dessa
+                raridade que sai como destacada (80% nas Lendárias = de cada 10
+                Lendárias, 8 são destacadas). Na Mítica é o 50/50 — quem perde
+                tem a próxima Mítica garantida como destacada. As probabilidades
+                das raridades não mudam.
+            </span>
+        }
+        "Exclusiva" = não está em nenhum banner Standard.
+    </p>
+
+    <form method="post" asp-controller="Gestao" asp-action="GuardarPool" asp-route-id="@b.Id">
+        @Html.AntiForgeryToken()
+
+        @foreach (var raridade in Model.Raridades)
+        {
+            var daRaridade = Model.Pool.Where(p => p.RaridadeId == raridade.Id).ToList();
+            if (daRaridade.Count == 0) { continue; }
+
+            <div class="pool-grupo" data-grupo="@raridade.Id">
+                <div class="pool-grupo-topo">
+                    <span class="ponto-cor" style="background:@(raridade.Cor ?? "#9aa5b1")"></span>
+                    <strong>@raridade.Nome</strong>
+                    <span class="texto-suave nota-pequena">@daRaridade.Count(p => p.NoBanner) de @daRaridade.Count</span>
+                    <button type="button" class="botao botao-pequeno botao-suave" data-marcar="@raridade.Id">Todas</button>
+                    <button type="button" class="botao botao-pequeno botao-suave" data-limpar="@raridade.Id">Nenhuma</button>
+                    @if (b.EhEvento)
+                    {
+                        <label class="pool-quota">
+                            Quota do destaque
+                            <input name="quotas[@raridade.Id]" inputmode="decimal" value="@Model.QuotaPercentagem(raridade)" size="3" aria-label="Quota do rate-up em percentagem" /> %
+                        </label>
+                    }
+                </div>
+                <ul class="pool-lista">
+                    @foreach (var p in daRaridade)
+                    {
+                        <li class="@(p.NoBanner ? "pool-dentro" : "")">
+                            <label class="pool-personagem">
+                                <input type="checkbox" name="personagens" value="@p.PersonagemId" checked="@p.NoBanner" />
+                                <img src="@(string.IsNullOrEmpty(p.ImagemUrl) ? "/img/personagens/desconhecido.svg" : p.ImagemUrl)" alt="" />
+                                <span>@p.Nome</span>
+                            </label>
+                            @if (!p.EmStandard) { <span class="etiqueta-estado admin">Exclusiva</span> }
+                            @if (!p.IsAtivo) { <span class="etiqueta-estado inativo">Inativa</span> }
+                            @if (b.EhEvento)
+                            {
+                                <label class="pool-destaque" title="Rate-up">
+                                    <input type="checkbox" name="rateUp" value="@p.PersonagemId" checked="@p.RateUp" /> Destaque
+                                </label>
+                            }
+                        </li>
+                    }
+                </ul>
+            </div>
+        }
+
+        <div class="formulario-linha">
+            <input name="motivo" maxlength="255" placeholder="Motivo (opcional)" aria-label="Motivo" />
+            <button type="submit" class="botao botao-pequeno botao-destaque">Guardar personagens</button>
+        </div>
+    </form>
+</section>
+
+@* ============================================================
+   3. Recompensas diárias do evento
+   ============================================================ *@
+@if (b.EhEvento)
+{
+    <section class="gestao-cartao" id="recompensas">
+        <h3>Recompensas diárias do evento</h3>
+        <p class="texto-suave nota-pequena">
+            Cada conta recebe um dia por dia de calendário, enquanto o evento
+            decorre (Carteira no site, Recompensa na app). Os dias seguem a ordem
+            da lista; por isso só o último se apaga, e só se ninguém o recebeu.
+        </p>
+
+        @if (Model.RecompensasEvento.Count == 0)
+        {
+            <p class="texto-suave">Ainda sem recompensas.</p>
+        }
+        else
+        {
+            <ul class="lista-dias">
+                @foreach (var dia in Model.RecompensasEvento)
+                {
+                    bool ultimo = dia.Id == Model.RecompensasEvento.Last().Id;
+                    <li>
+                        <span class="lista-dias-numero">Dia @dia.Dia</span>
+                        <form method="post" asp-controller="Gestao" asp-action="GuardarDiaEvento" asp-route-id="@b.Id" class="formulario-linha compacta">
+                            @Html.AntiForgeryToken()
+                            <input type="hidden" name="recompensaId" value="@dia.Id" />
+                            <input name="quantidade" inputmode="decimal" value="@dia.QuantidadeFormulario" size="5" aria-label="Quantidade" required />
+                            <select name="tipoMoedaId" aria-label="Moeda">
+                                @foreach (var m in Model.TiposMoeda)
+                                {
+                                    <option value="@m.Id" selected="@(m.Id == dia.TipoMoedaId)">@m.Nome</option>
+                                }
+                            </select>
+                            <input name="descricao" value="@dia.Descricao" maxlength="255" class="campo-largo" aria-label="Descrição" />
+                            <button type="submit" class="botao botao-pequeno">Guardar</button>
+                        </form>
+                        <span class="texto-suave nota-pequena">@dia.JaRecebido recebido(s)</span>
+                        @if (ultimo)
+                        {
+                            <form method="post" asp-controller="Gestao" asp-action="ApagarDiaEvento" asp-route-id="@b.Id" class="formulario-linha compacta formulario-fixo">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="recompensaId" value="@dia.Id" />
+                                <button type="submit" class="botao botao-pequeno botao-perigo" disabled="@(dia.JaRecebido > 0)"
+                                        data-pergunta="Apagar o dia @dia.Dia?">Apagar</button>
+                            </form>
+                        }
+                    </li>
+                }
+            </ul>
+        }
+
+        <h4 class="gestao-subtitulo">Acrescentar o dia @(Model.RecompensasEvento.Count + 1)</h4>
+        <form method="post" asp-controller="Gestao" asp-action="GuardarDiaEvento" asp-route-id="@b.Id" class="formulario-linha">
+            @Html.AntiForgeryToken()
+            <input name="quantidade" inputmode="decimal" value="1" size="5" aria-label="Quantidade" required />
+            <select name="tipoMoedaId" aria-label="Moeda">
+                @foreach (var m in Model.TiposMoeda)
+                {
+                    <option value="@m.Id" selected="@(m.Nome == "Bilhetes")">@m.Nome</option>
+                }
+            </select>
+            <input name="descricao" maxlength="255" class="campo-largo" placeholder="Descrição (vazio = automática)" aria-label="Descrição" />
+            <button type="submit" class="botao botao-pequeno botao-destaque">+ Acrescentar dia</button>
+        </form>
+    </section>
+}
+
+@* ============================================================
+   4. Apagar
+   ============================================================ *@
+@if (!b.EhPermanente)
+{
+    <section class="gestao-cartao zona-perigo">
+        <h3>Apagar banner</h3>
+        @if (b.PodeApagar)
+        {
+            <form method="post" asp-controller="Gestao" asp-action="ApagarBanner" asp-route-id="@b.Id" class="formulario-linha">
+                @Html.AntiForgeryToken()
+                <input name="motivo" maxlength="255" placeholder="Motivo (opcional)" aria-label="Motivo" />
+                <button type="submit" class="botao botao-pequeno botao-perigo"
+                        data-pergunta="Apagar o banner @(b.Nome), as personagens associadas e as recompensas? Não pode ser desfeito.">Apagar banner</button>
+            </form>
+        }
+        else
+        {
+            <p class="texto-suave nota-pequena">
+                Este banner já foi usado (invocações, pity ou recompensas recebidas).
+                Para o retirar, desmarque "Ativo" nos dados do banner — o histórico
+                das contas fica intacto.
+            </p>
+        }
+    </section>
+}
+
+@section Scripts {
+    <script>
+        // "Todas" / "Nenhuma" por raridade; tirar uma personagem da pool tira-lhe o destaque
+        document.querySelectorAll('[data-marcar],[data-limpar]').forEach(function (botao) {
+            botao.addEventListener('click', function () {
+                var grupo = botao.getAttribute('data-marcar') || botao.getAttribute('data-limpar');
+                var marcar = botao.hasAttribute('data-marcar');
+                document.querySelectorAll('[data-grupo="' + grupo + '"] input[name="personagens"]').forEach(function (caixa) {
+                    caixa.checked = marcar;
+                    caixa.dispatchEvent(new Event('change'));
+                });
+            });
+        });
+
+        document.querySelectorAll('input[name="personagens"]').forEach(function (caixa) {
+            caixa.addEventListener('change', function () {
+                var linha = caixa.closest('li');
+                linha.classList.toggle('pool-dentro', caixa.checked);
+                var destaque = linha.querySelector('input[name="rateUp"]');
+                if (destaque && !caixa.checked) { destaque.checked = false; }
+            });
+        });
+
+        document.querySelectorAll('input[name="rateUp"]').forEach(function (destaque) {
+            destaque.addEventListener('change', function () {
+                var caixa = destaque.closest('li').querySelector('input[name="personagens"]');
+                if (destaque.checked && caixa) { caixa.checked = true; caixa.closest('li').classList.add('pool-dentro'); }
+            });
+        });
+    </script>
+}
