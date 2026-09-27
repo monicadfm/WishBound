@@ -12,6 +12,7 @@
 <div class="gestao-topo">
     <h1>Conta de @conta.NomeUtilizador</h1>
     <div class="gestao-topo-acoes">
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Notificacoes" asp-route-utilizadorId="@conta.Id">Enviar notificação</a>
         <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Acoes" asp-route-utilizadorId="@conta.Id">Histórico de ações</a>
         <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Utilizadores">&larr; Todas as contas</a>
     </div>

@@ -1,0 +1,176 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model NotificacoesAdminViewModel
+@{
+    ViewData["Title"] = "Notificações";
+    Layout = "_LayoutGestao";
+    var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-PT");
+    bool paraConta = Model.UtilizadorId.HasValue;
+
+    string NomeTipo(string tipo) => tipo switch
+    {
+        "MensagemPersonagem" => "Personagem",
+        "LoginDiario" => "Login diário",
+        _ => tipo
+    };
+}
+
+<div class="gestao-topo">
+    <h1>Notificações</h1>
+</div>
+
+<p class="texto-suave">
+    As notificações aparecem no separador <strong>Notificações</strong> da app
+    móvel (e no contador de notificações do Início). As das personagens são escritas
+    pelo sistema de amizade; aqui a equipa envia avisos de eventos, banners,
+    recompensas e lembretes.
+</p>
+
+<div class="gestao-estatisticas">
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.Total.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">notificações guardadas</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.NaoLidas.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">por ler</span>
+    </div>
+    @foreach (var t in Model.PorTipo)
+    {
+        <div class="gestao-estatistica">
+            <span class="gestao-estatistica-valor">@t.Total.ToString("N0", pt)</span>
+            <span class="gestao-estatistica-nome">@NomeTipo(t.Tipo) · @t.NaoLidas por ler</span>
+        </div>
+    }
+</div>
+
+<div class="gestao-duas-colunas">
+    @* ----- Enviar ----- *@
+    <section class="gestao-cartao">
+        <h3>Enviar notificação</h3>
+        <form method="post" asp-controller="Gestao" asp-action="EnviarNotificacao" class="formulario-compacto">
+            @Html.AntiForgeryToken()
+            <div class="campos-lado-a-lado">
+                <div class="campo">
+                    <label for="tipo">Tipo</label>
+                    <select id="tipo" name="tipo">
+                        @foreach (var tipo in Model.TiposPermitidos)
+                        {
+                            <option value="@tipo">@NomeTipo(tipo)</option>
+                        }
+                    </select>
+                </div>
+                <div class="campo">
+                    <label for="destino">Para</label>
+                    <select id="destino" name="destino">
+                        <option value="todos" selected="@(!paraConta)">Todas as contas ativas (@Model.ContasAtivas)</option>
+                        <option value="conta" selected="@paraConta">Uma conta</option>
+                    </select>
+                </div>
+            </div>
+            <div class="campo" id="campo-conta">
+                <label for="utilizadorId">Id da conta @(paraConta ? "(" + Model.UtilizadorNome + ")" : "")</label>
+                <input id="utilizadorId" name="utilizadorId" type="number" min="1" value="@Model.UtilizadorId" />
+            </div>
+            <div class="campo">
+                <label for="titulo">Título</label>
+                <input id="titulo" name="titulo" maxlength="100" required placeholder="ex.: Manutenção esta noite" />
+            </div>
+            <div class="campo">
+                <label for="mensagem">Mensagem <span class="texto-suave nota-pequena" id="contador-mensagem">0 / 255</span></label>
+                <textarea id="mensagem" name="mensagem" rows="3" maxlength="255" required></textarea>
+            </div>
+            <div class="campo">
+                <label for="motivo-envio">Motivo (opcional, só no registo)</label>
+                <input id="motivo-envio" name="motivo" maxlength="255" />
+            </div>
+            <div class="botoes-estado">
+                <button type="submit" class="botao botao-pequeno botao-destaque">Enviar</button>
+            </div>
+        </form>
+    </section>
+
+    @* ----- Limpar ----- *@
+    <section class="gestao-cartao">
+        <h3>Limpar notificações antigas</h3>
+        <p class="texto-suave nota-pequena">
+            Apaga as notificações com mais de N dias, de todas as contas. Por
+            omissão só as que já foram lidas.
+        </p>
+        <form method="post" asp-controller="Gestao" asp-action="LimparNotificacoes" class="formulario-compacto">
+            @Html.AntiForgeryToken()
+            <div class="campo">
+                <label for="dias">Mais antigas do que (dias)</label>
+                <input id="dias" name="dias" type="number" min="1" max="3650" value="30" required />
+            </div>
+            <label class="caixa-opcao">
+                <input type="checkbox" name="apenasLidas" value="true" checked /> Só as já lidas
+            </label>
+            <div class="campo">
+                <label for="motivo-limpar">Motivo (opcional)</label>
+                <input id="motivo-limpar" name="motivo" maxlength="255" />
+            </div>
+            <div class="botoes-estado">
+                <button type="submit" class="botao botao-pequeno botao-perigo" data-pergunta="Apagar estas notificações? Não pode ser desfeito.">Limpar</button>
+            </div>
+        </form>
+
+        @if (Model.Envios.Count > 0)
+        {
+            <h4 class="gestao-subtitulo">Últimos envios da equipa</h4>
+            <ul class="lista-simples">
+                @foreach (var envio in Model.Envios)
+                {
+                    <li>
+                        <span class="texto-suave nota-pequena">@envio.Data.ToLocalTime().ToString("dd/MM HH:mm") · @envio.AdminNome</span><br />
+                        @envio.Acao.Substring(Math.Min(envio.Acao.Length, envio.Categoria.Length + 1)).Trim()
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>
+
+@* ----- Recentes ----- *@
+<section class="gestao-cartao">
+    <h3>As 50 mais recentes</h3>
+    @if (Model.Recentes.Count == 0)
+    {
+        <p class="texto-suave">Ainda não há notificações.</p>
+    }
+    else
+    {
+        <table class="tabela tabela-compacta">
+            <thead>
+                <tr><th>Data</th><th>Conta</th><th>Tipo</th><th>Notificação</th><th>Estado</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var n in Model.Recentes)
+                {
+                    <tr>
+                        <td class="texto-suave">@BannerAdmin.Local(n.Data).ToString("dd/MM HH:mm")</td>
+                        <td><a class="ligacao" asp-controller="Gestao" asp-action="Utilizador" asp-route-id="@n.UtilizadorId">@n.UtilizadorNome</a></td>
+                        <td><span class="etiqueta-categoria categoria-notificacao">@NomeTipo(n.Tipo)</span></td>
+                        <td><strong>@n.Titulo</strong><div class="texto-suave nota-pequena">@n.Mensagem</div></td>
+                        <td>@(n.IsLida ? "lida" : "por ler")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
+
+@section Scripts {
+    <script>
+        (function () {
+            var destino = document.getElementById('destino');
+            var campoConta = document.getElementById('campo-conta');
+            function mostrarConta() { campoConta.style.display = destino.value === 'conta' ? '' : 'none'; }
+            destino.addEventListener('change', mostrarConta);
+            mostrarConta();
+
+            var mensagem = document.getElementById('mensagem');
+            var contador = document.getElementById('contador-mensagem');
+            mensagem.addEventListener('input', function () { contador.textContent = mensagem.value.length + ' / 255'; });
+        })();
+    </script>
+}
