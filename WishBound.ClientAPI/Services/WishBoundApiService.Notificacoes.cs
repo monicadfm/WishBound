@@ -42,5 +42,11 @@ namespace WishBound.ClientAPI.Services
                 Motivo = motivo
             });
         }
+
+        /// <summary>Corre já os lembretes automáticos (início/fim de eventos, check-in diário, recompensas).</summary>
+        public Task<(ResultadoAcaoAdmin? Resultado, string? Erro)> AdminCorrerLembretesAsync(int adminId)
+        {
+            return EnviarAdminAsync(HttpMethod.Post, "api/admin/notificacoes/lembretes", new { AdminId = adminId });
+        }
     }
 }

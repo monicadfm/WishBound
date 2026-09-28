@@ -51,6 +51,11 @@ namespace WishBound.WebAPI.Models
         public string? Motivo { get; set; }
     }
 
+    public class AdminLembretesPedido
+    {
+        public int AdminId { get; set; }
+    }
+
     public class AdminLimparNotificacoesPedido
     {
         public int AdminId { get; set; }

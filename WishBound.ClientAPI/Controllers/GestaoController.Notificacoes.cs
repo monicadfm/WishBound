@@ -4,8 +4,8 @@ using WishBound.ClientAPI.Models.Gestao;
 namespace WishBound.ClientAPI.Controllers
 {
     /// <summary>
-    /// Área de gestão — NOTIFICAÇÕES: enviar a uma conta ou a todas e limpar
-    /// as antigas.
+    /// Área de gestão — NOTIFICAÇÕES: enviar a uma conta ou a todas, limpar
+    /// as antigas e correr já os lembretes automáticos.
     ///
     /// Parte da classe GestaoController ([Authorize(Roles = "Admin")] está na
     /// outra parte, GestaoController.cs). Todos os POST têm antiforgery.
@@ -67,6 +67,16 @@ namespace WishBound.ClientAPI.Controllers
         {
             return await ExecutarGestaoAsync(
                 () => _api.AdminLimparNotificacoesAsync(ObterAdminId(), dias, apenasLidas, motivo),
+                RedirectToAction(nameof(Notificacoes)));
+        }
+
+        // POST: /Gestao/CorrerLembretes
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CorrerLembretes()
+        {
+            return await ExecutarGestaoAsync(
+                () => _api.AdminCorrerLembretesAsync(ObterAdminId()),
                 RedirectToAction(nameof(Notificacoes)));
         }
     }

@@ -47,6 +47,14 @@ builder.Services.AddScoped<ServicoAmizade>();
 // mensagem diária de cada personagem conforme o nível de amizade.
 builder.Services.AddScoped<ServicoMensagens>();
 
+// Lembretes automáticos (notificações de início/fim de eventos, check-in
+// diário e recompensas de eventos por receber): o ServicoLembretes faz o
+// trabalho e o ServicoLembretesPeriodico corre-o em segundo plano de
+// "Lembretes:IntervaloMinutos" em "Lembretes:IntervaloMinutos" minutos.
+builder.Services.Configure<DefinicoesLembretes>(builder.Configuration.GetSection("Lembretes"));
+builder.Services.AddScoped<ServicoLembretes>();
+builder.Services.AddHostedService<ServicoLembretesPeriodico>();
+
 // Swagger - documentação e teste da API no browser.
 // Como a API passou a exigir uma chave, o Swagger ganha o botão "Authorize"
 // para a colar (senão todos os pedidos de teste dariam 401).

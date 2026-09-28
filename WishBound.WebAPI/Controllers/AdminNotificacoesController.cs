@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using WishBound.WebAPI.Data;
 using WishBound.WebAPI.Models;
+using WishBound.WebAPI.Services;
 
 namespace WishBound.WebAPI.Controllers
 {
@@ -13,6 +14,8 @@ namespace WishBound.WebAPI.Controllers
     ///                                               por administradores
     ///   POST api/admin/notificacoes/enviar        - envia a UMA conta ou a TODAS as ativas
     ///   POST api/admin/notificacoes/limpar        - apaga as antigas (por omissão só as lidas)
+    ///   POST api/admin/notificacoes/lembretes     - corre JÁ os lembretes automáticos
+    ///                                               (ServicoLembretes), mesmo antes da hora
     ///
     /// Os tipos aceites são os do CHECK da tabela: Evento, Banner,
     /// Recompensa e LoginDiario (MensagemPersonagem fica reservado às
@@ -27,8 +30,11 @@ namespace WishBound.WebAPI.Controllers
     {
         public static readonly string[] TiposPermitidos = { "Evento", "Banner", "Recompensa", "LoginDiario" };
 
-        public AdminNotificacoesController(WishBoundContext contexto) : base(contexto)
+        private readonly ServicoLembretes _lembretes;
+
+        public AdminNotificacoesController(WishBoundContext contexto, ServicoLembretes lembretes) : base(contexto)
         {
+            _lembretes = lembretes;
         }
 
         // GET: api/admin/notificacoes?adminId=1
@@ -159,6 +165,42 @@ namespace WishBound.WebAPI.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, "Erro ao enviar a notificação: " + ex.Message);
+            }
+        }
+
+        // POST: api/admin/notificacoes/lembretes   { "AdminId": 1 }
+        // Os lembretes automáticos correm sozinhos de meia em meia hora; este
+        // botão da gestão corre-os já (útil para testar e para a demonstração).
+        [HttpPost("lembretes")]
+        public async Task<ActionResult<AdminAcaoResultado>> CorrerLembretes([FromBody] AdminLembretesPedido pedido)
+        {
+            try
+            {
+                var admin = await ObterAdminAsync(pedido.AdminId);
+                if (admin == null)
+                {
+                    return ApenasAdmins("correr os lembretes");
+                }
+
+                var resultado = await _lembretes.ExecutarAsync(ignorarHora: true);
+
+                RegistarAcao(admin.Id, null,
+                    LogAdministrador.AcaoNotificacao + ": lembretes automáticos",
+                    "Notificacoes", null,
+                    "Corridos à mão: " + resultado + ".");
+                await _contexto.SaveChangesAsync();
+
+                return Ok(new AdminAcaoResultado
+                {
+                    Mensagem = resultado.Total == 0
+                        ? "Lembretes verificados — não havia nada novo a enviar."
+                        : "Lembretes enviados: " + resultado + ".",
+                    NovoValor = resultado.Total
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, "Erro ao correr os lembretes: " + ex.Message);
             }
         }
 

@@ -89,9 +89,23 @@
         </form>
     </section>
 
-    @* ----- Limpar ----- *@
+    @* ----- Lembretes automáticos + limpar ----- *@
     <section class="gestao-cartao">
-        <h3>Limpar notificações antigas</h3>
+        <h3>Lembretes automáticos</h3>
+        <p class="texto-suave nota-pequena">
+            A API envia sozinha, de meia em meia hora: aviso de evento ou banner
+            novo, "últimas horas" de um evento, e (a partir das 18h) o lembrete
+            do check-in diário e da recompensa de evento a quem ainda não os
+            recebeu. Nunca repete: cada aviso sai uma vez por conta (os
+            diários, uma vez por dia). Configuração em "Lembretes" no
+            appsettings.json da WebAPI.
+        </p>
+        <form method="post" asp-controller="Gestao" asp-action="CorrerLembretes" class="formulario-linha">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="botao botao-pequeno">Correr lembretes agora</button>
+        </form>
+
+        <h4 class="gestao-subtitulo">Limpar notificações antigas</h4>
         <p class="texto-suave nota-pequena">
             Apaga as notificações com mais de N dias, de todas as contas. Por
             omissão só as que já foram lidas.
