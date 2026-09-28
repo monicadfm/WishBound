@@ -46,6 +46,29 @@ namespace WishBound.WebAPI.Models
         public decimal Gasto { get; set; }
     }
 
+    /// <summary>
+    /// Participação num evento (banner de tipo Evento). Uma conta "participou"
+    /// se invocou no banner OU recebeu pelo menos um dia de recompensa.
+    /// </summary>
+    public class AdminEventoParticipacao
+    {
+        public int BannerId { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public string Estado { get; set; } = string.Empty;
+        public DateTime DataInicio { get; set; }
+        public DateTime DataFim { get; set; }
+
+        /// <summary>Contas diferentes que participaram (invocações ∪ recompensas).</summary>
+        public int Participantes { get; set; }
+
+        public int ContasQueInvocaram { get; set; }
+        public int Invocacoes { get; set; }
+        public int ContasComRecompensas { get; set; }
+
+        /// <summary>Contas que receberam todos os dias de recompensa.</summary>
+        public int ContasConcluiram { get; set; }
+    }
+
     public class AdminEstatisticasResposta
     {
         public int Dias { get; set; }
@@ -75,6 +98,9 @@ namespace WishBound.WebAPI.Models
         public List<AdminEconomiaMoeda> Economia { get; set; } = new List<AdminEconomiaMoeda>();
         public List<AdminContagem> NiveisAmizade { get; set; } = new List<AdminContagem>();
         public List<AdminContagem> AcoesPorCategoria { get; set; } = new List<AdminContagem>();
+
+        /// <summary>Eventos com maior participação (desde sempre, do maior para o menor).</summary>
+        public List<AdminEventoParticipacao> EventosParticipacao { get; set; } = new List<AdminEventoParticipacao>();
     }
 
     public class VistaEstatisticasGerais

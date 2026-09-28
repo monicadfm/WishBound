@@ -41,6 +41,20 @@ namespace WishBound.ClientAPI.Models.Gestao
         public decimal Gasto { get; set; }
     }
 
+    public class EventoParticipacaoAdmin
+    {
+        public int BannerId { get; set; }
+        public string Nome { get; set; } = string.Empty;
+        public string Estado { get; set; } = string.Empty;
+        public DateTime DataInicio { get; set; }
+        public DateTime DataFim { get; set; }
+        public int Participantes { get; set; }
+        public int ContasQueInvocaram { get; set; }
+        public int Invocacoes { get; set; }
+        public int ContasComRecompensas { get; set; }
+        public int ContasConcluiram { get; set; }
+    }
+
     public class EstatisticasViewModel
     {
         public int Dias { get; set; } = 30;
@@ -61,5 +75,6 @@ namespace WishBound.ClientAPI.Models.Gestao
         public List<EconomiaMoedaAdmin> Economia { get; set; } = new List<EconomiaMoedaAdmin>();
         public List<ContagemAdmin> NiveisAmizade { get; set; } = new List<ContagemAdmin>();
         public List<ContagemAdmin> AcoesPorCategoria { get; set; } = new List<ContagemAdmin>();
+        public List<EventoParticipacaoAdmin> EventosParticipacao { get; set; } = new List<EventoParticipacaoAdmin>();
     }
 }

@@ -16,8 +16,8 @@ namespace WishBound.WebAPI.Controllers
     /// As estatísticas usam as TRÊS VISTAS criadas com a base de dados
     /// (vw_EstatisticasGerais, vw_DistribuicaoRaridades,
     /// vw_PersonagensMaisPopulares), lidas com Database.SqlQuery, e juntam
-    /// contagens feitas pelo EF (invocações por dia, por banner, economia,
-    /// níveis de amizade, ações de administração).
+    /// contagens feitas pelo EF (invocações por dia, por banner, eventos com
+    /// maior participação, economia, níveis de amizade, ações de administração).
     ///
     /// Conjuntos exportáveis: estatisticas, utilizadores, personagens,
     /// banners, acoes (registo de ações) e transacoes (últimos 30 dias).
@@ -200,7 +200,71 @@ namespace WishBound.WebAPI.Controllers
                 .OrderByDescending(c => c.Total)
                 .ToList();
 
+            // ----- Eventos com maior participação (desde sempre) -----
+            r.EventosParticipacao = await EventosParticipacaoAsync();
+
             return r;
+        }
+
+        /// <summary>
+        /// Ranking dos eventos por participação: contas diferentes que
+        /// invocaram no banner do evento ou receberam alguma recompensa dele.
+        /// </summary>
+        private async Task<List<AdminEventoParticipacao>> EventosParticipacaoAsync()
+        {
+            var agora = DateTime.UtcNow;
+            var eventos = await _contexto.Banners.AsNoTracking()
+                .Where(b => b.TipoBanner == Banner.TipoEvento)
+                .ToListAsync();
+
+            if (eventos.Count == 0)
+            {
+                return new List<AdminEventoParticipacao>();
+            }
+
+            var ids = eventos.Select(b => b.Id).ToList();
+
+            // Pares (banner, conta) distintos de quem invocou
+            var invocaram = await _contexto.Invocacoes.AsNoTracking()
+                .Where(i => ids.Contains(i.BannerId))
+                .Select(i => new { i.BannerId, i.UtilizadorId })
+                .Distinct()
+                .ToListAsync();
+
+            var invocacoes = await _contexto.Invocacoes.AsNoTracking()
+                .Where(i => ids.Contains(i.BannerId))
+                .GroupBy(i => i.BannerId)
+                .Select(g => new { BannerId = g.Key, Total = g.Count() })
+                .ToDictionaryAsync(x => x.BannerId, x => x.Total);
+
+            var participacoes = await _contexto.ParticipacoesEventos.AsNoTracking()
+                .Where(p => ids.Contains(p.BannerId) && p.Progresso > 0)
+                .Select(p => new { p.BannerId, p.UtilizadorId, p.RecompensasResgatadas })
+                .ToListAsync();
+
+            return eventos
+                .Select(b =>
+                {
+                    var contasInvocaram = invocaram.Where(x => x.BannerId == b.Id).Select(x => x.UtilizadorId).ToHashSet();
+                    var contasRecompensas = participacoes.Where(x => x.BannerId == b.Id).Select(x => x.UtilizadorId).ToHashSet();
+
+                    return new AdminEventoParticipacao
+                    {
+                        BannerId = b.Id,
+                        Nome = b.Nome,
+                        Estado = EstadoBanner(b, agora),
+                        DataInicio = b.DataInicio,
+                        DataFim = b.DataFim,
+                        Participantes = contasInvocaram.Union(contasRecompensas).Count(),
+                        ContasQueInvocaram = contasInvocaram.Count,
+                        Invocacoes = invocacoes.GetValueOrDefault(b.Id, 0),
+                        ContasComRecompensas = contasRecompensas.Count,
+                        ContasConcluiram = participacoes.Count(x => x.BannerId == b.Id && x.RecompensasResgatadas)
+                    };
+                })
+                .OrderByDescending(e => e.Participantes)
+                .ThenByDescending(e => e.Invocacoes)
+                .ToList();
         }
 
         // ============================================================
@@ -341,6 +405,32 @@ namespace WishBound.WebAPI.Controllers
                 Titulo = "Invocações por banner (período)",
                 ElementoXml = "InvocacoesPorBanner",
                 Barras = e.InvocacoesPorBanner.Select(b => new BarraRelatorio { Etiqueta = b.Nome, Valor = b.Total, TextoValor = N(b.Total) }).ToList()
+            });
+
+            rel.Seccoes.Add(new SeccaoRelatorio
+            {
+                Titulo = "Eventos com maior participação (desde sempre)",
+                ElementoXml = "EventosParticipacao",
+                Tabela = new TabelaRelatorio
+                {
+                    ElementoLinha = "Evento",
+                    Colunas =
+                    {
+                        new ColunaRelatorio("#", "Posicao", true),
+                        new ColunaRelatorio("Evento", "Nome"),
+                        new ColunaRelatorio("Estado", "Estado"),
+                        new ColunaRelatorio("Participantes", "Participantes", true),
+                        new ColunaRelatorio("Invocaram", "ContasQueInvocaram", true),
+                        new ColunaRelatorio("Invocações", "Invocacoes", true),
+                        new ColunaRelatorio("Com recompensas", "ContasComRecompensas", true),
+                        new ColunaRelatorio("Concluíram", "ContasConcluiram", true)
+                    },
+                    Linhas = e.EventosParticipacao.Select((v, i) => new[]
+                    {
+                        (i + 1).ToString(), v.Nome, v.Estado, N(v.Participantes), N(v.ContasQueInvocaram),
+                        N(v.Invocacoes), N(v.ContasComRecompensas), N(v.ContasConcluiram)
+                    }).ToList()
+                }
             });
 
             rel.Seccoes.Add(new SeccaoRelatorio

@@ -13,6 +13,7 @@
     int maxPopular = Math.Max(1, Model.PersonagensPopulares.Select(p => p.Contas).DefaultIfEmpty(0).Max());
     int maxBanner = Math.Max(1, Model.InvocacoesPorBanner.Select(b => b.Total).DefaultIfEmpty(0).Max());
     int maxNivel = Math.Max(1, Model.NiveisAmizade.Select(n => n.Total).DefaultIfEmpty(0).Max());
+    int maxEvento = Math.Max(1, Model.EventosParticipacao.Select(e => e.Participantes).DefaultIfEmpty(0).Max());
     int maxAcoes = Math.Max(1, Model.AcoesPorCategoria.Select(a => a.Total).DefaultIfEmpty(0).Max());
     decimal percentagemPity = Model.InvocacoesPeriodo == 0 ? 0 : Math.Round(100m * Model.InvocacoesComPity / Model.InvocacoesPeriodo, 1);
 
@@ -143,6 +144,50 @@
         }
     </section>
 </div>
+
+@* ----- Eventos com maior participação ----- *@
+<section class="gestao-cartao">
+    <h3>Eventos com maior participação</h3>
+    <p class="texto-suave nota-pequena">Desde sempre. Participante = conta que invocou no banner do evento ou recebeu pelo menos um dia de recompensa.</p>
+    @if (Model.EventosParticipacao.Count == 0)
+    {
+        <p class="texto-suave">Ainda não houve eventos.</p>
+    }
+    else
+    {
+        <table class="tabela tabela-compacta">
+            <thead>
+                <tr>
+                    <th>#</th><th>Evento</th><th>Participantes</th>
+                    <th class="numero">Invocaram</th><th class="numero">Invocações</th>
+                    <th class="numero">Com recompensas</th><th class="numero">Concluíram</th>
+                </tr>
+            </thead>
+            <tbody>
+                @{ int posicaoEvento = 0; }
+                @foreach (var ev in Model.EventosParticipacao)
+                {
+                    posicaoEvento++;
+                    <tr>
+                        <td class="texto-suave">@posicaoEvento</td>
+                        <td>
+                            <a class="ligacao" asp-controller="Gestao" asp-action="EditarBanner" asp-route-id="@ev.BannerId">@ev.Nome</a>
+                            <div class="texto-suave nota-pequena">@ev.Estado · @BannerAdmin.Local(ev.DataInicio).ToString("dd/MM/yyyy") – @BannerAdmin.Local(ev.DataFim).ToString("dd/MM/yyyy")</div>
+                        </td>
+                        <td class="celula-barra">
+                            <span class="grafico-barras-pista"><span class="grafico-barras-valor" style="width:@Largura(ev.Participantes, maxEvento)"></span></span>
+                            <span class="grafico-barras-numero">@ev.Participantes.ToString("N0", pt)</span>
+                        </td>
+                        <td class="numero">@ev.ContasQueInvocaram.ToString("N0", pt)</td>
+                        <td class="numero">@ev.Invocacoes.ToString("N0", pt)</td>
+                        <td class="numero">@ev.ContasComRecompensas.ToString("N0", pt)</td>
+                        <td class="numero">@ev.ContasConcluiram.ToString("N0", pt)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+</section>
 
 @* ----- Personagens mais populares (vw_PersonagensMaisPopulares) ----- *@
 <section class="gestao-cartao">
