@@ -1,0 +1,290 @@
+@using WishBound.ClientAPI.Models.Gestao
+@model EstatisticasViewModel
+@{
+    ViewData["Title"] = "Estatísticas";
+    Layout = "_LayoutGestao";
+    var pt = System.Globalization.CultureInfo.GetCultureInfo("pt-PT");
+    var inv = System.Globalization.CultureInfo.InvariantCulture;
+    var periodos = new[] { (7, "7 dias"), (30, "30 dias"), (90, "90 dias"), (365, "1 ano") };
+
+    int maxDia = Math.Max(1, Model.InvocacoesPorDia.Select(d => d.Total).DefaultIfEmpty(0).Max());
+    int maxContasDia = Math.Max(1, Model.ContasPorDia.Select(d => d.Total).DefaultIfEmpty(0).Max());
+    decimal maxRaridade = Math.Max(1m, Model.DistribuicaoRaridades.Select(d => Math.Max(d.Percentagem, d.PercentagemEsperada)).DefaultIfEmpty(0m).Max());
+    int maxPopular = Math.Max(1, Model.PersonagensPopulares.Select(p => p.Contas).DefaultIfEmpty(0).Max());
+    int maxBanner = Math.Max(1, Model.InvocacoesPorBanner.Select(b => b.Total).DefaultIfEmpty(0).Max());
+    int maxNivel = Math.Max(1, Model.NiveisAmizade.Select(n => n.Total).DefaultIfEmpty(0).Max());
+    int maxAcoes = Math.Max(1, Model.AcoesPorCategoria.Select(a => a.Total).DefaultIfEmpty(0).Max());
+    decimal percentagemPity = Model.InvocacoesPeriodo == 0 ? 0 : Math.Round(100m * Model.InvocacoesComPity / Model.InvocacoesPeriodo, 1);
+
+    string Largura(decimal valor, decimal maximo) => (maximo <= 0 ? 0 : Math.Round(100m * valor / maximo, 1)).ToString("0.#", inv) + "%";
+
+    var conjuntos = new[]
+    {
+        ("estatisticas", "Estatísticas", "este relatório: resumo, gráficos e tabelas do período"),
+        ("utilizadores", "Contas", "todas as contas com estado, saldos e coleção"),
+        ("personagens", "Personagens", "raridade, banners, invocações e quem as tem"),
+        ("banners", "Banners e eventos", "datas, estado, pool e participação"),
+        ("acoes", "Registo de ações", "as últimas 500 ações de administração"),
+        ("transacoes", "Transações", "movimentos de moeda do período (até 2000)")
+    };
+}
+
+<div class="gestao-topo">
+    <h1>Estatísticas</h1>
+    <div class="gestao-topo-acoes">
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Exportar" asp-route-conjunto="estatisticas" asp-route-formato="pdf" asp-route-dias="@Model.Dias">PDF</a>
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Exportar" asp-route-conjunto="estatisticas" asp-route-formato="xml" asp-route-dias="@Model.Dias">XML</a>
+    </div>
+</div>
+
+<div class="gestao-chips">
+    @foreach (var (dias, texto) in periodos)
+    {
+        <a class="gestao-chip @(Model.Dias == dias ? "ativo" : "")" asp-controller="Gestao" asp-action="Estatisticas" asp-route-dias="@dias">@texto</a>
+    }
+</div>
+
+@* ----- Resumo (vw_EstatisticasGerais + contagens do período) ----- *@
+<div class="gestao-estatisticas">
+    <div class="gestao-estatistica" title="vw_EstatisticasGerais">
+        <span class="gestao-estatistica-valor">@Model.UtilizadoresAtivos.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">contas ativas (de @Model.ContasTotal.ToString("N0", pt))</span>
+    </div>
+    <div class="gestao-estatistica" title="vw_EstatisticasGerais">
+        <span class="gestao-estatistica-valor">@Model.TotalInvocacoes.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">invocações desde sempre</span>
+    </div>
+    <div class="gestao-estatistica" title="vw_EstatisticasGerais">
+        <span class="gestao-estatistica-valor">@Model.TotalPersonagensObtidas.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">personagens nas coleções</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.InvocacoesPeriodo.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">invocações no período · @percentagemPity.ToString("0.#", pt)% por pity</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.NovasContas.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">contas novas no período</span>
+    </div>
+    <div class="gestao-estatistica">
+        <span class="gestao-estatistica-valor">@Model.ContasComLogin.ToString("N0", pt)</span>
+        <span class="gestao-estatistica-nome">contas com login no período</span>
+    </div>
+</div>
+
+@* ----- Invocações por dia ----- *@
+<section class="gestao-cartao">
+    <div class="cartao-topo">
+        <h3>Invocações por dia</h3>
+        <span class="texto-suave nota-pequena">máx. @maxDia.ToString("N0", pt) num dia</span>
+    </div>
+    @if (Model.InvocacoesPeriodo == 0)
+    {
+        <p class="texto-suave">Sem invocações neste período.</p>
+    }
+    else
+    {
+        <div class="grafico-colunas grafico-alto @(Model.Dias > 90 ? "grafico-denso" : "")" role="img" aria-label="Invocações por dia">
+            @foreach (var d in Model.InvocacoesPorDia)
+            {
+                <div class="grafico-coluna" tabindex="0" data-dica="@d.Data.ToString("ddd dd/MM", pt): @d.Total.ToString("N0", pt)">
+                    <span class="grafico-coluna-barra" style="height:@Largura(d.Total, maxDia)"></span>
+                </div>
+            }
+        </div>
+        <div class="grafico-eixo">
+            <span>@Model.InvocacoesPorDia.First().Data.ToString("dd/MM/yyyy")</span>
+            <span>@Model.InvocacoesPorDia[Model.InvocacoesPorDia.Count / 2].Data.ToString("dd/MM")</span>
+            <span>hoje</span>
+        </div>
+    }
+</section>
+
+<div class="gestao-duas-colunas">
+    @* ----- Distribuição por raridade (vw_DistribuicaoRaridades) ----- *@
+    <section class="gestao-cartao">
+        <h3>Raridades obtidas</h3>
+        <p class="texto-suave nota-pequena">Desde sempre (vw_DistribuicaoRaridades). O traço marca a probabilidade configurada — o pity faz as raras saírem um pouco acima dela.</p>
+        <ul class="grafico-barras">
+            @foreach (var d in Model.DistribuicaoRaridades)
+            {
+                <li tabindex="0" data-dica="@d.Raridade: @d.Obtidas.ToString("N0", pt) (@d.Percentagem.ToString("0.##", pt)%) · esperado @d.PercentagemEsperada.ToString("0.##", pt)%">
+                    <span class="grafico-barras-nome">@d.Raridade</span>
+                    <span class="grafico-barras-pista">
+                        <span class="grafico-barras-valor" style="width:@Largura(d.Percentagem, maxRaridade); background:@(d.Cor ?? "#9aa5b1")"></span>
+                        <span class="grafico-barras-marca" style="left:@Largura(d.PercentagemEsperada, maxRaridade)" title="Esperado: @d.PercentagemEsperada.ToString("0.##", pt)%"></span>
+                    </span>
+                    <span class="grafico-barras-numero">@d.Percentagem.ToString("0.#", pt)% <span class="texto-suave">(@d.Obtidas.ToString("N0", pt))</span></span>
+                </li>
+            }
+        </ul>
+    </section>
+
+    @* ----- Invocações por banner ----- *@
+    <section class="gestao-cartao">
+        <h3>Invocações por banner</h3>
+        <p class="texto-suave nota-pequena">No período escolhido.</p>
+        @if (Model.InvocacoesPorBanner.Count == 0)
+        {
+            <p class="texto-suave">Sem invocações neste período.</p>
+        }
+        else
+        {
+            <ul class="grafico-barras">
+                @foreach (var b in Model.InvocacoesPorBanner)
+                {
+                    <li tabindex="0" data-dica="@b.Nome: @b.Total.ToString("N0", pt)">
+                        <span class="grafico-barras-nome">@b.Nome</span>
+                        <span class="grafico-barras-pista"><span class="grafico-barras-valor" style="width:@Largura(b.Total, maxBanner)"></span></span>
+                        <span class="grafico-barras-numero">@b.Total.ToString("N0", pt)</span>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>
+
+@* ----- Personagens mais populares (vw_PersonagensMaisPopulares) ----- *@
+<section class="gestao-cartao">
+    <h3>Personagens mais populares</h3>
+    <p class="texto-suave nota-pequena">Quantas contas têm cada personagem (vw_PersonagensMaisPopulares) e o total de cópias.</p>
+    <table class="tabela tabela-compacta">
+        <thead>
+            <tr><th>#</th><th>Personagem</th><th>Raridade</th><th>Contas que a têm</th><th class="numero">Cópias</th></tr>
+        </thead>
+        <tbody>
+            @{ int posicao = 0; }
+            @foreach (var p in Model.PersonagensPopulares)
+            {
+                posicao++;
+                <tr>
+                    <td class="texto-suave">@posicao</td>
+                    <td>
+                        <span class="conta-celula">
+                            <img class="conta-miniatura" src="@(string.IsNullOrEmpty(p.ImagemUrl) ? "/img/personagens/desconhecido.svg" : p.ImagemUrl)" alt="" />
+                            @p.Nome
+                        </span>
+                    </td>
+                    <td><span class="etiqueta-raridade" style="background:@(p.RaridadeCor ?? "#9aa5b1")">@p.RaridadeNome</span></td>
+                    <td class="celula-barra">
+                        <span class="grafico-barras-pista"><span class="grafico-barras-valor" style="width:@Largura(p.Contas, maxPopular)"></span></span>
+                        <span class="grafico-barras-numero">@p.Contas.ToString("N0", pt)</span>
+                    </td>
+                    <td class="numero">@p.Copias.ToString("N0", pt)</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</section>
+
+<div class="gestao-duas-colunas">
+    @* ----- Economia ----- *@
+    <section class="gestao-cartao">
+        <h3>Economia</h3>
+        <table class="tabela tabela-compacta">
+            <thead>
+                <tr><th>Moeda</th><th class="numero">Em circulação</th><th class="numero">Ganho</th><th class="numero">Gasto</th></tr>
+            </thead>
+            <tbody>
+                @foreach (var m in Model.Economia)
+                {
+                    <tr>
+                        <td>@m.Moeda</td>
+                        <td class="numero">@m.EmCirculacao.ToString("#,##0.##", pt)</td>
+                        <td class="numero montante-ganho">+@m.Ganho.ToString("#,##0.##", pt)</td>
+                        <td class="numero montante-gasto">−@m.Gasto.ToString("#,##0.##", pt)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        <p class="texto-suave nota-pequena">Ganho e gasto no período; em circulação = soma das carteiras hoje.</p>
+    </section>
+
+    @* ----- Amizade ----- *@
+    <section class="gestao-cartao">
+        <h3>Níveis de amizade</h3>
+        <p class="texto-suave nota-pequena">Personagens das coleções em cada nível.</p>
+        <ul class="grafico-barras">
+            @foreach (var n in Model.NiveisAmizade)
+            {
+                <li tabindex="0" data-dica="@n.Nome: @n.Total.ToString("N0", pt)">
+                    <span class="grafico-barras-nome">@n.Nome</span>
+                    <span class="grafico-barras-pista"><span class="grafico-barras-valor" style="width:@Largura(n.Total, maxNivel)"></span></span>
+                    <span class="grafico-barras-numero">@n.Total.ToString("N0", pt)</span>
+                </li>
+            }
+        </ul>
+    </section>
+</div>
+
+<div class="gestao-duas-colunas">
+    @* ----- Contas novas ----- *@
+    <section class="gestao-cartao">
+        <h3>Contas novas por dia</h3>
+        @if (Model.NovasContas == 0)
+        {
+            <p class="texto-suave">Nenhuma conta nova neste período.</p>
+        }
+        else
+        {
+            <div class="grafico-colunas @(Model.Dias > 90 ? "grafico-denso" : "")" role="img" aria-label="Contas novas por dia">
+                @foreach (var d in Model.ContasPorDia)
+                {
+                    <div class="grafico-coluna" tabindex="0" data-dica="@d.Data.ToString("ddd dd/MM", pt): @d.Total">
+                        <span class="grafico-coluna-barra" style="height:@Largura(d.Total, maxContasDia)"></span>
+                    </div>
+                }
+            </div>
+            <div class="grafico-eixo">
+                <span>@Model.ContasPorDia.First().Data.ToString("dd/MM")</span>
+                <span>máx. @maxContasDia/dia</span>
+                <span>hoje</span>
+            </div>
+        }
+    </section>
+
+    @* ----- Ações de administração ----- *@
+    <section class="gestao-cartao">
+        <h3>Ações de administração</h3>
+        @if (Model.AcoesPorCategoria.Count == 0)
+        {
+            <p class="texto-suave">Nenhuma ação neste período.</p>
+        }
+        else
+        {
+            <ul class="grafico-barras">
+                @foreach (var a in Model.AcoesPorCategoria)
+                {
+                    <li tabindex="0" data-dica="@a.Nome: @a.Total">
+                        <span class="grafico-barras-nome"><span class="etiqueta-categoria categoria-@a.Nome.ToLowerInvariant()">@a.Nome</span></span>
+                        <span class="grafico-barras-pista"><span class="grafico-barras-valor" style="width:@Largura(a.Total, maxAcoes)"></span></span>
+                        <span class="grafico-barras-numero">@a.Total</span>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>
+
+@* ----- Exportar ----- *@
+<section class="gestao-cartao" id="exportar">
+    <h3>Exportar dados</h3>
+    <p class="texto-suave nota-pequena">
+        PDF para ler e imprimir, XML para abrir noutro programa. Os conjuntos
+        com datas usam o período escolhido acima (@Model.Dias dias). Cada
+        exportação fica no registo de ações.
+    </p>
+    <div class="grelha-exportar">
+        @foreach (var (conjunto, nome, descricao) in conjuntos)
+        {
+            <div class="exportar-item">
+                <strong>@nome</strong>
+                <span class="texto-suave nota-pequena">@descricao</span>
+                <div class="botoes-estado">
+                    <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Exportar" asp-route-conjunto="@conjunto" asp-route-formato="pdf" asp-route-dias="@Model.Dias">PDF</a>
+                    <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Exportar" asp-route-conjunto="@conjunto" asp-route-formato="xml" asp-route-dias="@Model.Dias">XML</a>
+                </div>
+            </div>
+        }
+    </div>
+</section>

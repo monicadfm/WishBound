@@ -11,8 +11,8 @@
 <div class="gestao-topo">
     <h1>Painel</h1>
     <div class="gestao-topo-acoes">
-        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Estatisticas">&#128200; Estatísticas</a>
-        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Exportar" asp-route-conjunto="estatisticas" asp-route-formato="pdf">&#8681; Relatório PDF</a>
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Estatisticas">Estatísticas</a>
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Exportar" asp-route-conjunto="estatisticas" asp-route-formato="pdf">Relatório PDF</a>
     </div>
 </div>
 
@@ -58,7 +58,6 @@
             @foreach (var alerta in Model.Alertas)
             {
                 <li class="alerta-painel alerta-@alerta.Nivel">
-                    <span class="alerta-icone" aria-hidden="true">@(alerta.Nivel == "aviso" ? "⚠" : "ℹ")</span>
                     <span class="alerta-texto">@alerta.Texto</span>
                     @switch (alerta.Destino)
                     {
@@ -193,8 +192,8 @@
     <div class="botoes-estado">
         <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Criar">+ Nova personagem</a>
         <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Banners">+ Novo banner / evento</a>
-        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Notificacoes">&#128276; Enviar notificação</a>
-        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Moedas">&#127873; Oferta a todas as contas</a>
-        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Estatisticas" asp-fragment="exportar">&#8681; Exportar dados</a>
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Notificacoes">Enviar notificação</a>
+        <a class="botao botao-pequeno" asp-controller="Gestao" asp-action="Moedas">Oferta a todas as contas</a>
+        <a class="botao botao-pequeno botao-suave" asp-controller="Gestao" asp-action="Estatisticas" asp-fragment="exportar">Exportar dados</a>
     </div>
 </section>

@@ -150,6 +150,41 @@ A aplicação NÃO cria nem altera a base de dados ("database first").
   endpoints são api/admin/... e recebem o AdminId da sessão — a API
   confirma que é uma conta de administrador ativa (mesma fronteira de
   confiança do resto da API: chave partilhada + Id enviado pelo site).
+- Gestão da plataforma (Gestão, só para administradores). O /Gestao
+  abre no PAINEL: números do dia (contas, invocações, moeda em
+  circulação, notificações por ler), banners ativos com contagem
+  decrescente, invocações dos últimos 14 dias, últimas ações e ALERTAS
+  (probabilidades que não somam 100%, banner ativo sem personagens,
+  evento a acabar ou sem recompensas, personagens fora de todos os
+  banners, contas por validar). O resto do menu:
+    . Personagens  -> o CRUD de personagens (antes era o /Gestao);
+    . Raridades    -> criar, editar (nome, cor, probabilidade em %,
+      escalão 1-5) e apagar (só sem personagens nem histórico). O
+      escalão decide o pity, o 50/50 e o nível máximo de amizade;
+    . Banners e eventos -> criar banners Standard ou de Evento (datas,
+      descrição, copiar a pool de outro banner, avisar todas as contas),
+      escolher as personagens, o RATE-UP (destaque + quota por raridade,
+      o 50/50 na Mítica) e os dias de recompensa do evento. O banner
+      permanente não se desativa; um banner já usado não se apaga
+      (desativa-se, o histórico fica);
+    . Moedas       -> moeda em circulação e ganhos/gastos dos últimos 30
+      dias por tipo, de onde vem e para onde vai; criar/renomear/apagar
+      tipos de moeda; OFERTA a todas as contas ativas (com motivo, fica
+      nas Transações de cada conta e pode enviar uma notificação);
+    . Notificações -> enviar a uma conta ou a todas (tipos Evento,
+      Banner, Recompensa, LoginDiario — aparecem na app móvel), ver as
+      mais recentes, limpar as antigas;
+    . Estatísticas -> 7/30/90 dias ou 1 ano: usa as 3 vistas da base de
+      dados (vw_EstatisticasGerais, vw_DistribuicaoRaridades,
+      vw_PersonagensMaisPopulares) e mostra invocações e contas novas
+      por dia, raridades obtidas vs. configuradas, invocações por
+      banner, economia, níveis de amizade e ações de administração;
+    . Exportar     -> PDF ou XML de: estatísticas, contas, personagens,
+      banners, registo de ações e transações. Gerados na WebAPI sem
+      bibliotecas externas (Services\ServicoExportacao.cs).
+  Tudo isto passa por api/admin/raridades, /banners, /moedas,
+  /notificacoes, /painel, /estatisticas e /exportar, e cada escrita (e
+  cada exportação) fica no registo de ações.
 
 4. ENVIO DE EMAILS (opcional)
 -----------------------------
