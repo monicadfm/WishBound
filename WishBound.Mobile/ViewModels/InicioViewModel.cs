@@ -14,6 +14,7 @@ namespace WishBound.Mobile.ViewModels
     {
         private readonly ServicoApi _api;
         private readonly ServicoSessao _sessao;
+        private readonly ServicoLembretesTelemovel _lembretes;
 
         private string _boasVindas = string.Empty;
         private bool _ehAdmin;
@@ -24,10 +25,11 @@ namespace WishBound.Mobile.ViewModels
         private bool _carregado;
         private string _textoNotificacoes = string.Empty;
 
-        public InicioViewModel(ServicoApi api, ServicoSessao sessao)
+        public InicioViewModel(ServicoApi api, ServicoSessao sessao, ServicoLembretesTelemovel lembretes)
         {
             _api = api;
             _sessao = sessao;
+            _lembretes = lembretes;
 
             AtualizarCommand = new Command(async () => await CarregarAsync());
             AlternarCandidatasCommand = new Command(() => MostrarCandidatas = !MostrarCandidatas);
@@ -167,6 +169,12 @@ namespace WishBound.Mobile.ViewModels
             {
                 Ocupado = false;
             }
+
+            // Notificações do telemóvel: pede autorização (Android 13+), agenda
+            // os lembretes do check-in e dos eventos e mostra as novas do servidor
+            await _lembretes.PedirPermissaoAsync();
+            await _lembretes.AtualizarAgendamentosAsync();
+            await _lembretes.MostrarNovasNotificacoesAsync();
         }
 
         /// <summary>Escolhe (ou remove, com null) a companheira e volta a carregar a página.</summary>
@@ -205,6 +213,7 @@ namespace WishBound.Mobile.ViewModels
 
         private async Task SairAsync()
         {
+            _lembretes.CancelarTudo();
             _sessao.Terminar();
 
             _carregado = false;

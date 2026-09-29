@@ -14,6 +14,7 @@ namespace WishBound.Mobile.ViewModels
     {
         private readonly ServicoApi _api;
         private readonly ServicoSessao _sessao;
+        private readonly ServicoLembretesTelemovel _lembretes;
 
         private string _saldoMoedas = "0";
         private string _saldoBilhetes = "0";
@@ -25,10 +26,11 @@ namespace WishBound.Mobile.ViewModels
         private bool _temEventos;
         private bool _carregado;
 
-        public RecompensaViewModel(ServicoApi api, ServicoSessao sessao)
+        public RecompensaViewModel(ServicoApi api, ServicoSessao sessao, ServicoLembretesTelemovel lembretes)
         {
             _api = api;
             _sessao = sessao;
+            _lembretes = lembretes;
 
             AtualizarCommand = new Command(async () => await CarregarAsync());
             ReceberCommand = new Command(async () => await ReceberDiariaAsync());
@@ -173,6 +175,11 @@ namespace WishBound.Mobile.ViewModels
                 }
                 TemEventos = Eventos.Count > 0;
                 Notificar(nameof(SemEventos));
+
+                // Lembretes do telemóvel: o das 20h passa para amanhã quando a
+                // recompensa de hoje já foi recebida; aviso 24 h antes do fim de cada evento
+                _lembretes.AtualizarLembreteDiario(diaria.RecebidaHoje);
+                _lembretes.AgendarFimDosEventos(dados.Eventos);
             }
             finally
             {

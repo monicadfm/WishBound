@@ -21,6 +21,9 @@ namespace WishBound.Mobile
             builder.Services.AddSingleton<ServicoSessao>();
             builder.Services.AddSingleton<ServicoApi>();
 
+            // Notificações locais do telemóvel (lembretes + notificações do servidor)
+            builder.Services.AddSingleton<ServicoLembretesTelemovel>();
+
             // View models + páginas
             builder.Services.AddTransient<LoginViewModel>();
             builder.Services.AddTransient<LoginPage>();

@@ -12,4 +12,6 @@
 	             android:usesCleartextTraffic="true"></application>
 	<uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 	<uses-permission android:name="android.permission.INTERNET" />
+	<!-- Android 13+: autorização para mostrar notificações (lembretes locais) -->
+	<uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 </manifest>
