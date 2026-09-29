@@ -12,14 +12,14 @@
    ============================================================ */
 
 :root {
-    --fundo: #14101f;
-    --fundo-suave: #1e1830;
-    --fundo-cartao: #251d3a;
-    --borda: #3a2f57;
-    --texto: #efecfa;
-    --texto-suave: #a79fc4;
-    --dourado: #f3c04f;
-    --roxo: #8b5cf6;
+    --fundo: #1f0e1a;
+    --fundo-suave: #2f1729;
+    --fundo-cartao: #49243e;
+    --borda: #704264;
+    --texto: #f7ece8;
+    --texto-suave: #c9a0ab;
+    --dourado: #dbafa0;
+    --roxo: #bb8493;
 }
 
 * {
@@ -33,7 +33,7 @@
 body {
     font-family: 'Inter', 'Segoe UI', sans-serif;
     color: var(--texto);
-    background: linear-gradient(180deg, #14101f 0%, #1a1230 60%, #14101f 100%);
+    background: linear-gradient(180deg, #1f0e1a 0%, #2a1424 60%, #1f0e1a 100%);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
@@ -64,7 +64,7 @@ img {
     gap: 20px;
     flex-wrap: wrap;
     padding: 14px 32px;
-    background: rgba(20, 14, 36, 0.9);
+    background: rgba(31, 14, 26, 0.9);
     border-bottom: 1px solid var(--borda);
     position: sticky;
     top: 0;
@@ -357,8 +357,8 @@ img {
 
 /* "Fala" da personagem depois de uma interação (TempData["Reacao"]) */
 .caixa-reacao {
-    background: rgba(208, 70, 138, .15);
-    border: 1px solid rgba(243, 154, 198, .45);
+    background: rgba(187, 132, 147, .15);
+    border: 1px solid rgba(187, 132, 147, .45);
     border-radius: 12px;
     padding: 12px 16px;
     margin-bottom: 18px;
@@ -442,8 +442,8 @@ img {
 }
 
 .botao-destaque {
-    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
-    border-color: #8b5cf6;
+    background: linear-gradient(135deg, #bb8493, #704264);
+    border-color: #bb8493;
 }
 
 .botao-suave {
@@ -518,7 +518,7 @@ img {
     display: inline-block;
     padding: 3px 12px;
     border-radius: 999px;
-    color: #14101f;
+    color: #1f0e1a;
     font-size: 0.8rem;
     font-weight: 700;
     letter-spacing: 0.4px;
@@ -770,8 +770,8 @@ img {
     gap: 6px;
     padding: 4px 12px;
     border-radius: 999px;
-    background: rgba(243, 192, 79, .12);
-    border: 1px solid rgba(243, 192, 79, .45);
+    background: rgba(219, 175, 160, .12);
+    border: 1px solid rgba(219, 175, 160, .45);
     color: var(--dourado);
     font-weight: 600;
     font-variant-numeric: tabular-nums;
@@ -803,13 +803,13 @@ img {
 }
 
 .marca-rateup {
-    background: linear-gradient(135deg, #f3c04f, #f59e0b);
-    color: #2b2b2b;
+    background: linear-gradient(135deg, #dbafa0, #bb8493);
+    color: #2a1424;
 }
 
 .marca-exclusiva {
-    background: #e11d74;
-    color: #fff;
+    background: #bb8493;
+    color: #2a1424;
 }
 
 .marca-cinquenta {
@@ -869,7 +869,7 @@ img {
 
 .cinquenta.garantida {
     border-color: var(--dourado);
-    background: rgba(243, 192, 79, .08);
+    background: rgba(219, 175, 160, .08);
 }
 
 /* Cartão de evento (página inicial e página de Eventos) */
@@ -880,8 +880,8 @@ img {
     align-items: center;
     padding: 18px 22px;
     border-radius: 16px;
-    background: linear-gradient(135deg, rgba(139, 92, 246, .18), rgba(243, 192, 79, .10));
-    border: 1px solid rgba(243, 192, 79, .35);
+    background: linear-gradient(135deg, rgba(187, 132, 147, .18), rgba(219, 175, 160, .10));
+    border: 1px solid rgba(219, 175, 160, .35);
 }
 
 .evento-banner h2, .evento-banner h3 {

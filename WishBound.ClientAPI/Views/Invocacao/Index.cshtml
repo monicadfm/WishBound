@@ -285,8 +285,8 @@
             align-items: center;
             padding: 3px 12px;
             border-radius: 999px;
-            background: rgba(243, 192, 79, .12);
-            border: 1px solid rgba(243, 192, 79, .45);
+            background: rgba(219, 175, 160, .12);
+            border: 1px solid rgba(219, 175, 160, .45);
             color: var(--dourado);
             font-weight: 700;
             font-variant-numeric: tabular-nums;
@@ -350,7 +350,7 @@
 
         .marca-pity {
             background: #F1C40F;
-            color: #2b2b2b;
+            color: #2a1424;
         }
 
         @@keyframes aparecer {
@@ -414,7 +414,7 @@
         }
 
         .janela-probabilidades::backdrop {
-            background: rgba(6, 3, 14, .78);
+            background: rgba(18, 7, 15, .78);
             backdrop-filter: blur(3px);
         }
 
@@ -585,8 +585,8 @@
     <div class="carrossel">
     @if (Model.Banners.Count > 1)
     {
-        <button type="button" class="seta-banner esquerda" data-direcao="-1" title="Banner anterior" aria-label="Banner anterior">&#10094;</button>
-        <button type="button" class="seta-banner direita" data-direcao="1" title="Banner seguinte" aria-label="Banner seguinte">&#10095;</button>
+        <button type="button" class="seta-banner esquerda" data-direcao="-1" title="Banner anterior" aria-label="Banner anterior">&lsaquo;</button>
+        <button type="button" class="seta-banner direita" data-direcao="1" title="Banner seguinte" aria-label="Banner seguinte">&rsaquo;</button>
     }
 
     @foreach (var banner in Model.Banners)
@@ -711,8 +711,8 @@
                 </div>
 
                 <p class="texto-suave saldos">
-                    <span>&#128176; @estado.SaldoMoedas.ToString("0") Moedas</span>
-                    <span>&#127915; @estado.SaldoBilhetes.ToString("0") @(estado.SaldoBilhetes == 1 ? "bilhete" : "bilhetes")</span>
+                    <span>@estado.SaldoMoedas.ToString("0") Moedas</span>
+                    <span>@estado.SaldoBilhetes.ToString("0") @(estado.SaldoBilhetes == 1 ? "bilhete" : "bilhetes")</span>
                     @if (!estado.PodeInvocar)
                     {
                         <span>Liberta cópias repetidas na Coleção para ganhar mais.</span>
@@ -725,10 +725,10 @@
             <form class="botoes-invocar" method="post" asp-controller="Invocacao" asp-action="Invocar">
                 <input type="hidden" name="bannerId" value="@banner.Id" />
                 <button type="submit" name="quantidade" value="1" class="botao botao-destaque botao-grande">
-                    &#10024; Invocar (@(estado?.PrecoTexto(1) ?? "10 Moedas"))
+                    Invocar (@(estado?.PrecoTexto(1) ?? "10 Moedas"))
                 </button>
                 <button type="submit" name="quantidade" value="10" class="botao botao-suave botao-grande">
-                    &#10024; Invocar x10 (@(estado?.PrecoTexto(10) ?? "100 Moedas"))
+                    Invocar x10 (@(estado?.PrecoTexto(10) ?? "100 Moedas"))
                 </button>
             </form>
         </div>
@@ -806,7 +806,7 @@
                         <text>Repetida — ficas com @obtida.Quantidade cópias.</text>
                         @if (obtida.PontosAmizadeGanhos > 0)
                         {
-                            <text> +@obtida.PontosAmizadeGanhos amizade (@obtida.NivelAmizadeNome).</text>
+                            <text> +@obtida.PontosAmizadeGanhos &#9825; (@obtida.NivelAmizadeNome).</text>
                         }
                     }
                     <br />
@@ -867,7 +867,7 @@
                                 <text>x@(obtida.Quantidade)</text>
                                 @if (obtida.PontosAmizadeGanhos > 0)
                                 {
-                                    <text> &middot; +@obtida.PontosAmizadeGanhos &#10084;</text>
+                                    <text> &middot; +@obtida.PontosAmizadeGanhos &#9825;</text>
                                 }
                             }
                         </p>
@@ -892,7 +892,7 @@
         <div class="destaque-caixa">
             @foreach (var mensagem in Model.Resultado.MensagensAmizade)
             {
-                <p>&#10084; @mensagem</p>
+                <p>@mensagem</p>
             }
             <a class="ligacao" asp-controller="Colecao" asp-action="Index">ver na coleção</a>
         </div>
@@ -926,7 +926,7 @@
                         &middot; <a class="ligacao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@banner.Id">ver página do banner</a>
                     </span>
                 </div>
-                <button type="button" class="janela-fechar" data-fechar title="Fechar" aria-label="Fechar">&#10005;</button>
+                <button type="button" class="janela-fechar" data-fechar title="Fechar" aria-label="Fechar">&times;</button>
             </div>
 
             <div class="janela-corpo">
@@ -1086,7 +1086,7 @@
             });
 
             // Janela das probabilidades: o "i" do painel abre a do seu banner;
-            // fecha no ✕, com Esc (nativo do <dialog>) ou a clicar fora.
+            // fecha no botão ×, com Esc (nativo do <dialog>) ou a clicar fora.
             document.querySelectorAll('.botao-info').forEach(function (botao) {
                 botao.addEventListener('click', function () {
                     var janela = document.getElementById(botao.getAttribute('data-janela'));

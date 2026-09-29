@@ -65,14 +65,14 @@
                                Style="{StaticResource Subtitulo}" FontSize="12" />
 
                         <Border IsVisible="{Binding TemReacao}"
-                                BackgroundColor="#3a1f3d"
-                                Stroke="#e11d74"
+                                BackgroundColor="#5a2d4c"
+                                Stroke="#bb8493"
                                 StrokeShape="RoundRectangle 10"
                                 Padding="12">
                             <Label Text="{Binding Reacao}" FontSize="15" />
                         </Border>
 
-                        <Button Text="♥ Interagir" Command="{Binding InteragirCommand}" IsEnabled="{Binding NaoOcupado}" />
+                        <Button Text="Interagir" Command="{Binding InteragirCommand}" IsEnabled="{Binding NaoOcupado}" />
                     </VerticalStackLayout>
                 </Border>
 

@@ -122,7 +122,7 @@
                     }
                 </div>
                 <div>
-                    <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@d.Id">&#10024; Invocar neste banner</a>
+                    <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@d.Id">Invocar neste banner</a>
                 </div>
             </div>
 
@@ -198,7 +198,7 @@
                 @if (d.TemRecompensas)
                 {
                     <div class="regras" style="margin-top:14px">
-                        <strong>&#127873; Recompensas diárias do evento</strong>
+                        <strong>Recompensas diárias do evento</strong>
                         <span>
                             Resgataste <strong>@d.DiasResgatados / @d.DiasRecompensa</strong> dias
                             &middot; total do evento: @d.TotalRecompensas.ToString("0") @d.MoedaRecompensa

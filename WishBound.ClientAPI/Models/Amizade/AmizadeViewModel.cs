@@ -80,7 +80,7 @@ namespace WishBound.ClientAPI.Models.Amizade
         public bool Equipada { get; set; }
         public DateTime? DataObtencao { get; set; }
 
-        public string Cor => string.IsNullOrEmpty(CorHex) ? "#f3c04f" : CorHex;
+        public string Cor => string.IsNullOrEmpty(CorHex) ? "#dbafa0" : CorHex;
     }
 
     /// <summary>

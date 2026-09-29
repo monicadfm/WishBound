@@ -26,8 +26,8 @@
 
   <ItemGroup>
     <!-- Ícone, ecrã de arranque e ícones das abas (SVG -> PNG feito pelo MAUI na compilação) -->
-    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#14101f" />
-    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#14101f" BaseSize="128,128" />
+    <MauiIcon Include="Resources\AppIcon\appicon.svg" ForegroundFile="Resources\AppIcon\appiconfg.svg" Color="#1f0e1a" />
+    <MauiSplashScreen Include="Resources\Splash\splash.svg" Color="#1f0e1a" BaseSize="128,128" />
     <MauiImage Include="Resources\Images\*" />
 
     <!-- Sprites das personagens: cópias dos SVG do site (wwwroot/img/personagens),

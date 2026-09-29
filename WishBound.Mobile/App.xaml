@@ -6,14 +6,14 @@
         <ResourceDictionary>
 
             <!-- Mesma paleta do site (variáveis :root do site.css) -->
-            <Color x:Key="Fundo">#14101f</Color>
-            <Color x:Key="FundoSuave">#1e1830</Color>
-            <Color x:Key="FundoCartao">#251d3a</Color>
-            <Color x:Key="Borda">#3a2f57</Color>
-            <Color x:Key="Texto">#efecfa</Color>
-            <Color x:Key="TextoSuave">#a79fc4</Color>
-            <Color x:Key="Dourado">#f3c04f</Color>
-            <Color x:Key="Roxo">#8b5cf6</Color>
+            <Color x:Key="Fundo">#1f0e1a</Color>
+            <Color x:Key="FundoSuave">#2f1729</Color>
+            <Color x:Key="FundoCartao">#49243e</Color>
+            <Color x:Key="Borda">#704264</Color>
+            <Color x:Key="Texto">#f7ece8</Color>
+            <Color x:Key="TextoSuave">#c9a0ab</Color>
+            <Color x:Key="Dourado">#dbafa0</Color>
+            <Color x:Key="Roxo">#bb8493</Color>
             <Color x:Key="Erro">#ff8b7d</Color>
 
             <!-- Estilos implícitos: aplicam-se a todos os controlos do tipo -->

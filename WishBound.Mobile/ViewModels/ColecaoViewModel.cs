@@ -72,7 +72,7 @@ namespace WishBound.Mobile.ViewModels
             }
         }
 
-        public string TextoFavoritas => _soFavoritas ? "★ Só favoritas" : "☆ Todas";
+        public string TextoFavoritas => _soFavoritas ? "Só favoritas" : "Todas";
 
         public string ResumoEspaco
         {

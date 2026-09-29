@@ -40,7 +40,7 @@ namespace WishBound.Mobile.Models
         public string Inicial => string.IsNullOrEmpty(Nome) ? "?" : Nome.Substring(0, 1).ToUpperInvariant();
 
         /// <summary>Cor da raridade (vem em hexadecimal da tabela Raridades).</summary>
-        public Color Cor => Color.TryParse(RaridadeCor ?? string.Empty, out var cor) ? cor : Color.FromArgb("#8b5cf6");
+        public Color Cor => Color.TryParse(RaridadeCor ?? string.Empty, out var cor) ? cor : Color.FromArgb("#bb8493");
 
         public Brush CorPincel => new SolidColorBrush(Cor);
 
@@ -113,7 +113,7 @@ namespace WishBound.Mobile.Models
 
         public string Inicial => string.IsNullOrEmpty(Nome) ? "?" : Nome.Substring(0, 1).ToUpperInvariant();
 
-        public Color Cor => Color.TryParse(RaridadeCor ?? string.Empty, out var cor) ? cor : Color.FromArgb("#8b5cf6");
+        public Color Cor => Color.TryParse(RaridadeCor ?? string.Empty, out var cor) ? cor : Color.FromArgb("#bb8493");
 
         public Brush CorPincel => new SolidColorBrush(Cor);
 
@@ -124,7 +124,7 @@ namespace WishBound.Mobile.Models
 
         public string Estrela => IsFavorito ? "★" : "☆";
 
-        public Color CorEstrela => IsFavorito ? Color.FromArgb("#f3c04f") : Color.FromArgb("#a79fc4");
+        public Color CorEstrela => IsFavorito ? Color.FromArgb("#dbafa0") : Color.FromArgb("#c9a0ab");
 
         public bool NivelMaximo => !PontosProximoNivel.HasValue || NivelOrdem >= NivelMaximoOrdem;
 
@@ -218,11 +218,11 @@ namespace WishBound.Mobile.Models
         // Apenas para o ecrã
         public string Texto => Desbloqueada
             ? (Conteudo ?? string.Empty)
-            : "🔒 Desbloqueia no nível " + NivelOrdem + " (" + NivelNome + ")";
+            : "⊘ Desbloqueia no nível " + NivelOrdem + " (" + NivelNome + ")";
 
         public string Etiqueta => Tipo + " · nível " + NivelOrdem;
 
-        public Color CorTexto => Desbloqueada ? Color.FromArgb("#efecfa") : Color.FromArgb("#a79fc4");
+        public Color CorTexto => Desbloqueada ? Color.FromArgb("#f7ece8") : Color.FromArgb("#c9a0ab");
     }
 
     public class MensagensPersonagemResposta
@@ -276,12 +276,12 @@ namespace WishBound.Mobile.Models
 
         /// <summary>Hoje = rosa; último dia da semana = dourado; resto = borda normal.</summary>
         public Color CorBorda => Hoje
-            ? Color.FromArgb("#e11d74")
-            : FimDeSemana ? Color.FromArgb("#f3c04f") : Color.FromArgb("#3a2f57");
+            ? Color.FromArgb("#bb8493")
+            : FimDeSemana ? Color.FromArgb("#dbafa0") : Color.FromArgb("#704264");
 
         public Brush PincelBorda => new SolidColorBrush(CorBorda);
 
-        public Color Fundo => Hoje ? Color.FromArgb("#3a1f3d") : Color.FromArgb("#1e1830");
+        public Color Fundo => Hoje ? Color.FromArgb("#5a2d4c") : Color.FromArgb("#2f1729");
 
         public double Opacidade => Recebido ? 0.45 : 1;
 
@@ -289,7 +289,7 @@ namespace WishBound.Mobile.Models
 
         public static string IconeMoeda(string nome)
         {
-            return nome.StartsWith("Bilhete", StringComparison.OrdinalIgnoreCase) ? "🎟" : "◈";
+            return nome.StartsWith("Bilhete", StringComparison.OrdinalIgnoreCase) ? "◇" : "◈";
         }
     }
 
@@ -315,9 +315,9 @@ namespace WishBound.Mobile.Models
         public string Titulo => "Dia " + Dia;
         public string Valor => Quantidade.ToString("0");
         public string Moeda => DiaRecompensa.IconeMoeda(MoedaNome);
-        public Color CorBorda => Hoje ? Color.FromArgb("#e11d74") : Color.FromArgb("#3a2f57");
+        public Color CorBorda => Hoje ? Color.FromArgb("#bb8493") : Color.FromArgb("#704264");
         public Brush PincelBorda => new SolidColorBrush(CorBorda);
-        public Color Fundo => Hoje ? Color.FromArgb("#3a1f3d") : Color.FromArgb("#1e1830");
+        public Color Fundo => Hoje ? Color.FromArgb("#5a2d4c") : Color.FromArgb("#2f1729");
         public double Opacidade => Recebido ? 0.45 : 1;
         public string Sinal => Recebido ? "✓" : string.Empty;
     }
@@ -421,12 +421,12 @@ namespace WishBound.Mobile.Models
 
         public string Icone => Tipo switch
         {
-            "MensagemPersonagem" => "💬",
+            "MensagemPersonagem" => "♡",
             "Evento" => "✦",
             "Banner" => "✦",
-            "Recompensa" => "🎁",
-            "LoginDiario" => "📅",
-            _ => "🔔"
+            "Recompensa" => "◈",
+            "LoginDiario" => "◷",
+            _ => "•"
         };
 
         /// <summary>"há 5 min", "há 3 h", "ontem", "12/09"</summary>
@@ -458,7 +458,7 @@ namespace WishBound.Mobile.Models
             }
         }
 
-        public Color CorBorda => IsLida ? Color.FromArgb("#3a2f57") : Color.FromArgb("#f3c04f");
+        public Color CorBorda => IsLida ? Color.FromArgb("#704264") : Color.FromArgb("#dbafa0");
         public Brush PincelBorda => new SolidColorBrush(CorBorda);
         public double Opacidade => IsLida ? 0.6 : 1;
         public FontAttributes PesoTitulo => IsLida ? FontAttributes.None : FontAttributes.Bold;

@@ -59,7 +59,7 @@
 
         .hero-frase {
             font-size: 1.08rem;
-            color: #c9c4e4;
+            color: #dcc3c6;
             max-width: 480px;
             margin: 18px 0 26px;
         }
@@ -85,7 +85,7 @@
             font-family: 'Georgia', serif;
             font-style: italic;
             font-size: 1rem;
-            color: #f39ac6;
+            color: #bb8493;
         }
 
         /* ----- Cartão comum aos painéis do hero ----- */
@@ -136,7 +136,7 @@
             font-size: 0.9rem;
             font-style: italic;
             line-height: 1.45;
-            color: #e6e1f5;
+            color: #f1e3df;
             max-width: 300px;
         }
 
@@ -180,7 +180,7 @@
             width: 220px;
             padding: 10px;
             border-radius: 12px;
-            background: #1f1733;
+            background: #331a2d;
             border: 1px solid var(--borda);
             box-shadow: 0 10px 30px rgba(0, 0, 0, .45);
             display: flex;
@@ -194,7 +194,7 @@
             padding: 6px 8px;
             border-radius: 8px;
             border: 1px solid var(--borda);
-            background: rgba(20, 14, 36, .9);
+            background: rgba(31, 14, 26, .9);
             color: inherit;
             font-size: 0.85rem;
         }
@@ -272,12 +272,12 @@
         }
 
         .checkin-dia.hoje .caixa {
-            border-color: #f39ac6;
-            box-shadow: 0 0 14px rgba(243, 154, 198, .45);
+            border-color: #bb8493;
+            box-shadow: 0 0 14px rgba(187, 132, 147, .45);
         }
 
         .checkin-dia.hoje {
-            color: #f39ac6;
+            color: #bb8493;
             font-weight: 700;
         }
 
@@ -298,8 +298,8 @@
             margin-top: 24px;
             padding: 22px 26px;
             border-radius: 18px;
-            border: 1px solid rgba(243, 154, 198, .35);
-            background: linear-gradient(90deg, var(--fundo-suave), rgba(208, 70, 138, .10));
+            border: 1px solid rgba(187, 132, 147, .35);
+            background: linear-gradient(90deg, var(--fundo-suave), rgba(187, 132, 147, .10));
         }
 
         .evento-etiqueta {
@@ -467,10 +467,10 @@
             Quanto mais rara a personagem, mais especial o laço que vos une.
         </p>
         <div class="hero-botoes">
-            <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Invocar agora</a>
+            <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">Invocar agora</a>
             <a class="botao" asp-controller="Personagens" asp-action="Index">Ver personagens</a>
         </div>
-        <span class="hero-assinatura">Every wish brings a new story &#9825;</span>
+        <span class="hero-assinatura">Every wish brings a new story</span>
     </div>
 
     @if (comSessao)
@@ -524,7 +524,6 @@
 
         @* ----- CHECK-IN DIÁRIO: a semana atual do calendário de 28 dias ----- *@
         <aside class="painel checkin">
-            <span class="checkin-icone">&#127873;</span>
             <h2>Check-in diário</h2>
             @if (diaria == null)
             {
@@ -547,11 +546,11 @@
                                     }
                                     else if (dia.TipoMoedaId == 3)
                                     {
-                                        <text>&#127915;</text>
+                                        <text>B</text>
                                     }
                                     else
                                     {
-                                        <text>&#129689;</text>
+                                        <text>M</text>
                                     }
                                 </span>
                                 <small>@dia.Quantidade.ToString("0")</small>
@@ -570,7 +569,7 @@
                     else
                     {
                         <button type="submit" class="botao botao-destaque">
-                            &#127873; Reclamar recompensa
+                            Reclamar recompensa
                             @if (diaDeHoje != null)
                             {
                                 <text>(@diaDeHoje.Texto)</text>
@@ -598,14 +597,14 @@
 {
     <section class="evento-destaque">
         <div>
-            <span class="evento-etiqueta">&#11088; Evento em destaque</span>
+            <span class="evento-etiqueta">Evento em destaque</span>
             <h2>@evento.Nome</h2>
             @if (!string.IsNullOrWhiteSpace(evento.Descricao))
             {
                 <p class="texto-suave">@evento.Descricao</p>
             }
             <div class="hero-botoes">
-                <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@evento.Id">&#10024; Invocar</a>
+                <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index" asp-route-bannerId="@evento.Id">Invocar</a>
                 <a class="botao" asp-controller="Eventos" asp-action="Index" asp-route-bannerId="@evento.Id">Ver detalhes &rarr;</a>
             </div>
         </div>
@@ -632,7 +631,7 @@
 {
     <section>
         <div class="destaques-topo">
-            <h2 class="titulo-seccao">&#10022; Personagens em destaque</h2>
+            <h2 class="titulo-seccao">Personagens em destaque</h2>
             <a class="ligacao" asp-controller="Personagens" asp-action="Index">Ver todos &rarr;</a>
         </div>
 

@@ -5,7 +5,7 @@
    ============================================================ */
 
 .corpo-gestao {
-    background: #120e1d;
+    background: #1a0b16;
 }
 
 .gestao-grelha {
@@ -17,7 +17,7 @@
 /* ---------- Barra lateral ---------- */
 
 .gestao-lateral {
-    background: #191330;
+    background: #2a1424;
     border-right: 1px solid var(--borda);
     padding: 24px 18px;
     display: flex;
@@ -229,7 +229,7 @@
     vertical-align: middle;
 }
 
-.etiqueta-estado.admin { background: rgba(243, 192, 79, 0.2); color: var(--dourado); }
+.etiqueta-estado.admin { background: rgba(219, 175, 160, 0.2); color: var(--dourado); }
 .etiqueta-estado.ok { background: rgba(79, 194, 122, 0.18); color: #8fe0ad; }
 .etiqueta-estado.inativo { background: rgba(224, 122, 114, 0.2); color: #f0a49d; }
 .etiqueta-estado.aviso { background: rgba(255, 176, 71, 0.18); color: #ffcf8a; }
@@ -473,10 +473,10 @@
 
 .categoria-estado { background: rgba(224, 122, 114, 0.2); color: #f0a49d; }
 .categoria-password { background: rgba(255, 176, 71, 0.18); color: #ffcf8a; }
-.categoria-moeda { background: rgba(243, 192, 79, 0.2); color: var(--dourado); }
-.categoria-personagem { background: rgba(139, 92, 246, 0.25); color: #d7c6ff; }
+.categoria-moeda { background: rgba(219, 175, 160, 0.2); color: var(--dourado); }
+.categoria-personagem { background: rgba(187, 132, 147, 0.25); color: #efd6ce; }
 .categoria-inventario { background: rgba(79, 194, 122, 0.18); color: #8fe0ad; }
-.categoria-amizade { background: rgba(255, 120, 180, 0.2); color: #ffb3d6; }
+.categoria-amizade { background: rgba(187, 132, 147, 0.2); color: #e6c2b8; }
 .categoria-recompensa { background: rgba(66, 133, 244, 0.2); color: #9dbdff; }
 
 .tabela-compacta th,
@@ -533,8 +533,8 @@
     line-height: 1.4;
 }
 
-.tipo-saudacao  { background: rgba(243, 192, 79, .18); color: #f3c04f; }
-.tipo-aleatoria { background: rgba(208, 70, 138, .18); color: #f39ac6; }
+.tipo-saudacao  { background: rgba(219, 175, 160, .18); color: #dbafa0; }
+.tipo-aleatoria { background: rgba(187, 132, 147, .18); color: #bb8493; }
 .tipo-diaria    { background: rgba(120, 140, 255, .18); color: #aab4ff; }
 .categoria-mensagem { background: rgba(170, 180, 255, 0.18); color: #c9cfff; }
 
@@ -577,10 +577,10 @@
     font-variant-numeric: tabular-nums;
 }
 
-.categoria-raridade    { background: rgba(243, 192, 79, 0.14); color: #f7d98b; }
-.categoria-banner      { background: rgba(139, 92, 246, 0.25); color: #d7c6ff; }
+.categoria-raridade    { background: rgba(219, 175, 160, 0.14); color: #e6c3b6; }
+.categoria-banner      { background: rgba(187, 132, 147, 0.25); color: #efd6ce; }
 .categoria-notificacao { background: rgba(66, 133, 244, 0.2); color: #9dbdff; }
-.categoria-exportacao  { background: rgba(167, 159, 196, 0.18); color: var(--texto-suave); }
+.categoria-exportacao  { background: rgba(201, 160, 171, 0.18); color: var(--texto-suave); }
 
 /* ---------- Alertas do painel ---------- */
 
@@ -681,7 +681,7 @@
     left: 50%;
     transform: translateX(-50%);
     white-space: nowrap;
-    background: #0d0a16;
+    background: #150811;
     color: var(--texto);
     border: 1px solid var(--borda);
     padding: 5px 9px;

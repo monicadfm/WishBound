@@ -32,7 +32,7 @@
         }
 
         .saldo-cartao.bilhetes .saldo-valor {
-            color: #b28cf0;
+            color: #bb8493;
         }
 
         .bloco {
@@ -95,7 +95,7 @@
         }
 
         .dia.bilhete .dia-recompensa {
-            color: #b28cf0;
+            color: #bb8493;
         }
 
         .dia.fim-semana {
@@ -120,8 +120,8 @@
         }
 
         .dia.hoje {
-            border-color: #b28cf0;
-            box-shadow: 0 0 0 2px rgba(178, 140, 240, .45);
+            border-color: #bb8493;
+            box-shadow: 0 0 0 2px rgba(187, 132, 147, .45);
             opacity: 1;
             transform: translateY(-2px);
         }
@@ -146,7 +146,7 @@
             border-radius: 999px;
             padding: 3px 10px;
             font-size: 0.8rem;
-            background: rgba(243, 192, 79, .15);
+            background: rgba(219, 175, 160, .15);
             color: var(--dourado);
         }
 
@@ -170,7 +170,7 @@
         <h1 class="titulo-seccao">Carteira</h1>
         <div class="acoes-linha">
             <a class="botao botao-suave" asp-controller="Economia" asp-action="Transacoes">Histórico de transações</a>
-            <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">&#10024; Invocar</a>
+            <a class="botao botao-destaque" asp-controller="Invocacao" asp-action="Index">Invocar</a>
         </div>
     </div>
     <p class="texto-suave">
@@ -215,7 +215,7 @@
                 else
                 {
                     <button type="submit" class="botao botao-destaque botao-grande">
-                        &#127873; Receber o dia @diaria.ProximoDia
+                        Receber o dia @diaria.ProximoDia
                         @if (diaDeHoje != null)
                         {
                             <text>(@diaDeHoje.Texto)</text>
@@ -298,7 +298,7 @@
                         else
                         {
                             <button type="submit" class="botao botao-destaque">
-                                &#127873; Resgatar o dia @(evento.Progresso + 1)
+                                Resgatar o dia @(evento.Progresso + 1)
                                 @if (evento.DiaDeHoje != null)
                                 {
                                     <text>(@evento.DiaDeHoje.Texto)</text>

@@ -63,7 +63,7 @@ namespace WishBound.Mobile.ViewModels
 
         public bool TemItem => _item != null;
 
-        public string TextoFavorito => _item != null && _item.IsFavorito ? "★ Favorita" : "☆ Marcar favorita";
+        public string TextoFavorito => _item != null && _item.IsFavorito ? "Favorita (tocar para remover)" : "Marcar favorita";
 
         public string Saudacao
         {
@@ -91,7 +91,7 @@ namespace WishBound.Mobile.ViewModels
             }
         }
 
-        public string TextoCompanheira => _ehCompanheira ? "♡ É a tua companheira" : "Tornar companheira";
+        public string TextoCompanheira => _ehCompanheira ? "É a tua companheira" : "Tornar companheira";
 
         public string ResumoMensagens
         {

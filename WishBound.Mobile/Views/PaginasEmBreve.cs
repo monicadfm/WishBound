@@ -18,9 +18,9 @@ namespace WishBound.Mobile.Views
                 VerticalOptions = LayoutOptions.Center,
                 Children =
                 {
-                    new Label { Text = titulo, FontSize = 26, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#f3c04f"), HorizontalOptions = LayoutOptions.Center },
+                    new Label { Text = titulo, FontSize = 26, FontAttributes = FontAttributes.Bold, TextColor = Color.FromArgb("#dbafa0"), HorizontalOptions = LayoutOptions.Center },
                     new Label { Text = "Em breve", FontSize = 16, HorizontalOptions = LayoutOptions.Center },
-                    new Label { Text = descricao, TextColor = Color.FromArgb("#a79fc4"), HorizontalTextAlignment = TextAlignment.Center }
+                    new Label { Text = descricao, TextColor = Color.FromArgb("#c9a0ab"), HorizontalTextAlignment = TextAlignment.Center }
                 }
             };
         }

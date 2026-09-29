@@ -114,7 +114,7 @@
                             <td><a asp-action="Mensagens" asp-route-personagemId="@m.PersonagemId">@m.PersonagemNome</a></td>
                         }
                         <td><span class="etiqueta-categoria tipo-@m.Tipo.ToLower()">@m.TipoNome</span></td>
-                        <td>@m.NivelOrdem <span class="texto-suave">@m.NivelNome</span>@(m.Alcancavel ? "" : " ⚠")</td>
+                        <td>@m.NivelOrdem <span class="texto-suave">@m.NivelNome</span>@(m.Alcancavel ? "" : " △")</td>
                         <td class="celula-mensagem">@m.Conteudo</td>
                         <td class="tabela-acoes">
                             <a class="botao botao-pequeno botao-suave" asp-action="EditarMensagem" asp-route-id="@m.Id">Editar</a>

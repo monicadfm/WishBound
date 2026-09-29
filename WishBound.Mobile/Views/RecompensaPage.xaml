@@ -59,7 +59,7 @@
                 </Border>
                 <Border Grid.Column="1" Style="{StaticResource Cartao}" Padding="14">
                     <VerticalStackLayout Spacing="2">
-                        <Label Text="🎟 Bilhetes" Style="{StaticResource Subtitulo}" />
+                        <Label Text="Bilhetes" Style="{StaticResource Subtitulo}" />
                         <Label Text="{Binding SaldoBilhetes}" FontSize="26" FontAttributes="Bold" TextColor="{StaticResource Dourado}" />
                     </VerticalStackLayout>
                 </Border>

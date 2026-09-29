@@ -101,7 +101,7 @@ namespace WishBound.Mobile.ViewModels
             set => Definir(ref _mostrarCandidatas, value);
         }
 
-        /// <summary>"🔔 3 notificações por ler" (vazio quando não há).</summary>
+        /// <summary>"3 notificações por ler" (vazio quando não há).</summary>
         public string TextoNotificacoes
         {
             get => _textoNotificacoes;
@@ -163,7 +163,7 @@ namespace WishBound.Mobile.ViewModels
                 var naoLidas = contagem.Sucesso ? contagem.Dados : 0;
                 TextoNotificacoes = naoLidas <= 0
                     ? string.Empty
-                    : "🔔 " + naoLidas + (naoLidas == 1 ? " notificação por ler" : " notificações por ler");
+                    : naoLidas + (naoLidas == 1 ? " notificação por ler" : " notificações por ler");
             }
             finally
             {

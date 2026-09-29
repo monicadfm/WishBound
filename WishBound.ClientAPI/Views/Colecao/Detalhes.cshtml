@@ -24,8 +24,8 @@
             margin-top: 18px;
             padding: 16px 18px;
             border-radius: 12px;
-            background: rgba(208, 70, 138, .10);
-            border: 1px solid rgba(243, 154, 198, .35);
+            background: rgba(187, 132, 147, .10);
+            border: 1px solid rgba(187, 132, 147, .35);
         }
 
         .amizade-painel h2 {
@@ -56,7 +56,7 @@
 
         .interacoes-pontos span.cheio {
             background: var(--dourado);
-            box-shadow: 0 0 8px rgba(243, 192, 79, .6);
+            box-shadow: 0 0 8px rgba(219, 175, 160, .6);
         }
 
         .amizade-barra {
@@ -70,11 +70,11 @@
         .amizade-usado {
             height: 100%;
             border-radius: 6px;
-            background: linear-gradient(90deg, #d0468a, #f39ac6);
+            background: linear-gradient(90deg, #704264, #bb8493);
         }
 
         .nivel-maximo .amizade-usado {
-            background: linear-gradient(90deg, #f3c04f, #fff1b8);
+            background: linear-gradient(90deg, #dbafa0, #f3ded6);
         }
 
         /* Lista dos níveis: um por linha, com o que dá */
@@ -112,13 +112,13 @@
         }
 
         .niveis li.atingido .marca {
-            background: #d0468a;
-            border-color: #f39ac6;
+            background: #704264;
+            border-color: #bb8493;
             color: #fff;
         }
 
         .niveis li.atual {
-            outline: 1px solid rgba(243, 154, 198, .6);
+            outline: 1px solid rgba(187, 132, 147, .6);
         }
 
         .niveis li.fora {
@@ -158,7 +158,7 @@
             padding: 12px 16px;
             border-radius: 14px;
             background: rgba(255, 255, 255, .07);
-            border: 1px solid rgba(243, 154, 198, .45);
+            border: 1px solid rgba(187, 132, 147, .45);
             font-style: italic;
             line-height: 1.5;
         }
@@ -171,9 +171,9 @@
             width: 14px;
             height: 14px;
             transform: rotate(45deg);
-            background: rgba(46, 34, 72, 1);
-            border-left: 1px solid rgba(243, 154, 198, .45);
-            border-top: 1px solid rgba(243, 154, 198, .45);
+            background: rgba(73, 36, 62, 1);
+            border-left: 1px solid rgba(187, 132, 147, .45);
+            border-top: 1px solid rgba(187, 132, 147, .45);
         }
 
         .balao-saudacao .quem {
@@ -284,8 +284,8 @@
         }
 
         .mensagens-lista li.desbloqueada .nivel-etiqueta {
-            border-color: #f39ac6;
-            color: #f39ac6;
+            border-color: #bb8493;
+            color: #bb8493;
         }
     </style>
 }
@@ -316,7 +316,7 @@
                 <div class="companheira-acao">
                     @if (mensagens.EhCompanheira)
                     {
-                        <span class="texto-suave">&#127968; @item.Nome é a tua companheira: recebe-te na página inicial.</span>
+                        <span class="texto-suave">@item.Nome é a tua companheira: recebe-te na página inicial.</span>
                         <form method="post" asp-controller="Colecao" asp-action="Companheira">
                             @* sem personagemId = deixar de ter companheira; volta a esta página *@
                             <input type="hidden" name="voltar" value="detalhes" />
@@ -329,7 +329,7 @@
                         <form method="post" asp-controller="Colecao" asp-action="Companheira">
                             <input type="hidden" name="personagemId" value="@item.PersonagemId" />
                             <button type="submit" class="botao botao-suave" title="Só podes ter uma companheira; substitui a atual">
-                                &#127968; Tornar companheira da página inicial
+                                Tornar companheira da página inicial
                             </button>
                         </form>
                     }
@@ -501,7 +501,7 @@
                                         {
                                             <li class="@(m.Desbloqueada ? "desbloqueada" : "bloqueada")@(m.Alcancavel ? "" : " fora")"
                                                 title="@(m.Alcancavel ? "" : "Uma personagem " + item.RaridadeNome + " não chega a este nível")">
-                                                <span class="nivel-etiqueta">@(m.Desbloqueada ? "✓ " : "🔒 ")Nível @m.NivelOrdem</span>
+                                                <span class="nivel-etiqueta">@(m.Desbloqueada ? "✓ " : "⊘ ")Nível @m.NivelOrdem</span>
                                                 @if (m.Desbloqueada)
                                                 {
                                                     <span>@m.Conteudo</span>
@@ -523,7 +523,7 @@
                         <input type="hidden" name="voltar" value="detalhes" />
                         <button type="submit" class="botao @(amizade.TemInteracoes ? "botao-destaque" : "botao-suave")"
                                 title="Gasta 1 das @amizade.InteracoesPorDia interações do dia (+@amizade.PontosPorInteracao pontos)">
-                            &#10084; Interagir com @item.Nome
+                            Interagir com @item.Nome
                         </button>
                         <span class="texto-suave">
                             +@amizade.PontosPorInteracao pontos por interação; as cópias repetidas também contam
