@@ -211,9 +211,11 @@
                         </span>
                     </td>
                     <td><span class="etiqueta-raridade" style="background:@(p.RaridadeCor ?? "#9aa5b1")">@p.RaridadeNome</span></td>
-                    <td class="celula-barra">
-                        <span class="grafico-barras-pista"><span class="grafico-barras-valor" style="width:@Largura(p.Contas, maxPopular)"></span></span>
-                        <span class="grafico-barras-numero">@p.Contas.ToString("N0", pt)</span>
+                    <td>
+                        <div class="celula-barra">
+                            <span class="grafico-barras-pista"><span class="grafico-barras-valor" style="width:@Largura(p.Contas, maxPopular)"></span></span>
+                            <span class="grafico-barras-numero">@p.Contas.ToString("N0", pt)</span>
+                        </div>
                     </td>
                     <td class="numero">@p.Copias.ToString("N0", pt)</td>
                 </tr>
