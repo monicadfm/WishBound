@@ -8,6 +8,20 @@ It was built as my final course project for the CET in Information Systems Techn
 
 > The in-app text and the detailed setup notes (`LEIA-ME.txt`) are in Portuguese.
 
+## Screenshots
+
+<p align="center">
+  <img src="screenshots/home_1.png" width="49%" alt="Home page with companion character, daily check-in and featured event">
+  <img src="screenshots/summon.png" width="49%" alt="Summoning page with the permanent banner and pity counters">
+</p>
+<p align="center"><em>Home page with the companion character and daily check-in · Summoning with pity counters</em></p>
+
+<p align="center">
+  <img src="screenshots/admin-dashboard.png" width="72%" alt="Admin dashboard with stats, alerts, active banners and audit log">
+  <img src="screenshots/mobile.png" width="22%" alt=".NET MAUI mobile app home screen">
+</p>
+<p align="center"><em>Admin dashboard with the audit log · .NET MAUI mobile app</em></p>
+
 ---
 
 ## Tech stack
